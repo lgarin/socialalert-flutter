@@ -1,0 +1,30 @@
+name: social_alert_app
+description: Show your world as it is.
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=2.1.0 <3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  form_field_validator:
+  flutter_secure_storage:
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+
+# For information on the generic Dart part of this file, see the
+# following page: https://dart.dev/tools/pub/pubspec
+flutter:
+
+  uses-material-design: true
+
+  assets:
+    - images/logo_login.png
+    - images/login_bg.jpg
+
