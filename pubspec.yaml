@@ -12,6 +12,8 @@ dependencies:
 
   form_field_validator:
   flutter_secure_storage:
+  provider:
+  http:
 
 dev_dependencies:
   flutter_test:
@@ -25,6 +27,4 @@ flutter:
   uses-material-design: true
 
   assets:
-    - images/logo_login.png
-    - images/login_bg.jpg
-
+    - images/

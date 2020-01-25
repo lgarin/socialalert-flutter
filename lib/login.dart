@@ -1,20 +1,71 @@
-import 'dart:ffi';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:form_field_validator/form_field_validator.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:provider/provider.dart';
+
+import 'helper.dart';
 
 class LoginModel {
-  String username;
-  String password;
-
-  LoginModel.of(String username, String password) : this.username = username, this.password = password;
+  final username = TextEditingController();
+  final password = TextEditingController();
 
   LoginModel();
 
+  LoginModel.fromJson(Map<String, dynamic> json) {
+    username.text = json['username'];
+    password.text = json['password'];
+  }
+
+  Map<String, dynamic> toJson() =>
+  {
+    'username': username.text,
+    'password': password.text,
+  };
+
+  bool hasInput() {
+    return username.text != '' || password.text != '';
+  }
+
+  bool hasUsernameInput() {
+    return username.text != '';
+  }
+
+  bool hasPasswordInput() {
+    return password.text != '';
+  }
+
   @override
   String toString() {
-    return '$runtimeType($username, $password)';
+    return '$runtimeType(${username.text}, ${password.text})';
+  }
+}
+
+typedef LoginCallBack = void Function(LoginModel);
+
+class _LoginStore {
+  final _storage = new FlutterSecureStorage();
+
+  Future<LoginModel> _loadModel() async {
+    try {
+      final json = await _storage.read(key: "lastLogin");
+      if (json == null) {
+        return LoginModel();
+      }
+      return LoginModel.fromJson(jsonDecode(json));
+    } catch (e) {
+      print(e);
+      return LoginModel();
+    }
+  }
+
+  void _saveModel(LoginModel model) async {
+    try {
+      await _storage.write(key: "lastLogin", value: jsonEncode(model));
+    } catch (e) {
+      print(e);
+    }
   }
 }
 
@@ -54,15 +105,13 @@ class _UsernameWidget extends StatelessWidget {
           borderRadius: BorderRadius.all(Radius.circular(10))),
       padding: EdgeInsets.all(10),
       child: TextFormField(
-        autofocus: model?.username == null,
-        enabled: model != null,
-        controller: TextEditingController(text: model?.username),
+        autofocus: !model.hasUsernameInput(),
+        controller: model.username,
         keyboardType: TextInputType.emailAddress,
         decoration: InputDecoration(
             hintText: "Username",
             icon: Icon(Icons.perm_identity)),
         validator: RequiredValidator(errorText: "Username required"),
-        onSaved: (value) => model.username = value,
       ),
     );
   }
@@ -84,26 +133,27 @@ class _PasswordWidget extends StatelessWidget {
             borderRadius: BorderRadius.all(Radius.circular(10))),
         padding: EdgeInsets.all(10),
         child: TextFormField(
-          autofocus: model?.username != null,
-          controller: TextEditingController(text: model?.password),
-          enabled: model != null,
+          autofocus: model.hasUsernameInput() && !model.hasPasswordInput(),
+          controller: model.password,
           obscureText: true,
           decoration: InputDecoration(
               hintText: "Password",
               icon: Icon(Icons.lock_open)),
           validator: RequiredValidator(errorText: "Password required"),
-          onSaved: (value) => model.password = value,
         ));
   }
 }
 
 class _LoginButton extends StatelessWidget {
+
   const _LoginButton({
     Key key,
+    @required this.model,
     @required this.onLogin
   }) : super(key: key);
 
-  final VoidCallback onLogin;
+  final LoginCallBack onLogin;
+  final LoginModel model;
 
   @override
   Widget build(BuildContext context) {
@@ -112,8 +162,8 @@ class _LoginButton extends StatelessWidget {
         child:
         RaisedButton(
           child: Text(
-              "Login", style: TextStyle(color: Colors.white)),
-          onPressed: onLogin,
+              "Login", style: TextStyle(color: Colors.white, fontSize: 18)),
+          onPressed: () => onLogin(model),
           color: Color.fromARGB(255, 32, 47, 128),
           shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.all(
@@ -123,50 +173,24 @@ class _LoginButton extends StatelessWidget {
   }
 }
 
-
 class _LoginFormState extends State<_LoginForm> {
   final _formKey = GlobalKey<FormState>();
-  final _storage = new FlutterSecureStorage();
-  var _autovalidate = false;
-  final _model = LoginModel();
+  final _loginStore = new _LoginStore();
 
-  Future<LoginModel> _loadModel() async {
-    try {
-      _model.username = await _storage.read(key: "username");
-      _model.password = await _storage.read(key: "password");
-    } catch (e) {
-      print(e);
-    }
-    return _model;
-  }
-
-  void _saveModel() async {
-    try {
-      await _storage.write(key: "username", value: _model.username);
-      await _storage.write(key: "password", value: _model.password);
-    } catch (e) {
-      print(e);
-    }
-  }
-
-  void _onLogin() {
+  void _onLogin(LoginModel model) {
     var form = _formKey.currentState;
     if (form.validate()) {
-      form.save();
-      _saveModel();
-    } else {
-      setState(() {
-        _autovalidate = true;
-      });
+      _loginStore._saveModel(model);
+      buildErrorDialog(context, "Bad credentials");
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(future: _loadModel(),
-        builder: (BuildContext context,
-            AsyncSnapshot<LoginModel> snapshot) =>
-            _LoginWidget(model: snapshot.data, formKey: _formKey, autovalidate: _autovalidate, onLogin: _onLogin,)
+    return FutureProvider<LoginModel>(
+        create: (_) => _loginStore._loadModel(),
+        lazy: false,
+        child: _LoginWidget(formKey: _formKey, onLogin: _onLogin)
     );
   }
 }
@@ -175,34 +199,33 @@ class _LoginWidget extends StatelessWidget {
 
   const _LoginWidget({
     Key key,
-    @required this.model,
     @required this.formKey,
-    @required this.autovalidate,
-    @required this.onLogin
+    @required this.onLogin,
   }) : super(key: key);
 
   final GlobalKey<FormState> formKey;
-  final LoginModel model;
-  final bool autovalidate;
-  final VoidCallback onLogin;
+  final LoginCallBack onLogin;
 
   @override
   Widget build(BuildContext context) {
+    final model = Provider.of<LoginModel>(context);
+    if (model == null) {
+      return LoadingCircle();
+    }
     return Form(
         key: formKey,
-        autovalidate: autovalidate,
+        autovalidate: model.hasInput(),
         child: Column(
           children: <Widget>[
             _UsernameWidget(model: model),
             SizedBox(height: 10),
             _PasswordWidget(model: model),
             SizedBox(height: 10),
-            _LoginButton(onLogin: onLogin)
+            _LoginButton(model: model, onLogin: onLogin)
           ],
         ));
   }
 }
-
 
 class _LoginForm extends StatefulWidget {
   @override
