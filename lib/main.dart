@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:social_alert_app/auth_service.dart';
 import 'package:social_alert_app/login.dart';
 
 void main() => runApp(SocialAlertApp());
@@ -23,13 +24,17 @@ class SocialAlertApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         accentColor: Colors.lightBlue,
       ),
-      home: LoginScreen()
+      initialRoute: "login",
+      routes: {
+        "login": (context) => LoginScreen(),
+        "home": (context) => MyHomePage(),
+      },
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
+
 
   // This widget is the home page of your application. It is stateful, meaning
   // that it has a State object (defined below) that contains fields that affect
@@ -39,8 +44,6 @@ class MyHomePage extends StatefulWidget {
   // case the title) provided by the parent (in this case the App widget) and
   // used by the build method of the State. Fields in a Widget subclass are
   // always marked "final".
-
-  final String title;
 
   @override
   _MyHomePageState createState() => _MyHomePageState();
@@ -68,11 +71,12 @@ class _MyHomePageState extends State<MyHomePage> {
     // The Flutter framework has been optimized to make rerunning build methods
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
+    LoginResponse args = ModalRoute.of(context).settings.arguments;
     return Scaffold(
       appBar: AppBar(
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        title: Text(args.username),
       ),
       body: Center(
         // Center is a layout widget. It takes a single child and positions it

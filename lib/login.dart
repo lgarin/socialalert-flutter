@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:form_field_validator/form_field_validator.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
+import 'package:social_alert_app/auth_service.dart';
 
 import 'helper.dart';
 
@@ -44,6 +45,7 @@ class LoginModel {
 
 typedef LoginCallBack = void Function(LoginModel);
 
+// TODO should be a credential store for LoginParameter
 class _LoginStore {
   final _storage = new FlutterSecureStorage();
 
@@ -60,7 +62,7 @@ class _LoginStore {
     }
   }
 
-  void _saveModel(LoginModel model) async {
+  Future<void> _saveModel(LoginModel model) async {
     try {
       await _storage.write(key: "lastLogin", value: jsonEncode(model));
     } catch (e) {
@@ -175,23 +177,64 @@ class _LoginButton extends StatelessWidget {
 
 class _LoginFormState extends State<_LoginForm> {
   final _formKey = GlobalKey<FormState>();
-  final _loginStore = new _LoginStore();
+  final _loginStore = _LoginStore();
+  final _authService = AuthService();
+  LoginParameter _credentials;
 
   void _onLogin(LoginModel model) {
-    var form = _formKey.currentState;
+    final form = _formKey.currentState;
     if (form.validate()) {
-      _loginStore._saveModel(model);
-      buildErrorDialog(context, "Bad credentials");
+      setState(() {
+        _credentials = LoginParameter(model.username.text, model.password.text);
+      });
+    }
+  }
+
+  Future<LoginModel> _prepareModel(BuildContext context) {
+    return _loginStore._loadModel();
+  }
+
+  Future<LoginResponse> _handleLoginPhases() {
+    if (_credentials != null) {
+      return _authenticateUser();
+    } else {
+      return Future.value(null);
+    }
+  }
+
+  Future<LoginResponse> _authenticateUser() async {
+    try {
+      //await Future.delayed(Duration(seconds: 3), () => 'ok');
+      // TODO cleanup
+      await _loginStore._saveModel(LoginModel.fromJson(_credentials.toJson()));
+      var response = await _authService.loginUser(_credentials);
+      //await buildErrorDialog(context, "Success", "Hello ${response.username}");
+      await Navigator.pushReplacementNamed(context, "home", arguments: response);
+      return response;
+    } catch (e) {
+      await showSimpleDialog(context, "Login failed", e);
+      return null;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return FutureProvider<LoginModel>(
-        create: (_) => _loginStore._loadModel(),
+        create: _prepareModel,
         lazy: false,
-        child: _LoginWidget(formKey: _formKey, onLogin: _onLogin)
+        child: FutureBuilder<LoginResponse>(
+          future: _handleLoginPhases(),
+          builder: _buildWidget)
     );
+  }
+
+  Widget _buildWidget(BuildContext context, AsyncSnapshot<LoginResponse> snapshot) {
+    if (snapshot.connectionState == ConnectionState.waiting) {
+      return LoadingCircle();
+    } else if (snapshot.hasData) {
+      return null;
+    }
+    return _LoginWidget(formKey: _formKey, onLogin: _onLogin);
   }
 }
 

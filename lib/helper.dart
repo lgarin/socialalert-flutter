@@ -1,11 +1,11 @@
 
 import 'package:flutter/material.dart';
 
-Future buildErrorDialog(BuildContext context, String message) {
+Future showSimpleDialog(BuildContext context, String title, String message) {
   return showDialog(
     builder: (context) {
       return AlertDialog(
-        title: Text('Error'),
+        title: Text(title),
         content: Text(message),
         actions: <Widget>[
           FlatButton(
