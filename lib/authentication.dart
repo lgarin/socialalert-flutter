@@ -8,12 +8,14 @@ class LoginResponse {
   final String refreshToken;
   final String userId;
   final String username;
+  final int expiration;
 
   LoginResponse._internal(Map<String, dynamic> json) :
     accessToken = json['accessToken'],
     refreshToken =  json['refreshToken'],
-    userId = json['userId'],
-    username = json['username'];
+    userId = json['id'],
+    username = json['username'],
+    expiration = json['expiration'];
 
   factory LoginResponse(String json) {
     return LoginResponse._internal(jsonDecode(json));
@@ -22,20 +24,33 @@ class LoginResponse {
 
 class AuthService {
   static const jsonMediaType = 'application/json';
+  static const jsonHeaders = {
+    'Content-type': jsonMediaType,
+    'Accept': jsonMediaType,
+  };
   final baseUrl = 'http://3ft8uk98qmfq79pc.myfritz.net:18774/rest';
   final _httpClient = Client();
 
+  Future<Response> _postJson(String uri, String body) {
+    return _httpClient.post(baseUrl + uri, headers: jsonHeaders, body: body);
+  }
+
   Future<LoginResponse> loginUser(Credential crendential) async {
-    final headers = {
-      'Content-type': jsonMediaType,
-      'Accept': jsonMediaType,
-    };
-    final body = jsonEncode(crendential);
-    final response = await _httpClient.post(baseUrl + '/user/login', headers: headers, body: body);
+    final response = await _postJson('/user/login', jsonEncode(crendential));
     if (response.statusCode == 200) {
       return LoginResponse(response.body);
     } else if (response.statusCode == 401) {
-      throw 'Bad credentials';
+      throw 'Bad credential';
+    }
+    throw response.reasonPhrase;
+  }
+
+  Future<LoginResponse> renewLogin(String refreshToken) async {
+    final response = await _postJson('/user/renewLogin', refreshToken);
+    if (response.statusCode == 200) {
+      return LoginResponse(response.body);
+    } else if (response.statusCode == 401) {
+      throw 'Session timeout';
     }
     throw response.reasonPhrase;
   }

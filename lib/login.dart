@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:form_field_validator/form_field_validator.dart';
 import 'package:provider/provider.dart';
-import 'package:social_alert_app/authentication.dart';
-
-import 'helper.dart';
-import 'credential.dart';
+import 'package:social_alert_app/session.dart';
+import 'package:social_alert_app/helper.dart';
+import 'package:social_alert_app/credential.dart';
 
 class LoginModel {
   final username = TextEditingController();
@@ -149,8 +148,6 @@ class _LoginButton extends StatelessWidget {
 
 class _LoginFormState extends State<_LoginForm> {
   final _formKey = GlobalKey<FormState>();
-  final _credentialStore = CredentialStore();
-  final _authService = AuthService();
   Credential _credentials;
 
   void _onLogin(LoginModel model) {
@@ -163,27 +160,28 @@ class _LoginFormState extends State<_LoginForm> {
   }
 
   Future<LoginModel> _prepareModel(BuildContext context) async {
-    final credential = await _credentialStore.load();
+    var session = Provider.of<UserSession>(context);
+    final credential = await session.loadInitialCredential();
     return LoginModel.fromCredential(credential);
   }
 
-  Future<LoginResponse> _handleLoginPhases() {
+  Future<bool> _handleLoginPhases() {
     if (_credentials != null) {
       return _authenticateUser();
     } else {
-      return Future.value(null);
+      return Future.value(false);
     }
   }
 
-  Future<LoginResponse> _authenticateUser() async {
+  Future<bool> _authenticateUser() async {
     try {
-      await _credentialStore.store(_credentials);
-      var response = await _authService.loginUser(_credentials);
-      await Navigator.pushReplacementNamed(context, "home", arguments: response);
-      return response;
+      var session = Provider.of<UserSession>(context);
+      await session.open(_credentials);
+      await Navigator.pushReplacementNamed(context, "home");
+      return true;
     } catch (e) {
       await showSimpleDialog(context, "Login failed", e);
-      return null;
+      return false;
     }
   }
 
@@ -191,17 +189,18 @@ class _LoginFormState extends State<_LoginForm> {
   Widget build(BuildContext context) {
     return FutureProvider<LoginModel>(
         create: _prepareModel,
-        lazy: false,
-        child: FutureBuilder<LoginResponse>(
+        lazy: true,
+        child: FutureBuilder<bool>(
+          initialData: false,
           future: _handleLoginPhases(),
           builder: _buildWidget)
     );
   }
 
-  Widget _buildWidget(BuildContext context, AsyncSnapshot<LoginResponse> snapshot) {
-    if (snapshot.connectionState == ConnectionState.waiting) {
+  Widget _buildWidget(BuildContext context, AsyncSnapshot<bool> snapshot) {
+    if (snapshot.connectionState != ConnectionState.done) {
       return LoadingCircle();
-    } else if (snapshot.hasData) {
+    } else if (snapshot.data) {
       return null;
     }
     return _LoginWidget(formKey: _formKey, onLogin: _onLogin);

@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 Future showSimpleDialog(BuildContext context, String title, String message) {

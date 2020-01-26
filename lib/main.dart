@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:social_alert_app/authentication.dart';
+import 'package:provider/provider.dart';
 import 'package:social_alert_app/login.dart';
+import 'package:social_alert_app/session.dart';
 
 void main() => runApp(SocialAlertApp());
 
@@ -8,33 +9,43 @@ class SocialAlertApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Snypix',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
-        brightness: Brightness.light,
-        primarySwatch: Colors.blue,
-        accentColor: Colors.lightBlue,
-      ),
-      initialRoute: "login",
-      routes: {
-        "login": (context) => LoginScreen(),
-        "home": (context) => MyHomePage(),
-      },
+    return MultiProvider(
+        providers: [
+          Provider<UserSession>(create: (_) => UserSession()),
+        ],
+        child: MaterialApp(
+          title: 'Snypix',
+          theme: ThemeData(
+            // This is the theme of your application.
+            //
+            // Try running your application with "flutter run". You'll see the
+            // application has a blue toolbar. Then, without quitting the app, try
+            // changing the primarySwatch below to Colors.green and then invoke
+            // "hot reload" (press "r" in the console where you ran "flutter run",
+            // or simply save your changes to "hot reload" in a Flutter IDE).
+            // Notice that the counter didn't reset back to zero; the application
+            // is not restarted.
+            brightness: Brightness.light,
+            primaryColor: Color.fromARGB(255, 54, 71, 163),
+            accentColor: Color.fromARGB(255, 82, 173, 243),
+            buttonColor: Color.fromARGB(255, 32, 47, 128),
+            backgroundColor: Color.fromARGB(255, 63, 79, 167),
+            textTheme: TextTheme(
+              button: TextStyle(fontSize: 18, color: Colors.white),
+              subtitle: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)
+            ),
+          ),
+          initialRoute: "login",
+          routes: {
+            "login": (context) => LoginScreen(),
+            "home": (context) => MyHomePage(),
+          },
+        )
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-
 
   // This widget is the home page of your application. It is stateful, meaning
   // that it has a State object (defined below) that contains fields that affect
@@ -71,7 +82,7 @@ class _MyHomePageState extends State<MyHomePage> {
     // The Flutter framework has been optimized to make rerunning build methods
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
-    LoginResponse args = ModalRoute.of(context).settings.arguments;
+    UserSession args = Provider.of<UserSession>(context, listen: false);
     return Scaffold(
       appBar: AppBar(
         // Here we take the value from the MyHomePage object that was created by
@@ -85,8 +96,8 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: Icon(Icons.add),
+        tooltip: 'Take picture',
+        child: Icon(Icons.photo_camera),
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
