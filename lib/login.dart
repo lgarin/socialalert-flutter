@@ -51,7 +51,7 @@ class _LoginHeader extends StatelessWidget {
             height: 200,
           ),
           SizedBox(height: 10),
-          Text(message, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white))
+          Text(message, style: Theme.of(context).textTheme.subtitle)
         ])
     );
   }
@@ -118,7 +118,6 @@ class _PasswordWidget extends StatelessWidget {
 
 class _LoginButton extends StatelessWidget {
   static const label = 'Login';
-  static const color = Color.fromARGB(255, 32, 47, 128);
 
   _LoginButton({
     Key key,
@@ -137,9 +136,9 @@ class _LoginButton extends StatelessWidget {
         child:
         RaisedButton(
           child: Text(
-              label, style: TextStyle(color: Colors.white, fontSize: 18)),
+              label, style: Theme.of(context).textTheme.button),
           onPressed: () => onLogin(model),
-          color: color,
+          color: Theme.of(context).buttonColor,
           shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.all(
                   Radius.circular(20))),
@@ -250,12 +249,11 @@ class _LoginForm extends StatefulWidget {
 
 class LoginScreen extends StatelessWidget {
   static const backgroundImagePath = "images/login_bg.jpg";
-  static const backgroundColor = Color.fromARGB(255, 63, 79, 167);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: backgroundColor,
+        backgroundColor: Theme.of(context).backgroundColor,
         body: DecoratedBox(
             decoration: BoxDecoration(
                 image: DecorationImage(
