@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:social_alert_app/auth_service.dart';
+import 'package:social_alert_app/authentication.dart';
 import 'package:social_alert_app/login.dart';
 
 void main() => runApp(SocialAlertApp());

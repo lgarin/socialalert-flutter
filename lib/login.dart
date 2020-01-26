@@ -1,12 +1,10 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:form_field_validator/form_field_validator.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
-import 'package:social_alert_app/auth_service.dart';
+import 'package:social_alert_app/authentication.dart';
 
 import 'helper.dart';
+import 'credential.dart';
 
 class LoginModel {
   final username = TextEditingController();
@@ -14,16 +12,10 @@ class LoginModel {
 
   LoginModel();
 
-  LoginModel.fromJson(Map<String, dynamic> json) {
-    username.text = json['username'];
-    password.text = json['password'];
+  LoginModel.fromCredential(Credential credential) {
+    username.text = credential.username ?? '';
+    password.text = credential.password ?? '';
   }
-
-  Map<String, dynamic> toJson() =>
-  {
-    'username': username.text,
-    'password': password.text,
-  };
 
   bool hasInput() {
     return username.text != '' || password.text != '';
@@ -45,35 +37,9 @@ class LoginModel {
 
 typedef LoginCallBack = void Function(LoginModel);
 
-// TODO should be a credential store for LoginParameter
-class _LoginStore {
-  final _storage = new FlutterSecureStorage();
-
-  Future<LoginModel> _loadModel() async {
-    try {
-      final json = await _storage.read(key: "lastLogin");
-      if (json == null) {
-        return LoginModel();
-      }
-      return LoginModel.fromJson(jsonDecode(json));
-    } catch (e) {
-      print(e);
-      return LoginModel();
-    }
-  }
-
-  Future<void> _saveModel(LoginModel model) async {
-    try {
-      await _storage.write(key: "lastLogin", value: jsonEncode(model));
-    } catch (e) {
-      print(e);
-    }
-  }
-}
-
 class _LoginHeader extends StatelessWidget {
-  final String logoPath = "images/logo_login.png";
-  final String message = "Show your world as it is";
+  static const logoPath = "images/logo_login.png";
+  static const message = "Show your world as it is";
 
   @override
   Widget build(BuildContext context) {
@@ -92,7 +58,9 @@ class _LoginHeader extends StatelessWidget {
 }
 
 class _UsernameWidget extends StatelessWidget {
-  const _UsernameWidget({
+  static const label = 'Username';
+
+  _UsernameWidget({
     Key key,
     @required this.model,
   }) : super(key: key);
@@ -111,7 +79,7 @@ class _UsernameWidget extends StatelessWidget {
         controller: model.username,
         keyboardType: TextInputType.emailAddress,
         decoration: InputDecoration(
-            hintText: "Username",
+            hintText: label,
             icon: Icon(Icons.perm_identity)),
         validator: RequiredValidator(errorText: "Username required"),
       ),
@@ -120,7 +88,9 @@ class _UsernameWidget extends StatelessWidget {
 }
 
 class _PasswordWidget extends StatelessWidget {
-  const _PasswordWidget({
+  static const label = 'Password';
+
+  _PasswordWidget({
     Key key,
     @required this.model,
   }) : super(key: key);
@@ -139,7 +109,7 @@ class _PasswordWidget extends StatelessWidget {
           controller: model.password,
           obscureText: true,
           decoration: InputDecoration(
-              hintText: "Password",
+              hintText: label,
               icon: Icon(Icons.lock_open)),
           validator: RequiredValidator(errorText: "Password required"),
         ));
@@ -147,8 +117,10 @@ class _PasswordWidget extends StatelessWidget {
 }
 
 class _LoginButton extends StatelessWidget {
+  static const label = 'Login';
+  static const color = Color.fromARGB(255, 32, 47, 128);
 
-  const _LoginButton({
+  _LoginButton({
     Key key,
     @required this.model,
     @required this.onLogin
@@ -159,14 +131,15 @@ class _LoginButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
     return SizedBox(width: double.infinity,
         height: 40,
         child:
         RaisedButton(
           child: Text(
-              "Login", style: TextStyle(color: Colors.white, fontSize: 18)),
+              label, style: TextStyle(color: Colors.white, fontSize: 18)),
           onPressed: () => onLogin(model),
-          color: Color.fromARGB(255, 32, 47, 128),
+          color: color,
           shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.all(
                   Radius.circular(20))),
@@ -177,21 +150,22 @@ class _LoginButton extends StatelessWidget {
 
 class _LoginFormState extends State<_LoginForm> {
   final _formKey = GlobalKey<FormState>();
-  final _loginStore = _LoginStore();
+  final _credentialStore = CredentialStore();
   final _authService = AuthService();
-  LoginParameter _credentials;
+  Credential _credentials;
 
   void _onLogin(LoginModel model) {
     final form = _formKey.currentState;
     if (form.validate()) {
       setState(() {
-        _credentials = LoginParameter(model.username.text, model.password.text);
+        _credentials = Credential(model.username.text, model.password.text);
       });
     }
   }
 
-  Future<LoginModel> _prepareModel(BuildContext context) {
-    return _loginStore._loadModel();
+  Future<LoginModel> _prepareModel(BuildContext context) async {
+    final credential = await _credentialStore.load();
+    return LoginModel.fromCredential(credential);
   }
 
   Future<LoginResponse> _handleLoginPhases() {
@@ -204,11 +178,8 @@ class _LoginFormState extends State<_LoginForm> {
 
   Future<LoginResponse> _authenticateUser() async {
     try {
-      //await Future.delayed(Duration(seconds: 3), () => 'ok');
-      // TODO cleanup
-      await _loginStore._saveModel(LoginModel.fromJson(_credentials.toJson()));
+      await _credentialStore.store(_credentials);
       var response = await _authService.loginUser(_credentials);
-      //await buildErrorDialog(context, "Success", "Hello ${response.username}");
       await Navigator.pushReplacementNamed(context, "home", arguments: response);
       return response;
     } catch (e) {
@@ -240,7 +211,7 @@ class _LoginFormState extends State<_LoginForm> {
 
 class _LoginWidget extends StatelessWidget {
 
-  const _LoginWidget({
+  _LoginWidget({
     Key key,
     @required this.formKey,
     @required this.onLogin,
@@ -278,8 +249,8 @@ class _LoginForm extends StatefulWidget {
 }
 
 class LoginScreen extends StatelessWidget {
-  final String backgroundImagePath = "images/login_bg.jpg";
-  final Color backgroundColor = Color.fromARGB(255, 63, 79, 167);
+  static const backgroundImagePath = "images/login_bg.jpg";
+  static const backgroundColor = Color.fromARGB(255, 63, 79, 167);
 
   @override
   Widget build(BuildContext context) {

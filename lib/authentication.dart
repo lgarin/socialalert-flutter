@@ -1,20 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:http/http.dart';
-
-class LoginParameter {
-  final String username;
-  final String password;
-
-  LoginParameter(this.username, this.password);
-
-  Map<String, dynamic> toJson() => {
-    'username': username,
-    'password': password,
-  };
-}
+import 'package:social_alert_app/credential.dart';
 
 class LoginResponse {
   final String accessToken;
@@ -38,14 +25,12 @@ class AuthService {
   final baseUrl = 'http://3ft8uk98qmfq79pc.myfritz.net:18774/rest';
   final _httpClient = Client();
 
-  LoginResponse _loginResponse;
-
-  Future<LoginResponse> loginUser(LoginParameter parameter) async {
+  Future<LoginResponse> loginUser(Credential crendential) async {
     final headers = {
       'Content-type': jsonMediaType,
       'Accept': jsonMediaType,
     };
-    final body = jsonEncode(parameter);
+    final body = jsonEncode(crendential);
     final response = await _httpClient.post(baseUrl + '/user/login', headers: headers, body: body);
     if (response.statusCode == 200) {
       return LoginResponse(response.body);
