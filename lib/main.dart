@@ -19,6 +19,7 @@ class SocialAlertApp extends StatelessWidget {
           theme: ThemeData(
             brightness: Brightness.light,
             primaryColor: Color.fromARGB(255, 54, 71, 163),
+            primaryColorDark: Color.fromARGB(255, 43, 56, 130),
             accentColor: Color.fromARGB(255, 82, 173, 243),
             buttonColor: Color.fromARGB(255, 32, 47, 128),
             backgroundColor: Color.fromARGB(255, 63, 79, 167),
