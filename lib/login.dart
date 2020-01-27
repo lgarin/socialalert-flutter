@@ -160,8 +160,7 @@ class _LoginFormState extends State<_LoginForm> {
   }
 
   Future<LoginModel> _prepareModel(BuildContext context) async {
-    var session = Provider.of<UserSession>(context);
-    final credential = await session.loadInitialCredential();
+    final credential = await UserSession.current(context).initialCredential;
     return LoginModel.fromCredential(credential);
   }
 
@@ -175,8 +174,7 @@ class _LoginFormState extends State<_LoginForm> {
 
   Future<bool> _authenticateUser() async {
     try {
-      var session = Provider.of<UserSession>(context);
-      await session.open(_credentials);
+      await UserSession.current(context).authenticate(_credentials);
       await Navigator.pushReplacementNamed(context, "home");
       return true;
     } catch (e) {

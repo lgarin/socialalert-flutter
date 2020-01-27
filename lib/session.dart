@@ -1,51 +1,68 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:social_alert_app/authentication.dart';
 import 'package:social_alert_app/credential.dart';
 
+class UserIdentity {
+  final String userId;
+  final String username;
+
+  UserIdentity(LoginResponse login)
+      : userId = login.userId,
+        username = login.username;
+}
+
+class AuthToken {
+  static const refreshTokenDelta = 10000;
+
+  final accessToken;
+  final refreshToken;
+  final _expiration;
+
+  AuthToken(LoginResponse login)
+      : accessToken = login.accessToken,
+        refreshToken = login.refreshToken,
+        _expiration = login.expiration;
+
+  bool get expired {
+    return _expiration + refreshTokenDelta >
+        DateTime.now().millisecondsSinceEpoch;
+  }
+}
+
 class UserSession {
-  static const refreshTokenDelta = 1000;
   final _credentialStore = CredentialStore();
   final _authService = AuthService();
 
-  String _userId;
-  String _username;
-  String _accessToken;
-  String _refreshToken;
-  int _tokenExpiration;
+  UserIdentity _identity;
+  AuthToken _token;
 
-  Future<Credential> loadInitialCredential() {
+  static UserSession current(BuildContext context) =>
+      Provider.of<UserSession>(context, listen: false);
+
+  Future<Credential> get initialCredential {
     return _credentialStore.load();
   }
 
-  Future<void> open(Credential credential) async {
+  Future<void> authenticate(Credential credential) async {
     await _credentialStore.store(credential);
-    var response = await _authService.loginUser(credential);
+    var login = await _authService.loginUser(credential);
 
-    _setUser(response);
-    _setTokens(response);
+    _identity = UserIdentity(login);
+    _token = AuthToken(login);
   }
 
-  void _setUser(LoginResponse response) {
-    this._userId = response.userId;
-    this._username = response.username;
-  }
-
-  void _setTokens(LoginResponse response) {
-    this._accessToken = response.accessToken;
-    this._refreshToken = response.refreshToken;
-    this._tokenExpiration = response.expiration;
-  }
-
-  String get userId => _userId;
-  String get username => _username;
+  String get userId => _identity?.userId;
+  String get username => _identity?.username;
 
   Future<String> get accessToken async {
-    if (_refreshToken == null) {
+    if (_token == null) {
       return null;
     }
-    if (_tokenExpiration + refreshTokenDelta > DateTime.now().millisecondsSinceEpoch) {
-      var response = await _authService.renewLogin(_refreshToken);
-      _setTokens(response);
+    if (_token.expired) {
+      var login = await _authService.renewLogin(_token.refreshToken);
+      _token = AuthToken(login);
     }
-    return _accessToken;
+    return _token.accessToken;
   }
 }
