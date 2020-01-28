@@ -174,8 +174,8 @@ class _LoginFormState extends State<_LoginForm> {
 
   Future<bool> _authenticateUser() async {
     try {
-      await UserSession.current(context).authenticate(_credentials);
-      await Navigator.pushReplacementNamed(context, "home");
+      final login = await UserSession.current(context).authenticate(_credentials);
+      await Navigator.pushReplacementNamed(context, "home", arguments: login);
       return true;
     } catch (e) {
       await showSimpleDialog(context, "Login failed", e);

@@ -10,12 +10,23 @@ class LoginResponse {
   final String username;
   final int expiration;
 
+  final String email;
+  final String country;
+  final String biography;
+  final String birthdate;
+  final String imageUri;
+
   LoginResponse._internal(Map<String, dynamic> json) :
     accessToken = json['accessToken'],
     refreshToken =  json['refreshToken'],
     userId = json['id'],
     username = json['username'],
-    expiration = json['expiration'];
+    expiration = json['expiration'],
+    email = json['email'],
+    country = json['country'],
+    biography = json['biography'],
+    birthdate = json['birthdate'],
+    imageUri = json['imageUri'];
 
   factory LoginResponse(String json) {
     return LoginResponse._internal(jsonDecode(json));

@@ -44,12 +44,14 @@ class UserSession {
     return _credentialStore.load();
   }
 
-  Future<void> authenticate(Credential credential) async {
+  Future<LoginResponse> authenticate(Credential credential) async {
     await _credentialStore.store(credential);
     var login = await _authService.loginUser(credential);
 
     _identity = UserIdentity(login);
     _token = AuthToken(login);
+
+    return login;
   }
 
   String get userId => _identity?.userId;

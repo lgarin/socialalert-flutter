@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:social_alert_app/session.dart';
+import 'package:social_alert_app/profile.dart';
 
 class Menu extends StatelessWidget {
   Widget build(BuildContext context) {
@@ -25,15 +25,15 @@ class _MenuBar extends StatelessWidget {
       child: ListView(
         children: <Widget>[
           ListTile(
-            leading: Icon(Icons.perm_identity),
-            title: Text('My Profile'),
+            leading: Icon(Icons.person, color: Colors.white),
+            title: Text('My Profile', style: TextStyle(color: Colors.white)),
             onTap: () {
               Navigator.pop(context);
             },
           ),
           ListTile(
-            leading: Icon(Icons.settings),
-            title: Text('Settings'),
+            leading: Icon(Icons.settings, color: Colors.white),
+            title: Text('Settings', style: TextStyle(color: Colors.white)),
             onTap: () {
               Navigator.pop(context);
             },
@@ -46,9 +46,7 @@ class _MenuBar extends StatelessWidget {
 
 class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
-    final username = UserSession.current(context).username;
-    final location = 'Switzerland';
-    final imageUrl = null;
+    final profile = UserProfile.current(context);
     return Container(
         height: 240,
         color: Theme.of(context).primaryColorDark.withOpacity(0.9),
@@ -56,40 +54,38 @@ class _Header extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
               SizedBox(height: 50),
-              _buildAvatar(context, imageUrl),
+              _buildAvatar(context, profile),
               SizedBox(height: 10),
-              _buildUsername(context, username),
+              _buildUsername(context, profile),
               SizedBox(height: 5),
-              _buildLocation(context, location)
+              _buildLocation(context, profile)
             ]));
   }
 
-  Text _buildUsername(BuildContext context, String username) {
+  Text _buildUsername(BuildContext context, UserProfile profile) {
     return Text(
-              username,
-              style: Theme.of(context).textTheme.subtitle,
-            );
+      profile.username + " (" + profile.email + ")",
+      style: Theme.of(context).textTheme.subtitle
+    );
   }
 
-  Row _buildLocation(BuildContext context, String location) {
+  Row _buildLocation(BuildContext context, UserProfile profile) {
     return Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  Icon(Icons.place),
-                  Text(location, style: Theme.of(context).textTheme.body2),
-                ]);
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Icon(Icons.place, color: Colors.white, size: 14),
+          Text(profile.country ?? '???', style: TextStyle(color: Colors.white, fontSize: 12)),
+        ]);
   }
 
-  Container _buildAvatar(BuildContext context, String imageUrl) {
+  Container _buildAvatar(BuildContext context, UserProfile profile) {
     return Container(
       width: 100.0,
       height: 100.0,
       decoration: BoxDecoration(
         color: Theme.of(context).accentColor,
         image: DecorationImage(
-          image: imageUrl != null
-              ? NetworkImage(imageUrl)
-              : AssetImage('images/unknown_user.png'),
+          image: profile.picture,
           fit: BoxFit.cover,
         ),
         borderRadius: BorderRadius.all(Radius.circular(50.0)),
