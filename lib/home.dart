@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:social_alert_app/authentication.dart';
 import 'package:social_alert_app/menu.dart';
 import 'package:social_alert_app/profile.dart';
+import 'package:social_alert_app/session.dart';
+import 'package:social_alert_app/upload.dart';
 
 class HomePage extends StatefulWidget {
 
@@ -15,22 +19,42 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int _counter = 0;
-  int _currentNavIndex = 0;
+  int _currentDisplayIndex = 0;
   final LoginResponse _login;
+  final uploadService = UploadService();
+  final dateFormat = DateFormat.yMd().add_Hms();
+
 
   _HomePageState(LoginResponse login) : _login = login;
 
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
+  void _takePicture(BuildContext context) async {
+    final image = await ImagePicker.pickImage(source: ImageSource.camera);
+    if (image != null) {
+      final now = DateTime.now().toLocal();
+      final title = 'Snype on ' + dateFormat.format(now);
+      final token = await UserSession.current(context).accessToken;
+      final task = await uploadService.uploadImage(tag: title, file: image, accessToken: token);
+      print(task);
+    }
   }
 
   void _tabSelected(int index) {
     setState(() {
-      _currentNavIndex = index;
+      _currentDisplayIndex = index;
     });
+  }
+
+  Widget _createCurrentDisplay() {
+    switch (_currentDisplayIndex) {
+      case 0:
+        return _GalleryDisplay();
+      case 1:
+        return _FeedDisplay();
+      case 2:
+        return _NetworkDisplay();
+      default:
+        return null;
+    }
   }
 
   @override
@@ -47,9 +71,7 @@ class _HomePageState extends State<HomePage> {
         child: Scaffold(
           appBar: _buildAppBar(),
           drawer: Menu(),
-          body: Center(
-            child: CounterDisplay(counter: _counter),
-          ),
+          body: Center(child: _createCurrentDisplay()),
           floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
           floatingActionButton: _buildCaptureButton(context),
           bottomNavigationBar: _buildNavBar()
@@ -72,7 +94,7 @@ class _HomePageState extends State<HomePage> {
 
   FloatingActionButton _buildCaptureButton(BuildContext context) {
     return FloatingActionButton(
-      onPressed: _incrementCounter,
+      onPressed: () => _takePicture(context),
       tooltip: 'Take picture',
       backgroundColor: Theme.of(context).primaryColor,
       child: Icon(Icons.add_a_photo, color: Colors.white,),
@@ -81,7 +103,7 @@ class _HomePageState extends State<HomePage> {
 
   BottomNavigationBar _buildNavBar() {
     return BottomNavigationBar(
-      currentIndex: _currentNavIndex,
+      currentIndex: _currentDisplayIndex,
         onTap: _tabSelected,
         items: <BottomNavigationBarItem>[
           new BottomNavigationBarItem(
@@ -101,26 +123,52 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-class CounterDisplay extends StatelessWidget {
-  const CounterDisplay({
-    Key key,
-    @required int counter,
-  }) : _counter = counter, super(key: key);
-
-  final int _counter;
-
+class _GalleryDisplay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: <Widget>[
-        Text(
-          'You have pushed the button this many times:',
-        ),
-        Text(
-          '$_counter',
-          style: Theme.of(context).textTheme.display1,
-        ),
+        Icon(Icons.panorama, size: 100, color: Colors.grey),
+        Text('No content yet', style: Theme
+            .of(context)
+            .textTheme
+            .title),
+        Text('Be the first to post some media here.')
+      ],
+    );
+  }
+}
+
+class _FeedDisplay extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        Icon(Icons.create, size: 100, color: Colors.grey),
+        Text('No content yet', style: Theme
+            .of(context)
+            .textTheme
+            .title),
+        Text('Be the first to post some comments here.')
+      ],
+    );
+  }
+}
+
+class _NetworkDisplay extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        Icon(Icons.people, size: 100, color: Colors.grey),
+        Text('No relationship yet', style: Theme
+            .of(context)
+            .textTheme
+            .title),
+        Text('Invite some friends to follow them here.')
       ],
     );
   }

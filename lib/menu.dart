@@ -32,12 +32,19 @@ class _MenuBar extends StatelessWidget {
             },
           ),
           ListTile(
-            leading: Icon(Icons.settings, color: Colors.white),
-            title: Text('Settings', style: TextStyle(color: Colors.white)),
+            leading: Icon(Icons.show_chart, color: Colors.white),
+            title: Text('My Statistics', style: TextStyle(color: Colors.white)),
             onTap: () {
               Navigator.pop(context);
             },
-          )
+          ),
+          ListTile(
+            leading: Icon(Icons.settings, color: Colors.white),
+            title: Text('My Settings', style: TextStyle(color: Colors.white)),
+            onTap: () {
+              Navigator.pop(context);
+            },
+          ),
         ]
       )
     );
@@ -57,6 +64,7 @@ class _Header extends StatelessWidget {
               _buildAvatar(context, profile),
               SizedBox(height: 10),
               _buildUsername(context, profile),
+              _buildEmail(context, profile),
               SizedBox(height: 5),
               _buildLocation(context, profile)
             ]));
@@ -64,8 +72,15 @@ class _Header extends StatelessWidget {
 
   Text _buildUsername(BuildContext context, UserProfile profile) {
     return Text(
-      profile.username + " (" + profile.email + ")",
+      profile.username,
       style: Theme.of(context).textTheme.subtitle
+    );
+  }
+
+  Text _buildEmail(BuildContext context, UserProfile profile) {
+    return Text(
+        profile.email,
+        style: TextStyle(color: Colors.white, fontSize: 12)
     );
   }
 

@@ -14,6 +14,10 @@ dependencies:
   flutter_secure_storage:
   provider:
   http:
+  image_picker:
+  flutter_uploader:
+  path:
+  intl:
 
 dev_dependencies:
   flutter_test:

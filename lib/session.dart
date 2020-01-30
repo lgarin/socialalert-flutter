@@ -25,7 +25,7 @@ class AuthToken {
         _expiration = login.expiration;
 
   bool get expired {
-    return _expiration + refreshTokenDelta >
+    return _expiration - refreshTokenDelta <
         DateTime.now().millisecondsSinceEpoch;
   }
 }

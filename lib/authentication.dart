@@ -39,7 +39,7 @@ class AuthService {
     'Content-type': jsonMediaType,
     'Accept': jsonMediaType,
   };
-  final baseUrl = 'http://3ft8uk98qmfq79pc.myfritz.net:18774/rest';
+  static const baseUrl = 'http://3ft8uk98qmfq79pc.myfritz.net:18774/rest';
   final _httpClient = Client();
 
   Future<Response> _postJson(String uri, String body) {
