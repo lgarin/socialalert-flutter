@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 import 'package:social_alert_app/authentication.dart';
 import 'package:social_alert_app/credential.dart';
+import 'package:social_alert_app/geolocation.dart';
 
 class UserIdentity {
   final String userId;
@@ -33,6 +35,7 @@ class AuthToken {
 class UserSession {
   final _credentialStore = CredentialStore();
   final _authService = AuthService();
+  final _geolocationService = GeolocationService();
 
   UserIdentity _identity;
   AuthToken _token;
@@ -42,6 +45,10 @@ class UserSession {
 
   Future<Credential> get initialCredential {
     return _credentialStore.load();
+  }
+
+  Future<Placemark> get currentPlace async {
+    return _geolocationService.currentPlace;
   }
 
   Future<LoginResponse> authenticate(Credential credential) async {

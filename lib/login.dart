@@ -80,7 +80,7 @@ class _UsernameWidget extends StatelessWidget {
         decoration: InputDecoration(
             hintText: label,
             icon: Icon(Icons.perm_identity)),
-        validator: RequiredValidator(errorText: "Username required"),
+        validator: NonEmptyValidator(errorText: "$label required"),
       ),
     );
   }
@@ -110,7 +110,7 @@ class _PasswordWidget extends StatelessWidget {
           decoration: InputDecoration(
               hintText: label,
               icon: Icon(Icons.lock_open)),
-          validator: RequiredValidator(errorText: "Password required"),
+          validator: RequiredValidator(errorText: "$label required"),
         ));
   }
 }
@@ -244,7 +244,7 @@ class _LoginForm extends StatefulWidget {
   }
 }
 
-class LoginScreen extends StatelessWidget {
+class LoginPage extends StatelessWidget {
   static const backgroundImagePath = "images/login_bg.jpg";
 
   @override

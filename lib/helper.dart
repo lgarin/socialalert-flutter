@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:form_field_validator/form_field_validator.dart';
 
 Future showSimpleDialog(BuildContext context, String title, String message) {
   return showDialog(
@@ -29,4 +30,17 @@ class LoadingCircle extends StatelessWidget {
       ),
     );
   }
+}
+
+class NonEmptyValidator extends TextFieldValidator {
+  NonEmptyValidator({String errorText}) : super(errorText);
+
+  @override
+  bool get ignoreEmptyValues => false;
+
+  @override
+  bool isValid(String value) {
+    return value.trim().isNotEmpty;
+  }
+
 }

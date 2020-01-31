@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:social_alert_app/annotate.dart';
 import 'package:social_alert_app/home.dart';
 import 'package:social_alert_app/login.dart';
 import 'package:social_alert_app/session.dart';
@@ -32,8 +33,9 @@ class SocialAlertApp extends StatelessWidget {
         ),
         initialRoute: "login",
         routes: {
-          "login": (context) => LoginScreen(),
+          "login": (context) => LoginPage(),
           "home": (context) => HomePage(ModalRoute.of(context).settings.arguments),
+          "annotate": (context) => AnnotatePage(ModalRoute.of(context).settings.arguments),
         },
       );
   }

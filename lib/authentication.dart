@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:http/http.dart';
 import 'package:social_alert_app/credential.dart';
 
+import 'configuration.dart';
+
 class LoginResponse {
   final String accessToken;
   final String refreshToken;
@@ -39,11 +41,10 @@ class AuthService {
     'Content-type': jsonMediaType,
     'Accept': jsonMediaType,
   };
-  static const baseUrl = 'http://3ft8uk98qmfq79pc.myfritz.net:18774/rest';
   final _httpClient = Client();
 
   Future<Response> _postJson(String uri, String body) {
-    return _httpClient.post(baseUrl + uri, headers: jsonHeaders, body: body);
+    return _httpClient.post(baseServerUrl + uri, headers: jsonHeaders, body: body);
   }
 
   Future<LoginResponse> loginUser(Credential crendential) async {

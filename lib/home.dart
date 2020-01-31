@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:social_alert_app/authentication.dart';
 import 'package:social_alert_app/menu.dart';
 import 'package:social_alert_app/profile.dart';
-import 'package:social_alert_app/session.dart';
-import 'package:social_alert_app/upload.dart';
 
 class HomePage extends StatefulWidget {
 
@@ -21,20 +18,13 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _currentDisplayIndex = 0;
   final LoginResponse _login;
-  final uploadService = UploadService();
-  final dateFormat = DateFormat.yMd().add_Hms();
-
 
   _HomePageState(LoginResponse login) : _login = login;
 
   void _takePicture(BuildContext context) async {
     final image = await ImagePicker.pickImage(source: ImageSource.camera);
     if (image != null) {
-      final now = DateTime.now().toLocal();
-      final title = 'Snype on ' + dateFormat.format(now);
-      final token = await UserSession.current(context).accessToken;
-      final task = await uploadService.uploadImage(tag: title, file: image, accessToken: token);
-      print(task);
+      await Navigator.of(context).pushNamed("annotate", arguments: image);
     }
   }
 
