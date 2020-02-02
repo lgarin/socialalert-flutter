@@ -8,6 +8,7 @@ import 'package:social_alert_app/upload.dart';
 import 'helper.dart';
 
 class CaptureModel {
+  final DateTime timestamp;
   final File media;
   final Position position;
   final String country;
@@ -18,9 +19,12 @@ class CaptureModel {
   String selectedCategory;
   bool autovalidate = false;
 
-  CaptureModel({this.media, this.position, this.country, this.locality, this.address});
+  CaptureModel({this.media, this.position, this.country, this.locality, this.address})
+      : timestamp = DateTime.now();
 
   String get titleInput => title.text.trim();
+
+  String get descriptionInput => description.text;
 
   bool hasTitleInput() => titleInput != '';
 
@@ -42,6 +46,7 @@ class AnnotatePage extends StatefulWidget {
 class _AnnotatePageState extends State<AnnotatePage> {
   static const backgroundColor = Color.fromARGB(255, 240, 240, 240);
   final _formKey = GlobalKey<FormState>();
+  bool _fullImage = false;
 
   @override
   Widget build(BuildContext context) {
@@ -56,27 +61,50 @@ class _AnnotatePageState extends State<AnnotatePage> {
     );
   }
 
-  ListView _buildBody(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
+  void _switchFullImage() {
+    setState(() {
+      _fullImage = !_fullImage;
+    });
+  }
+
+  Widget _buildBody(BuildContext context) {
+    if (_fullImage) {
+      return buildImageContainer();
+    }
+
     return ListView(
           children: <Widget>[
-            Container(
-              color: Colors.black,
-              child: Image.file(widget.media, fit: BoxFit.fitHeight, height: screenHeight / 3,)
-            ),
-            Transform.translate(offset: Offset(0, -20),
-            child:
-              Container(
-                decoration: BoxDecoration(
-                    color: backgroundColor,
-                    borderRadius: BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20))
-                ),
-                padding: EdgeInsets.only(left: 20, right: 20, top: 20),
-                child: _MetadataForm(formKey: _formKey, onPublish: _onPublish),
-                )
-              )
+            buildImageContainer(),
+            Transform.translate(
+                offset: Offset(0, -20),
+                child: buildMetadataContainer()
+            )
           ],
         );
+  }
+
+  Container buildMetadataContainer() {
+    return Container(
+      decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20))
+      ),
+      padding: EdgeInsets.only(left: 20, right: 20, top: 20),
+      child: _MetadataForm(formKey: _formKey, onPublish: _onPublish),
+    );
+  }
+
+  Container buildImageContainer() {
+    final screenHeight = MediaQuery.of(context).size.height;
+    return Container(
+        color: Colors.black,
+        child: GestureDetector(
+            onTap: _switchFullImage,
+            child: _fullImage ?
+              Image.file(widget.media, fit: BoxFit.contain, height: screenHeight) :
+              Image.file(widget.media, fit: BoxFit.fitHeight, height: screenHeight / 3)
+        )
+    );
   }
 
   AppBar _buildAppBar(BuildContext context) {
@@ -86,9 +114,7 @@ class _AnnotatePageState extends State<AnnotatePage> {
       title: Text("Describe your Snype"),
         actions: <Widget>[
           _PublishIconButton(onPublish: _onPublish),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 5.0),
-          ),
+          SizedBox(width: 10),
           Icon(Icons.more_vert) // TODO show detail
         ]
     );
@@ -97,10 +123,23 @@ class _AnnotatePageState extends State<AnnotatePage> {
   void _onPublish(CaptureModel model) async {
     final form = _formKey.currentState;
     if (form.validate()) {
-      print(model.position);
+      final upload = UploadTask(
+        timestamp: model.timestamp,
+        title: model.titleInput,
+        path:  model.media.path,
+        category: model.selectedCategory,
+        description: model.descriptionInput,
+        latitude: model.position?.latitude,
+        longitude: model.position?.longitude,
+        address: model.address,
+        locality: model.locality,
+        country: model.country,
+      );
+
+      print(upload.toJson());
 
       final accessToken = await UserSession.current(context).accessToken;
-      final id = await UploadService().uploadImage(tag: model.titleInput, accessToken: accessToken, file: model.media);
+      final id = await UploadService().uploadImage(title: model.titleInput, accessToken: accessToken, file: model.media);
       // TODO start claim
     } else {
       setState(() {

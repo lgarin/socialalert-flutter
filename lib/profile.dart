@@ -8,6 +8,7 @@ class UserProfile with ChangeNotifier {
   ImageProvider _picture;
   DateTime _birthdate;
   String _biography;
+  String _lastLocation;
 
   static UserProfile current(BuildContext context) =>
       Provider.of<UserProfile>(context, listen: true);
@@ -28,6 +29,13 @@ class UserProfile with ChangeNotifier {
     _birthdate = birthdate != null ? DateTime.parse(birthdate) : null;
     _biography = biography;
   }
+
+  void updateLastLocation(String name, String country) {
+    _lastLocation = '$name ($country)';
+    notifyListeners();
+  }
+
+  String get lastLocation => _lastLocation;
 
   String get biography => _biography;
 

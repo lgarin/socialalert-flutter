@@ -48,7 +48,11 @@ class UserSession {
   }
 
   Future<Placemark> get currentPlace async {
-    return _geolocationService.currentPlace;
+    try {
+      return await _geolocationService.currentPlace;
+    } catch (e) {
+      return null;
+    }
   }
 
   Future<LoginResponse> authenticate(Credential credential) async {

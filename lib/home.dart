@@ -7,19 +7,16 @@ import 'package:social_alert_app/profile.dart';
 
 class HomePage extends StatefulWidget {
 
-  final LoginResponse _login;
+  final LoginResponse login;
 
-  HomePage(LoginResponse login) : _login = login;
+  HomePage(LoginResponse login) : login = login;
 
   @override
-  _HomePageState createState() => _HomePageState(_login);
+  _HomePageState createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
   int _currentDisplayIndex = 0;
-  final LoginResponse _login;
-
-  _HomePageState(LoginResponse login) : _login = login;
 
   void _takePicture(BuildContext context) async {
     final image = await ImagePicker.pickImage(source: ImageSource.camera);
@@ -51,12 +48,12 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider<UserProfile>(
         create: (_) => UserProfile(
-          username: _login.username,
-          email: _login.email,
-          imageUri: _login.imageUri,
-          country: _login.country,
-          birthdate: _login.birthdate,
-          biography: _login.biography
+          username: widget.login.username,
+          email: widget.login.email,
+          imageUri: widget.login.imageUri,
+          country: widget.login.country,
+          birthdate: widget.login.birthdate,
+          biography: widget.login.biography
         ),
         child: Scaffold(
           appBar: _buildAppBar(),
@@ -73,10 +70,10 @@ class _HomePageState extends State<HomePage> {
     return AppBar(
       title: Text("Snypix"),
       actions: <Widget>[
+        Icon(Icons.place),
+        SizedBox(width: 10),
         Icon(Icons.search),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 5.0),
-        ),
+        SizedBox(width: 10),
         Icon(Icons.more_vert)
       ],
     );

@@ -84,12 +84,15 @@ class _Header extends StatelessWidget {
     );
   }
 
-  Row _buildLocation(BuildContext context, UserProfile profile) {
+  Widget _buildLocation(BuildContext context, UserProfile profile) {
+    if (profile.country == null) {
+      return Row();
+    }
     return Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
           Icon(Icons.place, color: Colors.white, size: 14),
-          Text(profile.country ?? '???', style: TextStyle(color: Colors.white, fontSize: 12)),
+          Text(profile.country, style: TextStyle(color: Colors.white, fontSize: 12)),
         ]);
   }
 
