@@ -35,9 +35,9 @@ typedef PublishCallBack = void Function(CaptureModel);
 
 class AnnotatePage extends StatefulWidget {
 
-  final File media;
+  final UploadTask upload;
 
-  AnnotatePage(this.media);
+  AnnotatePage(this.upload);
 
   @override
   _AnnotatePageState createState() => _AnnotatePageState();
@@ -101,21 +101,20 @@ class _AnnotatePageState extends State<AnnotatePage> {
         child: GestureDetector(
             onTap: _switchFullImage,
             child: _fullImage ?
-              Image.file(widget.media, fit: BoxFit.contain, height: screenHeight) :
-              Image.file(widget.media, fit: BoxFit.fitHeight, height: screenHeight / 3)
+              Image.file(widget.upload.file, fit: BoxFit.contain, height: screenHeight) :
+              Image.file(widget.upload.file, fit: BoxFit.fitHeight, height: screenHeight / 3)
         )
     );
   }
 
   AppBar _buildAppBar(BuildContext context) {
-
-
     return AppBar(
       title: Text("Describe your Snype"),
         actions: <Widget>[
           _PublishIconButton(onPublish: _onPublish),
+          SizedBox(width: 20),
+          Icon(Icons.more_vert), // TODO show detail
           SizedBox(width: 10),
-          Icon(Icons.more_vert) // TODO show detail
         ]
     );
   }
@@ -123,10 +122,8 @@ class _AnnotatePageState extends State<AnnotatePage> {
   void _onPublish(CaptureModel model) async {
     final form = _formKey.currentState;
     if (form.validate()) {
-      final upload = UploadTask(
-        timestamp: model.timestamp,
+      widget.upload.annotate(
         title: model.titleInput,
-        path:  model.media.path,
         category: model.selectedCategory,
         description: model.descriptionInput,
         latitude: model.position?.latitude,
@@ -136,11 +133,12 @@ class _AnnotatePageState extends State<AnnotatePage> {
         country: model.country,
       );
 
-      print(upload.toJson());
-
-      final accessToken = await UserSession.current(context).accessToken;
-      final id = await UploadService().uploadImage(title: model.titleInput, accessToken: accessToken, file: model.media);
-      // TODO start claim
+      try {
+        await UserSession.current(context).beginUpload(widget.upload);
+        Navigator.pop(context);
+      } catch (e) {
+        showSimpleDialog(context, "Upload failed", e);
+      }
     } else {
       setState(() {
         model.autovalidate = true;
@@ -150,7 +148,7 @@ class _AnnotatePageState extends State<AnnotatePage> {
 
   Future<CaptureModel> _createModel(BuildContext context) async {
     final currentPlace = await UserSession.current(context).currentPlace;
-    return CaptureModel(media: widget.media,
+    return CaptureModel(media: widget.upload.file,
         position: currentPlace?.position,
         country: currentPlace?.isoCountryCode,
         locality: currentPlace?.locality,

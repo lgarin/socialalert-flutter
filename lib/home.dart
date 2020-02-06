@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:social_alert_app/authentication.dart';
 import 'package:social_alert_app/menu.dart';
 import 'package:social_alert_app/profile.dart';
+import 'package:social_alert_app/upload.dart';
 
 class HomePage extends StatefulWidget {
 
@@ -21,7 +22,7 @@ class _HomePageState extends State<HomePage> {
   void _takePicture(BuildContext context) async {
     final image = await ImagePicker.pickImage(source: ImageSource.camera);
     if (image != null) {
-      await Navigator.of(context).pushNamed("annotate", arguments: image);
+      await Navigator.of(context).pushNamed("annotate", arguments: UploadTask(file: image, type: UploadType.PICTURE));
     }
   }
 
@@ -71,10 +72,11 @@ class _HomePageState extends State<HomePage> {
       title: Text("Snypix"),
       actions: <Widget>[
         Icon(Icons.place),
-        SizedBox(width: 10),
+        SizedBox(width: 20),
         Icon(Icons.search),
+        SizedBox(width: 20),
+        Icon(Icons.more_vert),
         SizedBox(width: 10),
-        Icon(Icons.more_vert)
       ],
     );
   }

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:social_alert_app/authentication.dart';
 import 'package:social_alert_app/credential.dart';
 import 'package:social_alert_app/geolocation.dart';
+import 'package:social_alert_app/upload.dart';
 
 class UserIdentity {
   final String userId;
@@ -36,6 +37,9 @@ class UserSession {
   final _credentialStore = CredentialStore();
   final _authService = AuthService();
   final _geolocationService = GeolocationService();
+  final _uploadTaskStore = UploadTaskStore();
+  final _uploadService = UploadService();
+  List<UploadTask> _uploads;
 
   UserIdentity _identity;
   AuthToken _token;
@@ -77,5 +81,40 @@ class UserSession {
       _token = AuthToken(login);
     }
     return _token.accessToken;
+  }
+
+  Future<String> beginUpload(UploadTask task) async {
+    if (_uploads == null) {
+      _uploads = await _uploadTaskStore.load();
+    }
+    // TODO listen to stream
+    _uploads.removeWhere((other) => other.file == task.file);
+    _uploads.add(task);
+    final taskId = await _uploadService.uploadImage(title: task.title, file: task.file, accessToken: await accessToken);
+    task.markUploading(taskId);
+    await _uploadTaskStore.store(_uploads);
+    return taskId;
+  }
+
+  Future<UploadTask> _mapUploadResult(UploadTaskResult result) async {
+    if (_uploads == null) {
+      _uploads = await _uploadTaskStore.load();
+    }
+    final upload = _uploads.firstWhere((item) => item.taskId == result.taskId);
+    if (result.status == UploadStatus.UPLOADED) {
+      upload.markUploaded(result.mediaUri);
+    } else if (result.status == UploadStatus.UPLOAD_ERROR) {
+      upload.markUploadError();
+    }
+    await _uploadTaskStore.store(_uploads);
+    return upload;
+  }
+
+  Stream<UploadTask> get uploadResultStream {
+    return _uploadService.resultStream.asyncMap(_mapUploadResult);
+  }
+
+  Future<List<UploadTask>> get currentUploads async {
+    return await _uploadTaskStore.load();
   }
 }
