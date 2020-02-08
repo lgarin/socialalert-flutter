@@ -4,7 +4,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:path/path.dart';
 import 'package:flutter_uploader/flutter_uploader.dart';
-import 'configuration.dart';
+import 'package:provider/provider.dart';
+import 'package:social_alert_app/service/authentication.dart';
+import 'package:social_alert_app/service/configuration.dart';
+import 'package:social_alert_app/service/geolocation.dart';
 
 enum UploadStatus {
   CREATED,
@@ -60,7 +63,7 @@ class UploadTask {
 
   UploadTask.fromJson(Map<String, dynamic> json) :
         timestamp = DateTime.parse(json['timestamp']),
-        type = json['type'],
+        type = UploadType.values[json['type']],
         file = File(json['path']),
         _latitude = json['latitude'],
         _longitude = json['longitude'],
@@ -71,14 +74,14 @@ class UploadTask {
         _description = json['description'],
         _category = json['category'],
         _tags = json['tags'],
-        _status = json['status'],
+        _status = UploadStatus.values[json['status']],
         _mediaUri = json['mediaUri'],
         _uploadTaskId = json["uploadTaskId"],
         _lastUpdate = DateTime.parse(json['lastUpdate']);
 
   Map<String, dynamic> toJson() => {
-    'timestamp': timestamp,
-    'type': type,
+    'timestamp': timestamp.toIso8601String(),
+    'type': type.index,
     'path': file.path,
     'latitude': _latitude,
     'longitude': _longitude,
@@ -89,23 +92,22 @@ class UploadTask {
     'description': _description,
     'category': _category,
     'tags': _tags,
-    'status': _status,
+    'status': _status.index,
     'mediaUri': _mediaUri,
     'uploadTaskId': _uploadTaskId,
-    'lastUpdate': _lastUpdate,
+    'lastUpdate': _lastUpdate.toIso8601String(),
   };
 
-  void annotate({@required String title, String description, String category, List<String> tags,
-    double latitude, double longitude, String country, String locality, String address}) {
+  void annotate({@required String title, String description, String category, List<String> tags, GeoLocation location}) {
     _title = title;
     _description = description;
     _category = category;
     _tags = tags;
-    _latitude = latitude;
-    _longitude = longitude;
-    _country = country;
-    _locality = locality;
-    _address = address;
+    _latitude = location?.latitude;
+    _longitude = location?.longitude;
+    _country = location?.country;
+    _locality = location?.locality;
+    _address = location?.address;
     _changeStatus(UploadStatus.ANNOTATED);
   }
 
@@ -129,7 +131,7 @@ class UploadTask {
   }
 }
 
-class UploadTaskStore {
+class _UploadTaskStore {
   static const key = 'uploadTasks';
   final _storage = new FlutterSecureStorage();
 
@@ -149,6 +151,7 @@ class UploadTaskStore {
 
   Future<void> store(List<UploadTask> tasks) async {
     final json = tasks.map((item) => item.toJson()).toList();
+    print(json);
     await _storage.write(key: key, value: jsonEncode(json));
   }
 }
@@ -161,7 +164,7 @@ class UploadTaskResult {
   UploadTaskResult({this.taskId, this.mediaUri, this.status});
 }
 
-class UploadService {
+class _UploadApi {
 
   final uploader = FlutterUploader();
 
@@ -190,5 +193,61 @@ class UploadService {
 
   Stream<UploadTaskResult> get resultStream {
     return uploader.result.map(_map);
+  }
+
+  void dispose() {
+    uploader.dispose();
+  }
+}
+
+class UploadService {
+  static UploadService current(BuildContext context) =>
+      Provider.of<UploadService>(context, listen: false);
+
+  final _uploadTaskStore = _UploadTaskStore();
+  final _uploadService = _UploadApi();
+  final AuthService _authService;
+  List<UploadTask> _uploads;
+
+  UploadService(this._authService);
+
+  void dispose() {
+    _uploadService.dispose();
+  }
+
+  Future<String> beginUpload(UploadTask task) async {
+    if (_uploads == null) {
+      _uploads = await _uploadTaskStore.load();
+    }
+    // TODO listen to stream
+    _uploads.removeWhere((other) => other.file == task.file);
+    _uploads.add(task);
+    final accessToken = await _authService.accessToken;
+    final taskId = await _uploadService.uploadImage(title: task.title, file: task.file, accessToken: accessToken);
+    task.markUploading(taskId);
+    await _uploadTaskStore.store(_uploads);
+    return taskId;
+  }
+
+  Future<UploadTask> _mapUploadResult(UploadTaskResult result) async {
+    if (_uploads == null) {
+      _uploads = await _uploadTaskStore.load();
+    }
+    final upload = _uploads.firstWhere((item) => item.taskId == result.taskId);
+    if (result.status == UploadStatus.UPLOADED) {
+      upload.markUploaded(result.mediaUri);
+    } else if (result.status == UploadStatus.UPLOAD_ERROR) {
+      upload.markUploadError();
+    }
+    await _uploadTaskStore.store(_uploads);
+    return upload;
+  }
+
+  Stream<UploadTask> get uploadResultStream {
+    return _uploadService.resultStream.asyncMap(_mapUploadResult);
+  }
+
+  Future<List<UploadTask>> get currentUploads async {
+    return await _uploadTaskStore.load();
   }
 }

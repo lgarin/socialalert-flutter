@@ -3,7 +3,9 @@ import 'package:provider/provider.dart';
 import 'package:social_alert_app/annotate.dart';
 import 'package:social_alert_app/home.dart';
 import 'package:social_alert_app/login.dart';
-import 'package:social_alert_app/session.dart';
+import 'package:social_alert_app/service/authentication.dart';
+import 'package:social_alert_app/service/geolocation.dart';
+import 'package:social_alert_app/service/upload.dart';
 
 void main() => runApp(SocialAlertApp());
 
@@ -11,9 +13,16 @@ class SocialAlertApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Provider<UserSession>(create: (_) => UserSession(),
-            child: _buildApp()
-        );
+    return MultiProvider(
+        providers: [
+          Provider<GeoLocationService>(create: (_) => GeoLocationService(), dispose: (_, service) => service.dispose()),
+          StreamProvider<GeoLocation>(create: (context) => GeoLocationService.current(context).locationStream),
+          Provider<AuthService>(create: (_) => AuthService(), dispose: (_, service) => service.dispose()),
+          StreamProvider<UserProfile>(create: (context) => AuthService.current(context).profileStream),
+          Provider<UploadService>(create: (context) => UploadService(AuthService.current(context)), dispose: (_, service) => service.dispose()),
+        ],
+        child: _buildApp()
+    );
   }
 
   MaterialApp _buildApp() {
@@ -31,12 +40,18 @@ class SocialAlertApp extends StatelessWidget {
             subtitle: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)
           ),
         ),
-        initialRoute: "login",
+        initialRoute: AppRoute.Login,
         routes: {
-          "login": (context) => LoginPage(),
-          "home": (context) => HomePage(ModalRoute.of(context).settings.arguments),
-          "annotate": (context) => AnnotatePage(ModalRoute.of(context).settings.arguments),
+          AppRoute.Login: (context) => LoginPage(),
+          AppRoute.Home: (context) => HomePage(),
+          AppRoute.Annotate: (context) => AnnotatePage(ModalRoute.of(context).settings.arguments),
         },
       );
   }
+}
+
+class AppRoute {
+  static const Login = 'login';
+  static const Home = 'home';
+  static const Annotate = 'annotate';
 }

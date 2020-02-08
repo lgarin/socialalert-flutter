@@ -1,16 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:provider/provider.dart';
-import 'package:social_alert_app/authentication.dart';
+import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/menu.dart';
-import 'package:social_alert_app/profile.dart';
-import 'package:social_alert_app/upload.dart';
+import 'package:social_alert_app/service/upload.dart';
 
 class HomePage extends StatefulWidget {
-
-  final LoginResponse login;
-
-  HomePage(LoginResponse login) : login = login;
 
   @override
   _HomePageState createState() => _HomePageState();
@@ -22,7 +16,7 @@ class _HomePageState extends State<HomePage> {
   void _takePicture(BuildContext context) async {
     final image = await ImagePicker.pickImage(source: ImageSource.camera);
     if (image != null) {
-      await Navigator.of(context).pushNamed("annotate", arguments: UploadTask(file: image, type: UploadType.PICTURE));
+      await Navigator.of(context).pushNamed(AppRoute.Annotate, arguments: UploadTask(file: image, type: UploadType.PICTURE));
     }
   }
 
@@ -47,24 +41,14 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider<UserProfile>(
-        create: (_) => UserProfile(
-          username: widget.login.username,
-          email: widget.login.email,
-          imageUri: widget.login.imageUri,
-          country: widget.login.country,
-          birthdate: widget.login.birthdate,
-          biography: widget.login.biography
-        ),
-        child: Scaffold(
+    return Scaffold(
           appBar: _buildAppBar(),
           drawer: Menu(),
           body: Center(child: _createCurrentDisplay()),
           floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
           floatingActionButton: _buildCaptureButton(context),
           bottomNavigationBar: _buildNavBar()
-        )
-    );
+        );
   }
 
   AppBar _buildAppBar() {

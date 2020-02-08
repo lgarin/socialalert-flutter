@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:form_field_validator/form_field_validator.dart';
 import 'package:provider/provider.dart';
-import 'package:social_alert_app/session.dart';
 import 'package:social_alert_app/helper.dart';
-import 'package:social_alert_app/credential.dart';
+import 'package:social_alert_app/service/authentication.dart';
+import 'package:social_alert_app/service/credential.dart';
+
+import 'main.dart';
 
 class LoginModel {
   final username = TextEditingController();
@@ -160,7 +162,7 @@ class _LoginFormState extends State<_LoginForm> {
   }
 
   Future<LoginModel> _prepareModel(BuildContext context) async {
-    final credential = await UserSession.current(context).initialCredential;
+    final credential = await AuthService.current(context).initialCredential;
     return LoginModel.fromCredential(credential);
   }
 
@@ -174,8 +176,8 @@ class _LoginFormState extends State<_LoginForm> {
 
   Future<bool> _authenticateUser() async {
     try {
-      final login = await UserSession.current(context).authenticate(_credentials);
-      await Navigator.pushReplacementNamed(context, "home", arguments: login);
+      final profile = await AuthService.current(context).authenticate(_credentials);
+      await Navigator.pushReplacementNamed(context, AppRoute.Home, arguments: profile);
       return true;
     } catch (e) {
       await showSimpleDialog(context, "Login failed", e);

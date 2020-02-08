@@ -1,25 +1,21 @@
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
-import 'package:social_alert_app/session.dart';
-import 'package:social_alert_app/upload.dart';
+import 'package:social_alert_app/service/geolocation.dart';
+import 'package:social_alert_app/service/upload.dart';
 import 'helper.dart';
 
 class CaptureModel {
   final DateTime timestamp;
   final File media;
-  final Position position;
-  final String country;
-  final String locality;
-  final String address;
+  final GeoLocation location;
   final title = TextEditingController();
   final description = TextEditingController();
   String selectedCategory;
   bool autovalidate = false;
 
-  CaptureModel({this.media, this.position, this.country, this.locality, this.address})
+  CaptureModel({this.media, this.location})
       : timestamp = DateTime.now();
 
   String get titleInput => title.text.trim();
@@ -27,8 +23,6 @@ class CaptureModel {
   String get descriptionInput => description.text;
 
   bool hasTitleInput() => titleInput != '';
-
-  bool hasPosition() => position != null;
 }
 
 typedef PublishCallBack = void Function(CaptureModel);
@@ -126,18 +120,14 @@ class _AnnotatePageState extends State<AnnotatePage> {
         title: model.titleInput,
         category: model.selectedCategory,
         description: model.descriptionInput,
-        latitude: model.position?.latitude,
-        longitude: model.position?.longitude,
-        address: model.address,
-        locality: model.locality,
-        country: model.country,
+        location: model.location,
       );
 
       try {
-        await UserSession.current(context).beginUpload(widget.upload);
+        await UploadService.current(context).beginUpload(widget.upload);
         Navigator.pop(context);
       } catch (e) {
-        showSimpleDialog(context, "Upload failed", e);
+        showSimpleDialog(context, "Upload failed", e.toString());
       }
     } else {
       setState(() {
@@ -147,12 +137,8 @@ class _AnnotatePageState extends State<AnnotatePage> {
   }
 
   Future<CaptureModel> _createModel(BuildContext context) async {
-    final currentPlace = await UserSession.current(context).currentPlace;
-    return CaptureModel(media: widget.upload.file,
-        position: currentPlace?.position,
-        country: currentPlace?.isoCountryCode,
-        locality: currentPlace?.locality,
-        address: currentPlace?.name);
+    final location = await GeoLocationService.current(context).tryReadLocation();
+    return CaptureModel(media: widget.upload.file, location: location);
   }
 }
 

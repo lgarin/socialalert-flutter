@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:social_alert_app/profile.dart';
+import 'package:provider/provider.dart';
+import 'package:social_alert_app/helper.dart';
+import 'package:social_alert_app/service/authentication.dart';
+import 'package:social_alert_app/service/geolocation.dart';
 
 class Menu extends StatelessWidget {
   Widget build(BuildContext context) {
@@ -53,21 +56,27 @@ class _MenuBar extends StatelessWidget {
 
 class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
-    final profile = UserProfile.current(context);
+    final profile = Provider.of<UserProfile>(context);
+    final location = Provider.of<GeoLocation>(context);
     return Container(
         height: 240,
         color: Theme.of(context).primaryColorDark.withOpacity(0.9),
-        child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: <Widget>[
-              SizedBox(height: 50),
-              _buildAvatar(context, profile),
-              SizedBox(height: 10),
-              _buildUsername(context, profile),
-              _buildEmail(context, profile),
-              SizedBox(height: 5),
-              _buildLocation(context, profile)
-            ]));
+        child: profile != null ? _buildBody(context, profile, location) : LoadingCircle()
+      );
+  }
+
+  Column _buildBody(BuildContext context, UserProfile profile, GeoLocation location) {
+    return Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: <Widget>[
+            SizedBox(height: 50),
+            _buildAvatar(context, profile),
+            SizedBox(height: 10),
+            _buildUsername(context, profile),
+            _buildEmail(context, profile),
+            SizedBox(height: 5),
+            _buildLocation(context, location)
+          ]);
   }
 
   Text _buildUsername(BuildContext context, UserProfile profile) {
@@ -84,15 +93,15 @@ class _Header extends StatelessWidget {
     );
   }
 
-  Widget _buildLocation(BuildContext context, UserProfile profile) {
-    if (profile.country == null) {
+  Widget _buildLocation(BuildContext context, GeoLocation location) {
+    if (location == null) {
       return Row();
     }
     return Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
           Icon(Icons.place, color: Colors.white, size: 14),
-          Text(profile.country, style: TextStyle(color: Colors.white, fontSize: 12)),
+          Text(location.format(), style: TextStyle(color: Colors.white, fontSize: 12)),
         ]);
   }
 
@@ -103,7 +112,7 @@ class _Header extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).accentColor,
         image: DecorationImage(
-          image: profile.picture,
+          image: profile.imageUri != null ? NetworkImage(profile.imageUri) : AssetImage('images/unknown_user.png'),
           fit: BoxFit.cover,
         ),
         borderRadius: BorderRadius.all(Radius.circular(50.0)),
