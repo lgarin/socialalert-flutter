@@ -6,6 +6,7 @@ import 'package:social_alert_app/login.dart';
 import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/geolocation.dart';
 import 'package:social_alert_app/service/upload.dart';
+import 'package:social_alert_app/uploads.dart';
 
 void main() => runApp(SocialAlertApp());
 
@@ -44,6 +45,7 @@ class SocialAlertApp extends StatelessWidget {
         routes: {
           AppRoute.Login: (context) => LoginPage(),
           AppRoute.Home: (context) => HomePage(),
+          AppRoute.Uploads: (context) => UploadsPage(),
           AppRoute.Annotate: (context) => AnnotatePage(ModalRoute.of(context).settings.arguments),
         },
       );
@@ -54,4 +56,5 @@ class AppRoute {
   static const Login = 'login';
   static const Home = 'home';
   static const Annotate = 'annotate';
+  static const Uploads = 'uploads';
 }

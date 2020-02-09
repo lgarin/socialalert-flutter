@@ -43,7 +43,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
           appBar: _buildAppBar(),
-          drawer: Menu(),
+          drawer: UserMenu(),
           body: Center(child: _createCurrentDisplay()),
           floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
           floatingActionButton: _buildCaptureButton(context),

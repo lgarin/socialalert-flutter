@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:social_alert_app/helper.dart';
+import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/geolocation.dart';
 
-class Menu extends StatelessWidget {
+class UserMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     return Theme(
         data: Theme.of(context).copyWith(canvasColor: Colors.transparent),
@@ -32,6 +33,13 @@ class _MenuBar extends StatelessWidget {
             title: Text('My Profile', style: TextStyle(color: Colors.white)),
             onTap: () {
               Navigator.pop(context);
+            },
+          ),
+          ListTile(
+            leading: Icon(Icons.file_upload, color: Colors.white),
+            title: Text('My Uploads', style: TextStyle(color: Colors.white)),
+            onTap: () {
+              Navigator.popAndPushNamed(context, AppRoute.Uploads);
             },
           ),
           ListTile(

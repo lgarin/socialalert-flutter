@@ -46,7 +46,9 @@ class UploadTask {
     _changeStatus(UploadStatus.CREATED);
   }
 
-  String get taskId => _uploadTaskId;
+  String get id => file.path;
+
+  String get backgroundTaskId => _uploadTaskId;
 
   String get title => _title;
 
@@ -55,6 +57,13 @@ class UploadTask {
   UploadStatus get status => _status;
 
   DateTime get lastUpdate => _lastUpdate;
+
+  GeoLocation get location =>
+      GeoLocation(longitude: _longitude,
+          latitude: _latitude,
+          locality: _locality,
+          country: _country,
+          address: _address);
 
   void _changeStatus(UploadStatus newStatus) {
     _status = newStatus;
@@ -111,21 +120,21 @@ class UploadTask {
     _changeStatus(UploadStatus.ANNOTATED);
   }
 
-  void markUploading(String uploadTaskId) {
+  void _markUploading(String uploadTaskId) {
     _uploadTaskId = uploadTaskId;
     _changeStatus(UploadStatus.UPLOADING);
   }
 
-  void markUploaded(String mediaUri) {
+  void _markUploaded(String mediaUri) {
     _mediaUri = mediaUri;
     _changeStatus(UploadStatus.UPLOADED);
   }
 
-  void markUploadError() {
+  void _markUploadError() {
     _changeStatus(UploadStatus.UPLOAD_ERROR);
   }
 
-  void markClaimed() async {
+  void _markClaimed() async {
     _changeStatus(UploadStatus.CLAIMED);
     await file.delete();
   }
@@ -224,7 +233,7 @@ class UploadService {
     _uploads.add(task);
     final accessToken = await _authService.accessToken;
     final taskId = await _uploadService.uploadImage(title: task.title, file: task.file, accessToken: accessToken);
-    task.markUploading(taskId);
+    task._markUploading(taskId);
     await _uploadTaskStore.store(_uploads);
     return taskId;
   }
@@ -233,11 +242,11 @@ class UploadService {
     if (_uploads == null) {
       _uploads = await _uploadTaskStore.load();
     }
-    final upload = _uploads.firstWhere((item) => item.taskId == result.taskId);
+    final upload = _uploads.firstWhere((item) => item.backgroundTaskId == result.taskId);
     if (result.status == UploadStatus.UPLOADED) {
-      upload.markUploaded(result.mediaUri);
+      upload._markUploaded(result.mediaUri);
     } else if (result.status == UploadStatus.UPLOAD_ERROR) {
-      upload.markUploadError();
+      upload._markUploadError();
     }
     await _uploadTaskStore.store(_uploads);
     return upload;

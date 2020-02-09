@@ -18,6 +18,7 @@ dependencies:
   flutter_uploader:
   path:
   geolocator:
+  timeago_flutter:
 
 dev_dependencies:
   flutter_test:
