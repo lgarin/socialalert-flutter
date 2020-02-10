@@ -52,7 +52,7 @@ class _LoginHeader extends StatelessWidget {
             height: 200,
           ),
           SizedBox(height: 10),
-          Text(message, style: Theme.of(context).textTheme.subtitle)
+          Text(message, style: Theme.of(context).textTheme.subtitle2)
         ])
     );
   }

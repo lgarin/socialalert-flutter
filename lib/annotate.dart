@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:social_alert_app/service/geolocation.dart';
@@ -62,6 +61,7 @@ class _AnnotatePageState extends State<AnnotatePage> {
   }
 
   Widget _buildBody(BuildContext context) {
+
     if (_fullImage) {
       return buildImageContainer();
     }
@@ -124,7 +124,7 @@ class _AnnotatePageState extends State<AnnotatePage> {
       );
 
       try {
-        await UploadService.current(context).beginUpload(widget.upload);
+        await UploadService.current(context).queueUpload(widget.upload);
         Navigator.pop(context);
       } catch (e) {
         showSimpleDialog(context, "Upload failed", e.toString());

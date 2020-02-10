@@ -21,6 +21,7 @@ class SocialAlertApp extends StatelessWidget {
           Provider<AuthService>(create: (_) => AuthService(), dispose: (_, service) => service.dispose()),
           StreamProvider<UserProfile>(create: (context) => AuthService.current(context).profileStream),
           Provider<UploadService>(create: (context) => UploadService(AuthService.current(context)), dispose: (_, service) => service.dispose()),
+          //StreamProvider<UploadTask>(create: (context) => UploadService.current(context).uploadResultStream),
         ],
         child: _buildApp()
     );
@@ -38,7 +39,7 @@ class SocialAlertApp extends StatelessWidget {
           backgroundColor: Color.fromARGB(255, 63, 79, 167),
           textTheme: TextTheme(
             button: TextStyle(fontSize: 18, color: Colors.white),
-            subtitle: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)
+            subtitle2: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)
           ),
         ),
         initialRoute: AppRoute.Login,

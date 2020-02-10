@@ -1,6 +1,9 @@
+import 'dart:async';
+import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:path/path.dart';
 import 'package:flutter_uploader/flutter_uploader.dart';
@@ -24,7 +27,7 @@ enum UploadType {
   PICTURE
 }
 
-class UploadTask {
+class UploadTask with ChangeNotifier {
   final DateTime timestamp;
   final UploadType type;
   final File file;
@@ -68,6 +71,7 @@ class UploadTask {
   void _changeStatus(UploadStatus newStatus) {
     _status = newStatus;
     _lastUpdate = DateTime.now();
+    notifyListeners();
   }
 
   UploadTask.fromJson(Map<String, dynamic> json) :
@@ -135,8 +139,8 @@ class UploadTask {
   }
 
   void _markClaimed() async {
-    _changeStatus(UploadStatus.CLAIMED);
     await file.delete();
+    _changeStatus(UploadStatus.CLAIMED);
   }
 }
 
@@ -158,9 +162,8 @@ class _UploadTaskStore {
     return list.map((i) => UploadTask.fromJson(i)).toList();
   }
 
-  Future<void> store(List<UploadTask> tasks) async {
+  Future<void> store(Iterable<UploadTask> tasks) async {
     final json = tasks.map((item) => item.toJson()).toList();
-    print(json);
     await _storage.write(key: key, value: jsonEncode(json));
   }
 }
@@ -190,7 +193,7 @@ class _UploadApi {
   }
 
   UploadTaskResult _map(UploadTaskResponse response) {
-    if (response.status == UploadTaskStatus.complete && response.statusCode == 201) {
+    if (response.status == UploadTaskStatus.complete && response.statusCode == 200) {
       return UploadTaskResult(taskId: response.taskId, mediaUri: response.headers['Location'], status: UploadStatus.UPLOADED);
     } else if (response.status == UploadTaskStatus.failed) {
       return UploadTaskResult(taskId: response.taskId, status: UploadStatus.UPLOAD_ERROR);
@@ -209,6 +212,37 @@ class _UploadApi {
   }
 }
 
+class UploadList with IterableMixin<UploadTask>, ChangeNotifier {
+
+  final _list = List<UploadTask>();
+
+  UploadList(Iterable<UploadTask> source) {
+    _list.addAll(source);
+  }
+
+  UploadTask findById(String id) {
+    return _list.firstWhere((other) => other.id == id);
+  }
+
+  void add(UploadTask task) {
+    _list.removeWhere((other) => other.id == task.id);
+    _list.add(task);
+    notifyListeners();
+  }
+  
+  void remove(UploadTask task) {
+    _list.removeWhere((other) => other.id == task.id);
+    notifyListeners();
+  }
+
+  @override
+  Iterator<UploadTask> get iterator => _list.iterator;
+
+  UploadTask elementAt(int index) {
+    return _list.elementAt(index);
+  }
+}
+
 class UploadService {
   static UploadService current(BuildContext context) =>
       Provider.of<UploadService>(context, listen: false);
@@ -216,31 +250,50 @@ class UploadService {
   final _uploadTaskStore = _UploadTaskStore();
   final _uploadService = _UploadApi();
   final AuthService _authService;
-  List<UploadTask> _uploads;
+  StreamSubscription<UploadTask> _uploadSubscription;
+  UploadList _uploads;
 
-  UploadService(this._authService);
+  UploadService(this._authService) {
+    _uploadSubscription = uploadResultStream.listen((task) { });
+  }
 
   void dispose() {
+    _uploadSubscription.cancel();
     _uploadService.dispose();
   }
 
-  Future<String> beginUpload(UploadTask task) async {
-    if (_uploads == null) {
-      _uploads = await _uploadTaskStore.load();
+  Future<UploadList> currentUploads() async {
+    if (_uploads != null) {
+      return _uploads;
     }
-    // TODO listen to stream
-    _uploads.removeWhere((other) => other.file == task.file);
+    _uploads = UploadList(await _uploadTaskStore.load());
+    final restartUploadStates = {UploadStatus.UPLOAD_ERROR, UploadStatus.UPLOADING, UploadStatus.ANNOTATED};
+    for (final upload in _uploads) {
+      if (restartUploadStates.contains(upload.status)) {
+        await _startUpload(upload);
+      }
+    }
+    return _uploads;
+  }
+
+  Future<void> queueUpload(UploadTask task) async {
+    if (_uploads == null) {
+      _uploads = await currentUploads();
+    }
     _uploads.add(task);
+    await _uploadTaskStore.store(_uploads);
+    await _startUpload(task);
+  }
+
+  Future<void> _startUpload(UploadTask task) async {
     final accessToken = await _authService.accessToken;
     final taskId = await _uploadService.uploadImage(title: task.title, file: task.file, accessToken: accessToken);
     task._markUploading(taskId);
-    await _uploadTaskStore.store(_uploads);
-    return taskId;
   }
 
   Future<UploadTask> _mapUploadResult(UploadTaskResult result) async {
     if (_uploads == null) {
-      _uploads = await _uploadTaskStore.load();
+      _uploads = await currentUploads();
     }
     final upload = _uploads.firstWhere((item) => item.backgroundTaskId == result.taskId);
     if (result.status == UploadStatus.UPLOADED) {
@@ -254,9 +307,5 @@ class UploadService {
 
   Stream<UploadTask> get uploadResultStream {
     return _uploadService.resultStream.asyncMap(_mapUploadResult);
-  }
-
-  Future<List<UploadTask>> get currentUploads async {
-    return await _uploadTaskStore.load();
   }
 }

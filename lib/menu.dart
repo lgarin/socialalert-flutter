@@ -36,7 +36,7 @@ class _MenuBar extends StatelessWidget {
             },
           ),
           ListTile(
-            leading: Icon(Icons.file_upload, color: Colors.white),
+            leading: Icon(Icons.cloud_upload, color: Colors.white),
             title: Text('My Uploads', style: TextStyle(color: Colors.white)),
             onTap: () {
               Navigator.popAndPushNamed(context, AppRoute.Uploads);
@@ -90,7 +90,7 @@ class _Header extends StatelessWidget {
   Text _buildUsername(BuildContext context, UserProfile profile) {
     return Text(
       profile.username,
-      style: Theme.of(context).textTheme.subtitle
+      style: Theme.of(context).textTheme.subtitle2
     );
   }
 

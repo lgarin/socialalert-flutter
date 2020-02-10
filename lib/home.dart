@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/menu.dart';
 import 'package:social_alert_app/service/upload.dart';
@@ -12,6 +15,37 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _currentDisplayIndex = 0;
+  StreamSubscription<UploadTask> uploadSubscription;
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  @override
+  void initState() {
+    super.initState();
+    UploadService.current(context).uploadResultStream.listen(_showSnackBar);
+  }
+
+  void _showSnackBar(UploadTask task) {
+    if (_scaffoldKey == null) {
+      return;
+    }
+
+    if (task.status == UploadStatus.UPLOADED) {
+      _scaffoldKey.currentState.showSnackBar(SnackBar(
+        content: Text('Upload of "${task.title}" has completed', style: TextStyle(color: Colors.green)),
+      ));
+    } else if (task.status == UploadStatus.UPLOAD_ERROR) {
+      _scaffoldKey.currentState.showSnackBar(SnackBar(
+          content: Text('Upload of "${task.title}" has failed', style: TextStyle(color: Colors.red)),
+          action: SnackBarAction(label: 'Retry', onPressed: () => UploadService.current(context).queueUpload(task)),
+      ));
+    }
+  }
+
+  @override
+  void dispose() {
+    uploadSubscription.cancel();
+    super.dispose();
+  }
 
   void _takePicture(BuildContext context) async {
     final image = await ImagePicker.pickImage(source: ImageSource.camera);
@@ -41,14 +75,19 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return FutureProvider<UploadList>(
+        create: (context) => UploadService.current(context).currentUploads(),
+        lazy: false,
+        child: Scaffold(
+          key: _scaffoldKey,
           appBar: _buildAppBar(),
           drawer: UserMenu(),
           body: Center(child: _createCurrentDisplay()),
           floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
           floatingActionButton: _buildCaptureButton(context),
           bottomNavigationBar: _buildNavBar()
-        );
+        )
+    );
   }
 
   AppBar _buildAppBar() {
@@ -106,7 +145,7 @@ class _GalleryDisplay extends StatelessWidget {
         Text('No content yet', style: Theme
             .of(context)
             .textTheme
-            .title),
+            .headline6),
         Text('Be the first to post some media here.')
       ],
     );
@@ -123,7 +162,7 @@ class _FeedDisplay extends StatelessWidget {
         Text('No content yet', style: Theme
             .of(context)
             .textTheme
-            .title),
+            .headline6),
         Text('Be the first to post some comments here.')
       ],
     );
@@ -140,7 +179,7 @@ class _NetworkDisplay extends StatelessWidget {
         Text('No relationship yet', style: Theme
             .of(context)
             .textTheme
-            .title),
+            .headline6),
         Text('Invite some friends to follow them here.')
       ],
     );

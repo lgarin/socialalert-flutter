@@ -1,5 +1,3 @@
-
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:social_alert_app/helper.dart';
@@ -10,18 +8,18 @@ import 'package:timeago_flutter/timeago_flutter.dart';
 class UploadsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return FutureProvider<List<UploadTask>>(
-        create: _createModel,
+    return FutureProvider<UploadList>(
+        create: (context) => UploadService.current(context).currentUploads(),
         lazy: false,
         child: Scaffold(
-          body: Consumer<List<UploadTask>>(
+          body: Consumer<UploadList>(
             builder: (context, value, child) => _buildBody(context, value)
           )
         )
     );
   }
 
-  Widget _buildBody(BuildContext context, List<UploadTask> uploads) {
+  Widget _buildBody(BuildContext context, UploadList uploads) {
     if (uploads == null) {
       return LoadingCircle();
     } else if (uploads.isEmpty) {
@@ -29,34 +27,38 @@ class UploadsPage extends StatelessWidget {
     }
     return ListView.builder(
         itemCount: uploads.length,
-        itemBuilder: (context, index) => _buildTask(context, uploads[index])
+        itemBuilder: (context, index) => _buildTask(context, uploads.elementAt(index))
     );
   }
 
   Widget _buildEmpty(BuildContext context) {
-    return Column(
+    return Center(child: Column(
       mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: <Widget>[
         Icon(Icons.cloud_upload, size: 100, color: Colors.grey),
         Text('No upload in progress', style: Theme
             .of(context)
             .textTheme
             .headline6),
-        Text('Content waiting to be uploaded or enriched is displayed here.')
+        Text('Content waiting to be uploaded'),
+        Text('or enriched is displayed here.')
       ],
-    );
+    ));
   }
 
   Widget _buildTask(BuildContext context, UploadTask task) {
-    return Card(
-        key: ValueKey(task.id),
-        margin: EdgeInsets.only(left: 10, right: 10, top: 10),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            _buildListTile(task, context),
-            //_buildButtonBar(),
-          ],
+    return ChangeNotifierProvider.value(value: task,
+        child: Card(
+          key: ValueKey(task.id),
+          margin: EdgeInsets.only(left: 10, right: 10, top: 10),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              _buildListTile(task, context),
+              //_buildButtonBar(),
+            ],
+          )
         ),
       );
   }
@@ -98,12 +100,5 @@ class UploadsPage extends StatelessWidget {
         Text(task.location.format())
       ],
     );
-  }
-
-
-  Future<List<UploadTask>> _createModel(BuildContext context) {
-    return UploadService
-        .current(context)
-        .currentUploads;
   }
 }
