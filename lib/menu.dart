@@ -6,6 +6,10 @@ import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/geolocation.dart';
 
 class UserMenu extends StatelessWidget {
+  final String currentPage;
+
+  const UserMenu({Key key, this.currentPage}) : super(key: key);
+
   Widget build(BuildContext context) {
     return Theme(
         data: Theme.of(context).copyWith(canvasColor: Colors.transparent),
@@ -14,7 +18,7 @@ class UserMenu extends StatelessWidget {
             children: <Widget>[
               _Header(),
               Expanded(
-                  child: _MenuBar()
+                  child: _MenuBar(currentPage: currentPage)
               )
             ],
           ),
@@ -23,40 +27,60 @@ class UserMenu extends StatelessWidget {
 }
 
 class _MenuBar extends StatelessWidget {
+  final String currentPage;
+
+  const _MenuBar({Key key, this.currentPage}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return Container(color: Theme.of(context).primaryColor.withOpacity(0.9),
-      child: ListView(
-        children: <Widget>[
-          ListTile(
-            leading: Icon(Icons.person, color: Colors.white),
-            title: Text('My Profile', style: TextStyle(color: Colors.white)),
-            onTap: () {
-              Navigator.pop(context);
-            },
-          ),
-          ListTile(
-            leading: Icon(Icons.cloud_upload, color: Colors.white),
-            title: Text('My Uploads', style: TextStyle(color: Colors.white)),
-            onTap: () {
-              Navigator.popAndPushNamed(context, AppRoute.Uploads);
-            },
-          ),
-          ListTile(
-            leading: Icon(Icons.show_chart, color: Colors.white),
-            title: Text('My Statistics', style: TextStyle(color: Colors.white)),
-            onTap: () {
-              Navigator.pop(context);
-            },
-          ),
-          ListTile(
-            leading: Icon(Icons.settings, color: Colors.white),
-            title: Text('My Settings', style: TextStyle(color: Colors.white)),
-            onTap: () {
-              Navigator.pop(context);
-            },
-          ),
-        ]
+      child: ListTileTheme(
+        style: ListTileStyle.drawer,
+        iconColor: Colors.white,
+        textColor: Colors.white,
+        child: ListView(
+          children: <Widget>[
+            ListTile(
+              enabled: currentPage != AppRoute.Home,
+              selected: currentPage == AppRoute.Home,
+              leading: Icon(Icons.home),
+              title: Text('Home'),
+              onTap: () {
+                Navigator.popAndPushNamed(context, AppRoute.Home);
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.person),
+              title: Text('My Profile'),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              enabled: currentPage != AppRoute.Uploads,
+              selected: currentPage == AppRoute.Uploads,
+              leading: Icon(Icons.cloud_upload),
+              title: Text('My Uploads'),
+              onTap: () {
+                Navigator.popAndPushNamed(context, AppRoute.Uploads);
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.show_chart),
+              title: Text('My Statistics'),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.settings),
+              title: Text('My Settings'),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+          ]
+        )
       )
     );
   }

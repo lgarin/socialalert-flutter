@@ -20,12 +20,15 @@ class GeoLocation {
         address = placemark.name;
 
   String format() {
-    if (address != null) {
+    if (address != null && locality != null && country != null) {
       return '$address, $locality ($country)';
-    } else if (locality != null) {
+    } else if (locality != null && country != null) {
       return '$locality ($country)';
+    } else if (latitude != null && longitude != null) {
+      return '$latitude, $longitude';
+    } else {
+      return '';
     }
-    return '$latitude, $longitude';
   }
 }
 

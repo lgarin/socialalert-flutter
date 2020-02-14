@@ -276,13 +276,17 @@ class UploadService {
     return _uploads;
   }
 
-  Future<void> queueUpload(UploadTask task) async {
+  Future<void> manageTask(UploadTask task) async {
     if (_uploads == null) {
       _uploads = await currentUploads();
     }
     _uploads.add(task);
     await _uploadTaskStore.store(_uploads);
-    await _startUpload(task);
+    if (task.status == UploadStatus.ANNOTATED || task.status == UploadStatus.UPLOAD_ERROR) {
+      await _startUpload(task);
+    } else if (task.status == UploadStatus.UPLOADED || task.status == UploadStatus.CLAIM_ERROR) {
+      // TODO start claiming
+    }
   }
 
   Future<void> _startUpload(UploadTask task) async {

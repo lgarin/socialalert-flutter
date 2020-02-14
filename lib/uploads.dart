@@ -1,25 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:social_alert_app/base.dart';
 import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/service/upload.dart';
 import 'package:timeago_flutter/timeago_flutter.dart';
 
-class UploadsPage extends StatelessWidget {
+class UploadsPage extends StatefulWidget {
   @override
-  Widget build(BuildContext context) {
-    return FutureProvider<UploadList>(
-        create: (context) => UploadService.current(context).currentUploads(),
-        lazy: false,
-        child: Scaffold(
-          body: Consumer<UploadList>(
-            builder: (context, value, child) => _buildBody(context, value)
-          )
-        )
+  _UploadsPageState createState() => _UploadsPageState();
+}
+
+class _UploadsPageState extends BasePageState<UploadsPage> {
+
+  _UploadsPageState() : super(AppRoute.Uploads);
+
+  @override
+  Widget buildBody(BuildContext context) {
+    return Consumer<UploadList>(
+        builder: (context, value, child) => _buildList(context, value)
     );
   }
 
-  Widget _buildBody(BuildContext context, UploadList uploads) {
+  Widget _buildList(BuildContext context, UploadList uploads) {
     if (uploads == null) {
       return LoadingCircle();
     } else if (uploads.isEmpty) {

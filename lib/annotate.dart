@@ -124,7 +124,7 @@ class _AnnotatePageState extends State<AnnotatePage> {
       );
 
       try {
-        await UploadService.current(context).queueUpload(widget.upload);
+        await UploadService.current(context).manageTask(widget.upload);
         Navigator.pop(context);
       } catch (e) {
         showSimpleDialog(context, "Upload failed", e.toString());

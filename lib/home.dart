@@ -1,11 +1,6 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:provider/provider.dart';
+import 'package:social_alert_app/base.dart';
 import 'package:social_alert_app/main.dart';
-import 'package:social_alert_app/menu.dart';
-import 'package:social_alert_app/service/upload.dart';
 
 class HomePage extends StatefulWidget {
 
@@ -13,46 +8,10 @@ class HomePage extends StatefulWidget {
   _HomePageState createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends BasePageState<HomePage> {
   int _currentDisplayIndex = 0;
-  StreamSubscription<UploadTask> uploadSubscription;
-  final _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  @override
-  void initState() {
-    super.initState();
-    UploadService.current(context).uploadResultStream.listen(_showSnackBar);
-  }
-
-  void _showSnackBar(UploadTask task) {
-    if (_scaffoldKey == null) {
-      return;
-    }
-
-    if (task.status == UploadStatus.UPLOADED) {
-      _scaffoldKey.currentState.showSnackBar(SnackBar(
-        content: Text('Upload of "${task.title}" has completed', style: TextStyle(color: Colors.green)),
-      ));
-    } else if (task.status == UploadStatus.UPLOAD_ERROR) {
-      _scaffoldKey.currentState.showSnackBar(SnackBar(
-          content: Text('Upload of "${task.title}" has failed', style: TextStyle(color: Colors.red)),
-          action: SnackBarAction(label: 'Retry', onPressed: () => UploadService.current(context).queueUpload(task)),
-      ));
-    }
-  }
-
-  @override
-  void dispose() {
-    uploadSubscription.cancel();
-    super.dispose();
-  }
-
-  void _takePicture(BuildContext context) async {
-    final image = await ImagePicker.pickImage(source: ImageSource.camera);
-    if (image != null) {
-      await Navigator.of(context).pushNamed(AppRoute.Annotate, arguments: UploadTask(file: image, type: UploadType.PICTURE));
-    }
-  }
+  _HomePageState() : super(AppRoute.Home);
 
   void _tabSelected(int index) {
     setState(() {
@@ -73,47 +32,7 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return FutureProvider<UploadList>(
-        create: (context) => UploadService.current(context).currentUploads(),
-        lazy: false,
-        child: Scaffold(
-          key: _scaffoldKey,
-          appBar: _buildAppBar(),
-          drawer: UserMenu(),
-          body: Center(child: _createCurrentDisplay()),
-          floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-          floatingActionButton: _buildCaptureButton(context),
-          bottomNavigationBar: _buildNavBar()
-        )
-    );
-  }
-
-  AppBar _buildAppBar() {
-    return AppBar(
-      title: Text("Snypix"),
-      actions: <Widget>[
-        Icon(Icons.place),
-        SizedBox(width: 20),
-        Icon(Icons.search),
-        SizedBox(width: 20),
-        Icon(Icons.more_vert),
-        SizedBox(width: 10),
-      ],
-    );
-  }
-
-  FloatingActionButton _buildCaptureButton(BuildContext context) {
-    return FloatingActionButton(
-      onPressed: () => _takePicture(context),
-      tooltip: 'Take picture',
-      backgroundColor: Theme.of(context).primaryColor,
-      child: Icon(Icons.add_a_photo, color: Colors.white,),
-    );
-  }
-
-  BottomNavigationBar _buildNavBar() {
+  BottomNavigationBar buildNavBar(BuildContext context) {
     return BottomNavigationBar(
       currentIndex: _currentDisplayIndex,
         onTap: _tabSelected,
@@ -132,6 +51,11 @@ class _HomePageState extends State<HomePage> {
           )
         ]
     );
+  }
+
+  @override
+  Widget buildBody(BuildContext context) {
+    return Center(child: _createCurrentDisplay());
   }
 }
 
