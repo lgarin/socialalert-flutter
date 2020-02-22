@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/menu.dart';
+import 'package:social_alert_app/service/geolocation.dart';
 import 'package:social_alert_app/service/upload.dart';
 
 abstract class BasePageState<T extends StatefulWidget> extends State<T> {
@@ -91,9 +92,10 @@ abstract class BasePageState<T extends StatefulWidget> extends State<T> {
   }
 
   void _takePicture(BuildContext context) async {
+    final position = GeoLocationService.current(context).readPosition();
     final image = await ImagePicker.pickImage(source: ImageSource.camera);
     if (image != null) {
-      final task = UploadTask(file: image, type: UploadType.PICTURE);
+      final task = UploadTask(file: image, type: UploadType.PICTURE, position: await position);
       await UploadService.current(context).manageTask(task);
       await Navigator.of(context).pushNamed(AppRoute.Annotate, arguments: task);
     }

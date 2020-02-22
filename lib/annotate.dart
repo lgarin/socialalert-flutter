@@ -36,6 +36,11 @@ class AnnotatePage extends StatefulWidget {
   _AnnotatePageState createState() => _AnnotatePageState();
 }
 
+enum _PopupAction {
+  DELETE,
+  INFO
+}
+
 class _AnnotatePageState extends State<AnnotatePage> {
   static const backgroundColor = Color.fromARGB(255, 240, 240, 240);
   final _formKey = GlobalKey<FormState>();
@@ -106,11 +111,37 @@ class _AnnotatePageState extends State<AnnotatePage> {
       title: Text("Describe your Snype"),
         actions: <Widget>[
           _PublishIconButton(onPublish: _onPublish),
-          SizedBox(width: 20),
-          Icon(Icons.more_vert), // TODO show detail
-          SizedBox(width: 10),
+          PopupMenuButton<_PopupAction>(
+            itemBuilder: _buildPopupMenuItems,
+            onSelected: _onPopupMenuItemSelection,
+          ),
         ]
     );
+  }
+
+
+
+  List<PopupMenuEntry<_PopupAction>> _buildPopupMenuItems(BuildContext context) {
+    return [
+      PopupMenuItem(value: _PopupAction.DELETE,
+        enabled: widget.upload.canBeDeleted(),
+        child: ListTile(title: Text('Delete'), leading: Icon(Icons.delete))),
+      PopupMenuItem(value: _PopupAction.INFO,
+        child: ListTile(title: Text('Info'), leading: Icon(Icons.info)))
+    ];
+  }
+
+  void _onPopupMenuItemSelection(_PopupAction selectedItem) {
+    if (selectedItem == _PopupAction.DELETE) {
+      showConfirmDialog(context, 'Delete Snype', 'Do you really want to delete this upload?', _onConfirmUploadDeletion);
+    } else if (selectedItem == _PopupAction.INFO) {
+      // TODO show detail
+    }
+  }
+
+  void _onConfirmUploadDeletion() {
+    UploadService.current(context).deleteTask(widget.upload);
+    Navigator.pop(context);
   }
 
   void _onPublish(CaptureModel model) async {
@@ -137,7 +168,7 @@ class _AnnotatePageState extends State<AnnotatePage> {
   }
 
   Future<CaptureModel> _createModel(BuildContext context) async {
-    final location = await GeoLocationService.current(context).tryReadLocation();
+    final location = await GeoLocationService.current(context).tryReadLocation(widget.upload.position);
     return CaptureModel(media: widget.upload.file, location: location);
   }
 }

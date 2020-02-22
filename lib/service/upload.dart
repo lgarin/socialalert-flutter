@@ -31,8 +31,8 @@ class UploadTask with ChangeNotifier {
   final DateTime timestamp;
   final UploadType type;
   final File file;
-  double _latitude;
-  double _longitude;
+  final double _latitude;
+  final double _longitude;
   String _country;
   String _locality;
   String _address;
@@ -45,8 +45,13 @@ class UploadTask with ChangeNotifier {
   String _uploadTaskId;
   DateTime _lastUpdate;
 
-  UploadTask({@required this.file, @required this.type}) : timestamp = DateTime.now() {
+  UploadTask({@required this.file, @required this.type, GeoPosition position}) :
+        timestamp = DateTime.now(), _latitude = position?.latitude, _longitude = position?.longitude {
     _changeStatus(UploadStatus.CREATED);
+  }
+
+  bool canBeDeleted() {
+    return status == UploadStatus.CREATED || status == UploadStatus.ANNOTATED || status == UploadStatus.CLAIM_ERROR || status == UploadStatus.CLAIM_ERROR;
   }
 
   String get id => file.path;
@@ -60,6 +65,8 @@ class UploadTask with ChangeNotifier {
   UploadStatus get status => _status;
 
   DateTime get lastUpdate => _lastUpdate;
+
+  GeoPosition get position => GeoPosition(latitude: _latitude, longitude: _longitude);
 
   GeoLocation get location =>
       GeoLocation(longitude: _longitude,
@@ -112,12 +119,11 @@ class UploadTask with ChangeNotifier {
   };
 
   void annotate({@required String title, String description, String category, List<String> tags, GeoLocation location}) {
+    assert(status == UploadStatus.CREATED);
     _title = title;
     _description = description;
     _category = category;
     _tags = tags;
-    _latitude = location?.latitude;
-    _longitude = location?.longitude;
     _country = location?.country;
     _locality = location?.locality;
     _address = location?.address;
@@ -125,22 +131,32 @@ class UploadTask with ChangeNotifier {
   }
 
   void _markUploading(String uploadTaskId) {
+    assert(status == UploadStatus.ANNOTATED);
     _uploadTaskId = uploadTaskId;
     _changeStatus(UploadStatus.UPLOADING);
   }
 
   void _markUploaded(String mediaUri) {
+    assert(status == UploadStatus.UPLOADING);
     _mediaUri = mediaUri;
     _changeStatus(UploadStatus.UPLOADED);
   }
 
   void _markUploadError() {
+    assert(status == UploadStatus.UPLOADING);
     _changeStatus(UploadStatus.UPLOAD_ERROR);
   }
 
-  void _markClaimed() async {
+  Future<void> _markClaimed() async {
+    assert(status == UploadStatus.UPLOADED);
     await file.delete();
     _changeStatus(UploadStatus.CLAIMED);
+  }
+
+  Future<void> _markDeleted() async {
+    assert(canBeDeleted());
+    await file.delete();
+    _changeStatus(null);
   }
 }
 
@@ -224,13 +240,20 @@ class UploadList with IterableMixin<UploadTask>, ChangeNotifier {
     return _list.firstWhere((other) => other.id == id);
   }
 
-  void add(UploadTask task) {
+  void _onTaskChanged() {
+    notifyListeners();
+  }
+
+  void _add(UploadTask task) {
+    task.removeListener(_onTaskChanged);
     _list.removeWhere((other) => other.id == task.id);
     _list.add(task);
+    task.addListener(_onTaskChanged);
     notifyListeners();
   }
   
-  void remove(UploadTask task) {
+  void _remove(UploadTask task) {
+    task.removeListener(_onTaskChanged);
     _list.removeWhere((other) => other.id == task.id);
     notifyListeners();
   }
@@ -280,13 +303,25 @@ class UploadService {
     if (_uploads == null) {
       _uploads = await currentUploads();
     }
-    _uploads.add(task);
+    _uploads._add(task);
     await _uploadTaskStore.store(_uploads);
     if (task.status == UploadStatus.ANNOTATED || task.status == UploadStatus.UPLOAD_ERROR) {
       await _startUpload(task);
     } else if (task.status == UploadStatus.UPLOADED || task.status == UploadStatus.CLAIM_ERROR) {
       // TODO start claiming
     }
+  }
+
+  Future<void> deleteTask(UploadTask task) async {
+    if (!task.canBeDeleted()) {
+      throw 'Invalid task state';
+    }
+    if (_uploads == null) {
+      _uploads = await currentUploads();
+    }
+
+    _uploads._remove(task);
+    await task._markDeleted();
   }
 
   Future<void> _startUpload(UploadTask task) async {

@@ -20,6 +20,31 @@ Future showSimpleDialog(BuildContext context, String title, String message) {
   );
 }
 
+Future showConfirmDialog(BuildContext context, String title, String message, VoidCallback onConfirm) {
+  return showDialog(
+    builder: (context) {
+      return AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: <Widget>[
+          FlatButton(
+              child: Text('Confirm'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                onConfirm();
+              }),
+          FlatButton(
+            child: Text('Cancel'),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          )
+        ],
+      );
+    },
+    context: context);
+}
+
 class LoadingCircle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
