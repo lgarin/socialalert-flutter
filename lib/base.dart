@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -10,13 +12,20 @@ import 'package:social_alert_app/service/upload.dart';
 abstract class BasePageState<T extends StatefulWidget> extends State<T> {
   final String pageName;
   final _scaffoldKey = GlobalKey<ScaffoldState>();
+  StreamSubscription<UploadTask> uploadResultListener;
 
   BasePageState(this.pageName);
 
   @override
   void initState() {
     super.initState();
-    UploadService.current(context).uploadResultStream.listen(_showSnackBar);
+    uploadResultListener = UploadService.current(context).uploadResultStream.listen(_showSnackBar);
+  }
+
+  @override
+  void dispose() {
+    uploadResultListener.cancel();
+    super.dispose();
   }
 
   void _showSnackBar(UploadTask task) {
@@ -33,7 +42,7 @@ abstract class BasePageState<T extends StatefulWidget> extends State<T> {
       _scaffoldKey.currentState.showSnackBar(SnackBar(
         content: Text('Upload of "${task.title}" has completed', style: TextStyle(color: Colors.green)),
       ));
-    } else if (task.status == UploadStatus.UPLOAD_ERROR) {
+    } else if (task.status == UploadStatus.UPLOAD_ERROR || task.status == UploadStatus.CLAIM_ERROR) {
       _scaffoldKey.currentState.showSnackBar(SnackBar(
         content: Text('Upload of "${task.title}" has failed', style: TextStyle(color: Colors.red)),
         action: SnackBarAction(label: 'Retry', onPressed: () => UploadService.current(context).manageTask(task)),

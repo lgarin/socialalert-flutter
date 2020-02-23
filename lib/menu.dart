@@ -8,7 +8,7 @@ import 'package:social_alert_app/service/geolocation.dart';
 class UserMenu extends StatelessWidget {
   final String currentPage;
 
-  const UserMenu({Key key, this.currentPage}) : super(key: key);
+  UserMenu({this.currentPage});
 
   Widget build(BuildContext context) {
     return Theme(
@@ -46,7 +46,8 @@ class _MenuBar extends StatelessWidget {
               leading: Icon(Icons.home),
               title: Text('Home'),
               onTap: () {
-                Navigator.popAndPushNamed(context, AppRoute.Home);
+                Navigator.pop(context);
+                Navigator.pushReplacementNamed(context, AppRoute.Home);
               },
             ),
             ListTile(
@@ -62,7 +63,8 @@ class _MenuBar extends StatelessWidget {
               leading: Icon(Icons.cloud_upload),
               title: Text('My Uploads'),
               onTap: () {
-                Navigator.popAndPushNamed(context, AppRoute.Uploads);
+                Navigator.pop(context);
+                Navigator.pushReplacementNamed(context, AppRoute.Uploads);
               },
             ),
             ListTile(

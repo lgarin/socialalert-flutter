@@ -44,6 +44,7 @@ class UploadTask with ChangeNotifier {
   String _mediaUri;
   String _uploadTaskId;
   DateTime _lastUpdate;
+  int _uploadProgress;
 
   UploadTask({@required this.file, @required this.type, GeoPosition position}) :
         timestamp = DateTime.now(), _latitude = position?.latitude, _longitude = position?.longitude {
@@ -51,7 +52,7 @@ class UploadTask with ChangeNotifier {
   }
 
   bool canBeDeleted() {
-    return status == UploadStatus.CREATED || status == UploadStatus.ANNOTATED || status == UploadStatus.CLAIM_ERROR || status == UploadStatus.CLAIM_ERROR;
+    return status == UploadStatus.CREATED || status == UploadStatus.ANNOTATED || status == UploadStatus.CLAIM_ERROR || status == UploadStatus.CLAIM_ERROR || status == UploadStatus.CLAIMED;
   }
 
   String get id => file.path;
@@ -74,6 +75,8 @@ class UploadTask with ChangeNotifier {
           locality: _locality,
           country: _country,
           address: _address);
+
+  double get uploadProgress => _uploadProgress != null ? _uploadProgress / 100.0 : 0.0;
 
   void _changeStatus(UploadStatus newStatus) {
     _status = newStatus;
@@ -131,8 +134,9 @@ class UploadTask with ChangeNotifier {
   }
 
   void _markUploading(String uploadTaskId) {
-    assert(status == UploadStatus.ANNOTATED);
+    assert(status == UploadStatus.ANNOTATED || status == UploadStatus.UPLOADING || status == UploadStatus.UPLOAD_ERROR);
     _uploadTaskId = uploadTaskId;
+    _uploadProgress = null;
     _changeStatus(UploadStatus.UPLOADING);
   }
 
@@ -147,16 +151,41 @@ class UploadTask with ChangeNotifier {
     _changeStatus(UploadStatus.UPLOAD_ERROR);
   }
 
-  Future<void> _markClaimed() async {
+  void _markClaiming() {
+    assert(status == UploadStatus.UPLOADED || status == UploadStatus.CLAIMING || status == UploadStatus.CLAIM_ERROR);
+    _changeStatus(UploadStatus.CLAIMING);
+  }
+
+  void _markClaimError() {
+    assert(status == UploadStatus.CLAIMING);
+    _changeStatus(UploadStatus.CLAIM_ERROR);
+  }
+
+  void _markClaimed() async {
     assert(status == UploadStatus.UPLOADED);
-    await file.delete();
     _changeStatus(UploadStatus.CLAIMED);
   }
 
-  Future<void> _markDeleted() async {
+  Future<void> _delete() async {
     assert(canBeDeleted());
     await file.delete();
     _changeStatus(null);
+  }
+
+  void _setUploadProgress(int progress) {
+    _uploadProgress = progress;
+    notifyListeners();
+  }
+
+  void _reset() {
+    _uploadProgress = null;
+    _uploadTaskId = null;
+    if (status == UploadStatus.UPLOADING) {
+      _status = UploadStatus.UPLOAD_ERROR;
+    } else if (status == UploadStatus.CLAIMING) {
+      _status = UploadStatus.CLAIM_ERROR;
+    }
+    notifyListeners();
   }
 }
 
@@ -192,6 +221,13 @@ class UploadTaskResult {
   UploadTaskResult({this.taskId, this.mediaUri, this.status});
 }
 
+class UploadTaskStep {
+  final String taskId;
+  final int progress;
+
+  UploadTaskStep({this.taskId, this.progress});
+}
+
 class _UploadApi {
 
   final uploader = FlutterUploader();
@@ -208,7 +244,7 @@ class _UploadApi {
     );
   }
 
-  UploadTaskResult _map(UploadTaskResponse response) {
+  UploadTaskResult _mapResponse(UploadTaskResponse response) {
     if (response.status == UploadTaskStatus.complete && response.statusCode == 200) {
       return UploadTaskResult(taskId: response.taskId, mediaUri: response.headers['Location'], status: UploadStatus.UPLOADED);
     } else if (response.status == UploadTaskStatus.failed) {
@@ -220,7 +256,15 @@ class _UploadApi {
   }
 
   Stream<UploadTaskResult> get resultStream {
-    return uploader.result.map(_map);
+    return uploader.result.map(_mapResponse);
+  }
+
+  UploadTaskStep _mapProgress(UploadTaskProgress event) {
+    return UploadTaskStep(taskId: event.taskId, progress: event.progress);
+  }
+
+  Stream<UploadTaskStep> get progressStream {
+    return uploader.progress.where((event) => event.status == UploadTaskStatus.running).map(_mapProgress);
   }
 
   void dispose() {
@@ -232,28 +276,17 @@ class UploadList with IterableMixin<UploadTask>, ChangeNotifier {
 
   final _list = List<UploadTask>();
 
-  UploadList(Iterable<UploadTask> source) {
-    _list.addAll(source);
-  }
-
   UploadTask findById(String id) {
     return _list.firstWhere((other) => other.id == id);
   }
 
-  void _onTaskChanged() {
-    notifyListeners();
-  }
-
   void _add(UploadTask task) {
-    task.removeListener(_onTaskChanged);
     _list.removeWhere((other) => other.id == task.id);
     _list.add(task);
-    task.addListener(_onTaskChanged);
     notifyListeners();
   }
   
   void _remove(UploadTask task) {
-    task.removeListener(_onTaskChanged);
     _list.removeWhere((other) => other.id == task.id);
     notifyListeners();
   }
@@ -274,13 +307,20 @@ class UploadService {
   final _uploadService = _UploadApi();
   final AuthService _authService;
   StreamSubscription<UploadTask> _uploadSubscription;
+  StreamSubscription<UploadTask> _progressSubscription;
+  StreamController<UploadTask> _uploadStreamController = StreamController.broadcast();
+  StreamController<UploadTask> _progressStreamController = StreamController.broadcast();
   UploadList _uploads;
 
   UploadService(this._authService) {
-    _uploadSubscription = uploadResultStream.listen((task) { });
+    _uploadSubscription = _uploadResultStream.listen(_uploadStreamController.add, onError: _uploadStreamController.addError, onDone: _uploadStreamController.close);
+    _progressSubscription = _uploadProgressStream.listen(_progressStreamController.add, onError: _progressStreamController.addError, onDone: _progressStreamController.close);
   }
 
   void dispose() {
+    _uploadStreamController.close();
+    _progressStreamController.close();
+    _progressSubscription.cancel();
     _uploadSubscription.cancel();
     _uploadService.dispose();
   }
@@ -289,12 +329,17 @@ class UploadService {
     if (_uploads != null) {
       return _uploads;
     }
-    _uploads = UploadList(await _uploadTaskStore.load());
-    final restartUploadStates = {UploadStatus.UPLOAD_ERROR, UploadStatus.UPLOADING, UploadStatus.ANNOTATED};
-    for (final upload in _uploads) {
-      if (restartUploadStates.contains(upload.status)) {
-        await _startUpload(upload);
+
+    _uploads = UploadList();
+    for (final upload in await _uploadTaskStore.load()) {
+      if (upload.file.existsSync()) {
+        upload._reset();
+        _uploads._add(upload);
       }
+    }
+
+    for (final upload in _uploads) {
+      await manageTask(upload);
     }
     return _uploads;
   }
@@ -303,12 +348,16 @@ class UploadService {
     if (_uploads == null) {
       _uploads = await currentUploads();
     }
-    _uploads._add(task);
-    await _uploadTaskStore.store(_uploads);
+
+    if (task.status == UploadStatus.CREATED) {
+      _uploads._add(task);
+      await _uploadTaskStore.store(_uploads);
+    }
+
     if (task.status == UploadStatus.ANNOTATED || task.status == UploadStatus.UPLOAD_ERROR) {
-      await _startUpload(task);
+      await _startUploading(task);
     } else if (task.status == UploadStatus.UPLOADED || task.status == UploadStatus.CLAIM_ERROR) {
-      // TODO start claiming
+      await _startClaiming(task);
     }
   }
 
@@ -321,13 +370,18 @@ class UploadService {
     }
 
     _uploads._remove(task);
-    await task._markDeleted();
+    await task._delete();
   }
 
-  Future<void> _startUpload(UploadTask task) async {
+  Future<void> _startUploading(UploadTask task) async {
     final accessToken = await _authService.accessToken;
     final taskId = await _uploadService.uploadImage(title: task.title, file: task.file, accessToken: accessToken);
     task._markUploading(taskId);
+  }
+
+  Future<void> _startClaiming(UploadTask task) async {
+    task._markClaiming();
+    task._markClaimError();
   }
 
   Future<UploadTask> _mapUploadResult(UploadTaskResult result) async {
@@ -337,6 +391,7 @@ class UploadService {
     final upload = _uploads.firstWhere((item) => item.backgroundTaskId == result.taskId);
     if (result.status == UploadStatus.UPLOADED) {
       upload._markUploaded(result.mediaUri);
+      _startClaiming(upload);
     } else if (result.status == UploadStatus.UPLOAD_ERROR) {
       upload._markUploadError();
     }
@@ -344,7 +399,24 @@ class UploadService {
     return upload;
   }
 
-  Stream<UploadTask> get uploadResultStream {
+  Stream<UploadTask> get _uploadResultStream {
     return _uploadService.resultStream.asyncMap(_mapUploadResult);
   }
+
+  Stream<UploadTask> get uploadResultStream => _uploadStreamController.stream;
+
+  Future<UploadTask> _mapUploadProgress(UploadTaskStep step) async {
+    if (_uploads == null) {
+      _uploads = await currentUploads();
+    }
+    final upload = _uploads.firstWhere((item) => item.backgroundTaskId == step.taskId);
+    upload._setUploadProgress(step.progress);
+    return upload;
+  }
+
+  Stream<UploadTask> get _uploadProgressStream {
+    return _uploadService.progressStream.asyncMap(_mapUploadProgress);
+  }
+
+  Stream<UploadTask> get uploadProgressStream => _progressStreamController.stream;
 }
