@@ -304,7 +304,7 @@ class UploadService {
       Provider.of<UploadService>(context, listen: false);
 
   final _uploadTaskStore = _UploadTaskStore();
-  final _uploadService = _UploadApi();
+  final _uploadApi = _UploadApi();
   final AuthService _authService;
   StreamSubscription<UploadTask> _uploadSubscription;
   StreamSubscription<UploadTask> _progressSubscription;
@@ -322,38 +322,45 @@ class UploadService {
     _progressStreamController.close();
     _progressSubscription.cancel();
     _uploadSubscription.cancel();
-    _uploadService.dispose();
+    _uploadApi.dispose();
   }
 
   Future<UploadList> currentUploads() async {
     if (_uploads != null) {
       return _uploads;
     }
-
-    _uploads = UploadList();
-    for (final upload in await _uploadTaskStore.load()) {
-      if (upload.file.existsSync()) {
-        upload._reset();
-        _uploads._add(upload);
-      }
-    }
-
-    for (final upload in _uploads) {
-      await manageTask(upload);
-    }
+    _uploads = await _initUploads();
     return _uploads;
   }
 
-  Future<void> manageTask(UploadTask task) async {
-    if (_uploads == null) {
-      _uploads = await currentUploads();
+  Future<UploadList> _initUploads() async {
+    final uploads = UploadList();
+    for (final upload in await _uploadTaskStore.load()) {
+      if (upload.file.existsSync()) {
+        upload._reset();
+        uploads._add(upload);
+      }
     }
+
+    for (final upload in uploads) {
+      await _restartTask(upload);
+    }
+    return uploads;
+  }
+
+  Future<void> manageTask(UploadTask task) async {
+    final uploads = await currentUploads();
 
     if (task.status == UploadStatus.CREATED) {
-      _uploads._add(task);
-      await _uploadTaskStore.store(_uploads);
+      uploads._add(task);
     }
 
+    await _uploadTaskStore.store(uploads);
+
+    await _restartTask(task);
+  }
+
+  Future<void> _restartTask(UploadTask task) async {
     if (task.status == UploadStatus.ANNOTATED || task.status == UploadStatus.UPLOAD_ERROR) {
       await _startUploading(task);
     } else if (task.status == UploadStatus.UPLOADED || task.status == UploadStatus.CLAIM_ERROR) {
@@ -365,57 +372,53 @@ class UploadService {
     if (!task.canBeDeleted()) {
       throw 'Invalid task state';
     }
-    if (_uploads == null) {
-      _uploads = await currentUploads();
-    }
-
-    _uploads._remove(task);
+    final uploads = await currentUploads();
+    uploads._remove(task);
+    await _uploadTaskStore.store(uploads);
     await task._delete();
   }
 
   Future<void> _startUploading(UploadTask task) async {
     final accessToken = await _authService.accessToken;
-    final taskId = await _uploadService.uploadImage(title: task.title, file: task.file, accessToken: accessToken);
+    final taskId = await _uploadApi.uploadImage(title: task.title, file: task.file, accessToken: accessToken);
     task._markUploading(taskId);
   }
 
   Future<void> _startClaiming(UploadTask task) async {
     task._markClaiming();
+    await Future.delayed(Duration(seconds: 5));
     task._markClaimError();
+    _uploadStreamController.add(task);
   }
 
   Future<UploadTask> _mapUploadResult(UploadTaskResult result) async {
-    if (_uploads == null) {
-      _uploads = await currentUploads();
-    }
-    final upload = _uploads.firstWhere((item) => item.backgroundTaskId == result.taskId);
+    final uploads = await currentUploads();
+    final upload = uploads.firstWhere((item) => item.backgroundTaskId == result.taskId);
     if (result.status == UploadStatus.UPLOADED) {
       upload._markUploaded(result.mediaUri);
       _startClaiming(upload);
     } else if (result.status == UploadStatus.UPLOAD_ERROR) {
       upload._markUploadError();
     }
-    await _uploadTaskStore.store(_uploads);
+    await _uploadTaskStore.store(uploads);
     return upload;
   }
 
   Stream<UploadTask> get _uploadResultStream {
-    return _uploadService.resultStream.asyncMap(_mapUploadResult);
+    return _uploadApi.resultStream.asyncMap(_mapUploadResult);
   }
 
   Stream<UploadTask> get uploadResultStream => _uploadStreamController.stream;
 
   Future<UploadTask> _mapUploadProgress(UploadTaskStep step) async {
-    if (_uploads == null) {
-      _uploads = await currentUploads();
-    }
-    final upload = _uploads.firstWhere((item) => item.backgroundTaskId == step.taskId);
+    final uploads = await currentUploads();
+    final upload = uploads.firstWhere((item) => item.backgroundTaskId == step.taskId);
     upload._setUploadProgress(step.progress);
     return upload;
   }
 
   Stream<UploadTask> get _uploadProgressStream {
-    return _uploadService.progressStream.asyncMap(_mapUploadProgress);
+    return _uploadApi.progressStream.asyncMap(_mapUploadProgress);
   }
 
   Stream<UploadTask> get uploadProgressStream => _progressStreamController.stream;
