@@ -29,7 +29,7 @@ abstract class BasePageState<T extends StatefulWidget> extends State<T> {
   }
 
   void _showSnackBar(UploadTask task) {
-    if (_scaffoldKey == null) {
+    if (_scaffoldKey.currentState == null) {
       return;
     }
 
@@ -81,8 +81,6 @@ abstract class BasePageState<T extends StatefulWidget> extends State<T> {
     return AppBar(
       title: Text("Snypix"),
       actions: <Widget>[
-        Icon(Icons.place),
-        SizedBox(width: 20),
         Icon(Icons.search),
         SizedBox(width: 20),
         Icon(Icons.more_vert),

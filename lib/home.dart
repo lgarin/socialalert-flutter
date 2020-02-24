@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:social_alert_app/base.dart';
+import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/main.dart';
+import 'package:social_alert_app/service/geolocation.dart';
 
 class HomePage extends StatefulWidget {
 
@@ -26,7 +29,7 @@ class _HomePageState extends BasePageState<HomePage> {
       case 1:
         return _FeedDisplay();
       case 2:
-        return _NetworkDisplay();
+        return _MapDisplay();
       default:
         return null;
     }
@@ -46,8 +49,8 @@ class _HomePageState extends BasePageState<HomePage> {
             title: Text('Scribes'),
           ),
           new BottomNavigationBarItem(
-              icon: Icon(Icons.people),
-              title: Text('Network')
+              icon: Icon(Icons.place),
+              title: Text('Map')
           )
         ]
     );
@@ -93,19 +96,17 @@ class _FeedDisplay extends StatelessWidget {
   }
 }
 
-class _NetworkDisplay extends StatelessWidget {
+class _MapDisplay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: <Widget>[
-        Icon(Icons.people, size: 100, color: Colors.grey),
-        Text('No relationship yet', style: Theme
-            .of(context)
-            .textTheme
-            .headline6),
-        Text('Invite some friends to follow them here.')
-      ],
-    );
+    return FutureBuilder<GeoPosition>(
+      future: GeoLocationService.current(context).readPosition(),
+      builder: (context, snapshot) => snapshot.hasData ?
+        GoogleMap(
+            mapType: MapType.normal,
+            myLocationEnabled: false,
+            myLocationButtonEnabled: false,
+            initialCameraPosition: CameraPosition(zoom: 15.0, target: LatLng(snapshot.data.latitude, snapshot.data.longitude)))
+        : LoadingCircle());
   }
 }

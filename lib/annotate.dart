@@ -19,7 +19,7 @@ class CaptureModel {
 
   String get titleInput => title.text.trim();
 
-  String get descriptionInput => description.text;
+  String get descriptionInput => description.text.isEmpty ? null : description.text;
 
   bool hasTitleInput() => titleInput != '';
 }
@@ -146,7 +146,7 @@ class _AnnotatePageState extends State<AnnotatePage> {
 
   void _onPublish(CaptureModel model) async {
     final form = _formKey.currentState;
-    if (form.validate()) {
+    if (form != null && form.validate()) {
       widget.upload.annotate(
         title: model.titleInput,
         category: model.selectedCategory,
@@ -163,6 +163,7 @@ class _AnnotatePageState extends State<AnnotatePage> {
     } else {
       setState(() {
         model.autovalidate = true;
+        _fullImage = false;
       });
     }
   }

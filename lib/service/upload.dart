@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:http/http.dart';
 import 'package:path/path.dart';
 import 'package:flutter_uploader/flutter_uploader.dart';
 import 'package:provider/provider.dart';
@@ -61,11 +62,15 @@ class UploadTask with ChangeNotifier {
 
   String get title => _title;
 
+  String get category => _category;
+
   String get mediaUri => _mediaUri;
 
   UploadStatus get status => _status;
 
   DateTime get lastUpdate => _lastUpdate;
+
+  List<String> get tags => _tags == null ? [] : List.from(_tags);
 
   GeoPosition get position => GeoPosition(latitude: _latitude, longitude: _longitude);
 
@@ -213,26 +218,47 @@ class _UploadTaskStore {
   }
 }
 
-class UploadTaskResult {
+class _UploadTaskResult {
   final String taskId;
   final String mediaUri;
   final UploadStatus status;
 
-  UploadTaskResult({this.taskId, this.mediaUri, this.status});
+  _UploadTaskResult({this.taskId, this.mediaUri, this.status});
 }
 
-class UploadTaskStep {
+class _UploadTaskStep {
   final String taskId;
   final int progress;
 
-  UploadTaskStep({this.taskId, this.progress});
+  _UploadTaskStep({this.taskId, this.progress});
+}
+
+class _ClaimParameter {
+  final String title;
+  final String category;
+  final String description;
+  final GeoLocation location;
+  final List<String> tags;
+
+  _ClaimParameter(this.title, this.category, this.description, this.location, this.tags);
+
+  Map<String, dynamic> toJson() => {
+    'title': title,
+    'category': category,
+    'description': description,
+    'location': location?.toJson(),
+    'tags': tags
+  };
 }
 
 class _UploadApi {
 
+  static const jsonMediaType = 'application/json';
+
+  final _httpClient = Client();
   final uploader = FlutterUploader();
 
-  Future<String> uploadImage({String title, File file, String accessToken}) {
+  Future<String> enqueueImage({@required String title, @required File file, @required String accessToken}) {
     final item = FileItem(savedDir: dirname(file.path),
         filename: basename(file.path));
     return uploader.enqueueBinary(url: baseServerUrl + '/file/upload/picture',
@@ -244,26 +270,46 @@ class _UploadApi {
     );
   }
 
-  UploadTaskResult _mapResponse(UploadTaskResponse response) {
+  Future<Response> _postJson(String uri, String body, String accessToken) {
+    final headers = {
+      'Content-type': jsonMediaType,
+      'Accept': jsonMediaType,
+      'Authorization': accessToken
+    };
+    return _httpClient.post(baseServerUrl + uri, headers: headers, body: body);
+  }
+
+  Future<void> claimMedia({@required String mediaUri, @required _ClaimParameter param, @required String accessToken}) async {
+    print(param.toJson());
+    final response = await _postJson('/media/claim/$mediaUri', json.encode(param.toJson()), accessToken);
+    print(response.statusCode);
+    if (response.statusCode != 200) {
+      throw response.reasonPhrase;
+    }
+  }
+
+  _UploadTaskResult _mapResponse(UploadTaskResponse response) {
     if (response.status == UploadTaskStatus.complete && response.statusCode == 200) {
-      return UploadTaskResult(taskId: response.taskId, mediaUri: response.headers['Location'], status: UploadStatus.UPLOADED);
+      final baseLocationUrl = baseServerUrl + '/file/download/';
+      final mediaUri = response.headers['Location'].substring(baseLocationUrl.length);
+      return _UploadTaskResult(taskId: response.taskId, mediaUri: mediaUri, status: UploadStatus.UPLOADED);
     } else if (response.status == UploadTaskStatus.failed) {
-      return UploadTaskResult(taskId: response.taskId, status: UploadStatus.UPLOAD_ERROR);
+      return _UploadTaskResult(taskId: response.taskId, status: UploadStatus.UPLOAD_ERROR);
     } else {
-      return UploadTaskResult(taskId: response.taskId);
+      return _UploadTaskResult(taskId: response.taskId);
     }
 
   }
 
-  Stream<UploadTaskResult> get resultStream {
+  Stream<_UploadTaskResult> get resultStream {
     return uploader.result.map(_mapResponse);
   }
 
-  UploadTaskStep _mapProgress(UploadTaskProgress event) {
-    return UploadTaskStep(taskId: event.taskId, progress: event.progress);
+  _UploadTaskStep _mapProgress(UploadTaskProgress event) {
+    return _UploadTaskStep(taskId: event.taskId, progress: event.progress);
   }
 
-  Stream<UploadTaskStep> get progressStream {
+  Stream<_UploadTaskStep> get progressStream {
     return uploader.progress.where((event) => event.status == UploadTaskStatus.running).map(_mapProgress);
   }
 
@@ -362,9 +408,9 @@ class UploadService {
 
   Future<void> _restartTask(UploadTask task) async {
     if (task.status == UploadStatus.ANNOTATED || task.status == UploadStatus.UPLOAD_ERROR) {
-      await _startUploading(task);
+      _startUploading(task);
     } else if (task.status == UploadStatus.UPLOADED || task.status == UploadStatus.CLAIM_ERROR) {
-      await _startClaiming(task);
+      _startClaiming(task);
     }
   }
 
@@ -380,18 +426,20 @@ class UploadService {
 
   Future<void> _startUploading(UploadTask task) async {
     final accessToken = await _authService.accessToken;
-    final taskId = await _uploadApi.uploadImage(title: task.title, file: task.file, accessToken: accessToken);
+    final taskId = await _uploadApi.enqueueImage(title: task.title, file: task.file, accessToken: accessToken);
     task._markUploading(taskId);
   }
 
   Future<void> _startClaiming(UploadTask task) async {
+    final accessToken = await _authService.accessToken;
+    final param = _ClaimParameter(task._title, task._category, task._description, task.location, task.tags);
+    _uploadApi.claimMedia(mediaUri: task.mediaUri, param: param, accessToken: accessToken)
+      .then((_) => task._markClaimed(), onError: (_) => task._markClaimError())
+      .whenComplete(() => _uploadStreamController.add(task));
     task._markClaiming();
-    await Future.delayed(Duration(seconds: 5));
-    task._markClaimError();
-    _uploadStreamController.add(task);
   }
 
-  Future<UploadTask> _mapUploadResult(UploadTaskResult result) async {
+  Future<UploadTask> _mapUploadResult(_UploadTaskResult result) async {
     final uploads = await currentUploads();
     final upload = uploads.firstWhere((item) => item.backgroundTaskId == result.taskId);
     if (result.status == UploadStatus.UPLOADED) {
@@ -410,7 +458,7 @@ class UploadService {
 
   Stream<UploadTask> get uploadResultStream => _uploadStreamController.stream;
 
-  Future<UploadTask> _mapUploadProgress(UploadTaskStep step) async {
+  Future<UploadTask> _mapUploadProgress(_UploadTaskStep step) async {
     final uploads = await currentUploads();
     final upload = uploads.firstWhere((item) => item.backgroundTaskId == step.taskId);
     upload._setUploadProgress(step.progress);

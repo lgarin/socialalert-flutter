@@ -35,6 +35,14 @@ class GeoLocation extends GeoPosition {
       return '';
     }
   }
+
+  Map<String, dynamic> toJson() => {
+    'latitude': latitude,
+    'longitude': longitude,
+    'formattedAddress': address,
+    'locality': locality,
+    'country': country,
+  };
 }
 
 class GeoLocationService {

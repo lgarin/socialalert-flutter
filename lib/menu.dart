@@ -58,6 +58,16 @@ class _MenuBar extends StatelessWidget {
               },
             ),
             ListTile(
+              enabled: currentPage != AppRoute.Network,
+              selected: currentPage == AppRoute.Network,
+              leading: Icon(Icons.people),
+              title: Text('My Network'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushReplacementNamed(context, AppRoute.Network);
+              },
+            ),
+            ListTile(
               enabled: currentPage != AppRoute.Uploads,
               selected: currentPage == AppRoute.Uploads,
               leading: Icon(Icons.cloud_upload),

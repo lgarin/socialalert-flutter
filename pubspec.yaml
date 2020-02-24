@@ -19,6 +19,7 @@ dependencies:
   path:
   geolocator:
   timeago_flutter:
+  google_maps_flutter:
 
 dev_dependencies:
   flutter_test:

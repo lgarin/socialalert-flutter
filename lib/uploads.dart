@@ -26,12 +26,18 @@ class _UploadErrorItem {
 
 class _UploadsPageState extends BasePageState<UploadsPage> {
 
+  static const iconSize = 50.0;
+
   _UploadsPageState() : super(AppRoute.Uploads);
 
   @override
   Widget buildBody(BuildContext context) {
     return Consumer<UploadList>(
-        builder: (context, value, child) => ChangeNotifierProvider.value(value: value, child: _buildList(context, value))
+        builder: (context, uploads, _) => ChangeNotifierProvider.value(value: uploads,
+          child: Consumer<UploadList>(
+            builder: (context, value, _) => _buildList(context, value)
+          )
+        )
     );
   }
 
@@ -64,14 +70,15 @@ class _UploadsPageState extends BasePageState<UploadsPage> {
     return Card(
           key: ValueKey(task.id),
           margin: EdgeInsets.only(left: 10, right: 10, top: 10),
-          child: _buildListTile(task, context)
+          child: ChangeNotifierProvider.value(value: task, child: _buildListTile(context, task))
       );
   }
 
-  Widget _buildListTile(UploadTask task, BuildContext context) {
-    return ChangeNotifierProvider.value(value: task,
-      child: ListTile(
-            leading: Image.file(task.file, height: 70, width: 70, fit: BoxFit.cover),
+  Widget _buildListTile(BuildContext context, UploadTask task) {
+    return Consumer<UploadTask>(
+      child: Image.file(task.file, height: 70, width: 70, fit: BoxFit.cover),
+      builder: (context, task, child) => ListTile(
+            leading: child,
             title: Text(task.title ?? 'TODO'),
             isThreeLine: true,
             subtitle: _buildSubtitle(context, task),
@@ -102,17 +109,17 @@ class _UploadsPageState extends BasePageState<UploadsPage> {
     } else if (task.status == UploadStatus.CLAIMING) {
       return CircularProgressIndicator();
     } else if (task.status == UploadStatus.CREATED) {
-      return Icon(Icons.navigate_next, size: 70);
+      return Icon(Icons.navigate_next, size: iconSize);
     } else if (task.status == UploadStatus.ANNOTATED || task.status == UploadStatus.UPLOADED) {
-      return Icon(Icons.refresh, size: 70);
+      return Icon(Icons.refresh, size: iconSize);
     } else if (task.status == UploadStatus.UPLOAD_ERROR || task.status == UploadStatus.CLAIM_ERROR) {
       return PopupMenuButton(
-        child: Icon(Icons.error, size: 70),
+        child: Icon(Icons.error, size: iconSize),
         itemBuilder: (context) => _buildUploadErrorMenu(context, task),
         onSelected: _onErrorItemSelection,
       );
     } else if (task.status == UploadStatus.CLAIMED) {
-      return Icon(Icons.done, size: 70);
+      return Icon(Icons.done, size: iconSize);
     } else {
       return null;
     }
