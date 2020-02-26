@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:social_alert_app/main.dart';
+import 'package:social_alert_app/picture.dart';
 import 'package:social_alert_app/service/geolocation.dart';
 import 'package:social_alert_app/service/upload.dart';
 import 'helper.dart';
@@ -46,6 +48,12 @@ class _AnnotatePageState extends State<AnnotatePage> {
   final _formKey = GlobalKey<FormState>();
   bool _fullImage = false;
 
+  void _switchFullImage() {
+    setState(() {
+      _fullImage = !_fullImage;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return FutureProvider<CaptureModel>(
@@ -54,54 +62,12 @@ class _AnnotatePageState extends State<AnnotatePage> {
         child: Scaffold(
           backgroundColor: backgroundColor,
           appBar: _buildAppBar(context),
-          body: _buildBody(context)
-        )
-    );
-  }
-
-  void _switchFullImage() {
-    setState(() {
-      _fullImage = !_fullImage;
-    });
-  }
-
-  Widget _buildBody(BuildContext context) {
-
-    if (_fullImage) {
-      return buildImageContainer();
-    }
-
-    return ListView(
-          children: <Widget>[
-            buildImageContainer(),
-            Transform.translate(
-                offset: Offset(0, -20),
-                child: buildMetadataContainer()
-            )
-          ],
-        );
-  }
-
-  Container buildMetadataContainer() {
-    return Container(
-      decoration: BoxDecoration(
-          color: backgroundColor,
-          borderRadius: BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20))
-      ),
-      padding: EdgeInsets.only(left: 20, right: 20, top: 20),
-      child: _MetadataForm(formKey: _formKey, onPublish: _onPublish),
-    );
-  }
-
-  Container buildImageContainer() {
-    final screenHeight = MediaQuery.of(context).size.height;
-    return Container(
-        color: Colors.black,
-        child: GestureDetector(
-            onTap: _switchFullImage,
-            child: _fullImage ?
-              Image.file(widget.upload.file, fit: BoxFit.contain, height: screenHeight) :
-              Image.file(widget.upload.file, fit: BoxFit.fitHeight, height: screenHeight / 3)
+          body: PicturePreview(
+              backgroundColor: backgroundColor,
+              image: widget.upload.file,
+              fullScreen: _fullImage,
+              fullScreenSwitch: _switchFullImage,
+              child: _MetadataForm(formKey: _formKey, onPublish: _onPublish))
         )
     );
   }
@@ -119,8 +85,6 @@ class _AnnotatePageState extends State<AnnotatePage> {
     );
   }
 
-
-
   List<PopupMenuEntry<_PopupAction>> _buildPopupMenuItems(BuildContext context) {
     return [
       PopupMenuItem(value: _PopupAction.DELETE,
@@ -135,7 +99,7 @@ class _AnnotatePageState extends State<AnnotatePage> {
     if (selectedItem == _PopupAction.DELETE) {
       showConfirmDialog(context, 'Delete Snype', 'Do you really want to delete this upload?', _onConfirmUploadDeletion);
     } else if (selectedItem == _PopupAction.INFO) {
-      // TODO show detail
+      Navigator.of(context).pushNamed(AppRoute.PictureInfo, arguments: widget.upload);
     }
   }
 

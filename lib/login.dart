@@ -150,24 +150,27 @@ class _LoginButton extends StatelessWidget {
 
 class _LoginFormState extends State<_LoginForm> {
   final _formKey = GlobalKey<FormState>();
-  Credential _credentials;
+  Credential _credential;
 
   void _onLogin(LoginModel model) {
     final form = _formKey.currentState;
     if (form.validate()) {
       setState(() {
-        _credentials = Credential(model.username.text, model.password.text);
+        _credential = Credential(model.username.text, model.password.text);
       });
     }
   }
 
   Future<LoginModel> _prepareModel(BuildContext context) async {
     final credential = await AuthService.current(context).initialCredential;
+    if (credential.username.isNotEmpty && credential.password.isNotEmpty) {
+      _credential = credential;
+    }
     return LoginModel.fromCredential(credential);
   }
 
   Future<bool> _handleLoginPhases() {
-    if (_credentials != null) {
+    if (_credential != null) {
       return _authenticateUser();
     } else {
       return Future.value(false);
@@ -176,7 +179,7 @@ class _LoginFormState extends State<_LoginForm> {
 
   Future<bool> _authenticateUser() async {
     try {
-      final profile = await AuthService.current(context).authenticate(_credentials);
+      final profile = await AuthService.current(context).authenticate(_credential);
       await Navigator.pushReplacementNamed(context, AppRoute.Home, arguments: profile);
       return true;
     } catch (e) {

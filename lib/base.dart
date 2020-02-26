@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -67,17 +66,17 @@ abstract class BasePageState<T extends StatefulWidget> extends State<T> {
         lazy: false,
         child: Scaffold(
             key: _scaffoldKey,
-            appBar: _buildAppBar(),
+            appBar: buildAppBar(),
             drawer: UserMenu(currentPage: pageName),
             body: buildBody(context),
             floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-            floatingActionButton: _buildCaptureButton(context),
+            floatingActionButton: buildCaptureButton(context),
             bottomNavigationBar: buildNavBar(context)
         )
     );
   }
 
-  AppBar _buildAppBar() {
+  AppBar buildAppBar() {
     return AppBar(
       title: Text("Snypix"),
       actions: <Widget>[
@@ -89,7 +88,7 @@ abstract class BasePageState<T extends StatefulWidget> extends State<T> {
     );
   }
 
-  FloatingActionButton _buildCaptureButton(BuildContext context) {
+  FloatingActionButton buildCaptureButton(BuildContext context) {
     return FloatingActionButton(
       onPressed: () => _takePicture(context),
       tooltip: 'Take picture',
@@ -108,9 +107,7 @@ abstract class BasePageState<T extends StatefulWidget> extends State<T> {
     }
   }
 
-  BottomNavigationBar buildNavBar(BuildContext context) {
-    return null;
-  }
+  BottomNavigationBar buildNavBar(BuildContext context) => null;
 
   Widget buildBody(BuildContext context);
 }

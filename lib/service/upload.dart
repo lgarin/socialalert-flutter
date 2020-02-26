@@ -52,8 +52,20 @@ class UploadTask with ChangeNotifier {
     _changeStatus(UploadStatus.CREATED);
   }
 
+  bool isNew() {
+    return status == UploadStatus.CREATED;
+  }
+
   bool canBeDeleted() {
     return status == UploadStatus.CREATED || status == UploadStatus.ANNOTATED || status == UploadStatus.CLAIM_ERROR || status == UploadStatus.CLAIM_ERROR || status == UploadStatus.CLAIMED;
+  }
+
+  bool isFileValid() {
+    return file.existsSync();
+  }
+
+  bool isObsolete(DateTime now) {
+    return status == UploadStatus.CLAIMED && now.difference(timestamp).inDays > 30;
   }
 
   String get id => file.path;
@@ -280,9 +292,7 @@ class _UploadApi {
   }
 
   Future<void> claimMedia({@required String mediaUri, @required _ClaimParameter param, @required String accessToken}) async {
-    print(param.toJson());
     final response = await _postJson('/media/claim/$mediaUri', json.encode(param.toJson()), accessToken);
-    print(response.statusCode);
     if (response.statusCode != 200) {
       throw response.reasonPhrase;
     }
@@ -381,8 +391,9 @@ class UploadService {
 
   Future<UploadList> _initUploads() async {
     final uploads = UploadList();
+    final now = DateTime.now();
     for (final upload in await _uploadTaskStore.load()) {
-      if (upload.file.existsSync()) {
+      if (upload.isFileValid() && !upload.isObsolete(now)) {
         upload._reset();
         uploads._add(upload);
       }

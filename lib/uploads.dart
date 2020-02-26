@@ -12,7 +12,6 @@ class UploadsPage extends StatefulWidget {
 }
 
 enum _UploadErrorAction {
-  INFO,
   RETRY,
   DELETE
 }
@@ -79,7 +78,7 @@ class _UploadsPageState extends BasePageState<UploadsPage> {
       child: Image.file(task.file, height: 70, width: 70, fit: BoxFit.cover),
       builder: (context, task, child) => ListTile(
             leading: child,
-            title: Text(task.title ?? 'TODO'),
+            title: Text(task.title ?? '?'),
             isThreeLine: true,
             subtitle: _buildSubtitle(context, task),
             trailing: _buildIcon(context, task),
@@ -141,8 +140,6 @@ class _UploadsPageState extends BasePageState<UploadsPage> {
       showConfirmDialog(context, 'Delete Snype', 'Do you really want to delete this upload?', () => _onConfirmUploadDeletion(item.task));
     } else if (item.action == _UploadErrorAction.RETRY) {
       UploadService.current(context).manageTask(item.task);
-    } else if (item.action == _UploadErrorAction.INFO) {
-      // TODO show info
     }
   }
 
@@ -156,7 +153,7 @@ class _UploadsPageState extends BasePageState<UploadsPage> {
     } else if (task.status == UploadStatus.CLAIMED) {
       UploadService.current(context).deleteTask(task);
     } else {
-      // TODO show info
+      Navigator.of(context).pushNamed(AppRoute.PictureInfo, arguments: task);
     }
   }
 }
