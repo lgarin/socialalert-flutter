@@ -67,7 +67,8 @@ class _AnnotatePageState extends State<AnnotatePage> {
               image: widget.upload.file,
               fullScreen: _fullImage,
               fullScreenSwitch: _switchFullImage,
-              child: _MetadataForm(formKey: _formKey, onPublish: _onPublish))
+              child: _MetadataForm(formKey: _formKey, onPublish: _onPublish),
+              childHeight: 475)
         )
     );
   }

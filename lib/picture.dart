@@ -13,8 +13,9 @@ class PicturePreview extends StatelessWidget {
   final Color backgroundColor;
   final bool fullScreen;
   final VoidCallback fullScreenSwitch;
+  final int childHeight;
 
-  PicturePreview({Key key, this.child, this.image, this.backgroundColor, this.fullScreen, this.fullScreenSwitch}) : super(key: key);
+  PicturePreview({Key key, this.child, this.image, this.backgroundColor, this.fullScreen, this.fullScreenSwitch, this.childHeight}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +54,7 @@ class PicturePreview extends StatelessWidget {
             onTap: fullScreenSwitch,
             child: fullScreen ?
             Image.file(image, fit: BoxFit.contain, height: screenHeight) :
-            Image.file(image, fit: BoxFit.cover, height: screenHeight / 3)
+            Image.file(image, fit: BoxFit.cover, height: childHeight != null ? screenHeight - childHeight : screenHeight / 3)
         )
     );
   }
@@ -123,6 +124,7 @@ class _PictureInfoPageState extends State<PictureInfoPage> {
               image: widget.upload.file,
               fullScreen: _fullImage,
               fullScreenSwitch: _switchFullImage,
+              childHeight: 410,
               child: Consumer<_ExifData>(
                 builder: (context, exifData, _) => _buildInfoPanel(context, exifData)
               )
