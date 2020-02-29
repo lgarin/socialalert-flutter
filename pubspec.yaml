@@ -20,6 +20,8 @@ dependencies:
   geolocator:
   timeago_flutter:
   google_maps_flutter:
+  intl:
+  exifdart:
 
 dev_dependencies:
   flutter_test:

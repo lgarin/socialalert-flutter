@@ -84,6 +84,12 @@ class UploadTask with ChangeNotifier {
 
   List<String> get tags => _tags == null ? [] : List.from(_tags);
 
+  double get latitude => _latitude;
+
+  double get longitude => _longitude;
+
+  bool get hasPosition => _latitude != null && _longitude != null;
+
   GeoPosition get position => GeoPosition(latitude: _latitude, longitude: _longitude);
 
   GeoLocation get location =>
@@ -93,7 +99,7 @@ class UploadTask with ChangeNotifier {
           country: _country,
           address: _address);
 
-  double get uploadProgress => _uploadProgress != null ? _uploadProgress / 100.0 : 0.0;
+  double get uploadProgress => _uploadProgress != null ? _uploadProgress * 0.95 / 100.0 : 0.0;
 
   void _changeStatus(UploadStatus newStatus) {
     _status = newStatus;
@@ -179,7 +185,7 @@ class UploadTask with ChangeNotifier {
   }
 
   void _markClaimed() async {
-    assert(status == UploadStatus.UPLOADED);
+    assert(status == UploadStatus.CLAIMING);
     _changeStatus(UploadStatus.CLAIMED);
   }
 
@@ -455,11 +461,15 @@ class UploadService {
     final upload = uploads.firstWhere((item) => item.backgroundTaskId == result.taskId);
     if (result.status == UploadStatus.UPLOADED) {
       upload._markUploaded(result.mediaUri);
-      _startClaiming(upload);
     } else if (result.status == UploadStatus.UPLOAD_ERROR) {
       upload._markUploadError();
     }
     await _uploadTaskStore.store(uploads);
+
+    if (upload.status == UploadStatus.UPLOADED) {
+      _startClaiming(upload);
+    }
+
     return upload;
   }
 

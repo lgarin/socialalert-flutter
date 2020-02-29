@@ -1,5 +1,10 @@
 import 'dart:io';
+import 'package:exifdart/exifdart.dart';
+import 'package:exifdart/exifdart_io.dart';
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:social_alert_app/service/upload.dart';
 
 class PicturePreview extends StatelessWidget {
@@ -64,6 +69,21 @@ class PictureInfoPage extends StatefulWidget {
   _PictureInfoPageState createState() => _PictureInfoPageState();
 }
 
+class _ExifData {
+  static final oneMega = 1000 * 1000;
+  static final numberFormat = new NumberFormat('0.0');
+  final int mediaHeight;
+  final int mediaWidth;
+  final String cameraMaker;
+  final String cameraModel;
+
+  _ExifData({this.mediaHeight, this.mediaWidth, this.cameraMaker, this.cameraModel});
+
+  String get format => numberFormat.format(mediaHeight * mediaWidth / oneMega) + 'MP - $mediaWidth x $mediaHeight';
+
+  String get camera => cameraMaker + " " + cameraModel;
+}
+
 class _PictureInfoPageState extends State<PictureInfoPage> {
   static const backgroundColor = Color.fromARGB(255, 240, 240, 240);
   bool _fullImage = false;
@@ -74,23 +94,101 @@ class _PictureInfoPageState extends State<PictureInfoPage> {
     });
   }
 
+  Future<_ExifData> _buildExifData(BuildContext context) async {
+    Map<String, dynamic> tags = await readExif(FileReader(widget.upload.file));
+    print(tags);
+    return _ExifData(
+      mediaHeight: tags['ImageHeight'] as int,
+      mediaWidth: tags['ImageWidth'] as int,
+      cameraMaker: tags['Make'] as String,
+      cameraModel: tags['Model'] as String,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return FutureProvider(
+        create: _buildExifData,
+        child: Scaffold(
             backgroundColor: backgroundColor,
             appBar: _buildAppBar(context),
-            body: PicturePreview(
-                backgroundColor: backgroundColor,
-                image: widget.upload.file,
-                fullScreen: _fullImage,
-                fullScreenSwitch: _switchFullImage,
-                child: Container(height: 400,))
-        );
+            body: _buildPicturePreview()
+        )
+    );
+  }
+
+  Widget _buildPicturePreview() {
+    return PicturePreview(
+              backgroundColor: backgroundColor,
+              image: widget.upload.file,
+              fullScreen: _fullImage,
+              fullScreenSwitch: _switchFullImage,
+              child: Consumer<_ExifData>(
+                builder: (context, exifData, _) => _buildInfoPanel(context, exifData)
+              )
+    );
   }
 
   AppBar _buildAppBar(BuildContext context) {
-    return AppBar(
-        title: Text(widget.upload.title ?? 'New Snype'),
+    return AppBar(title: Text(widget.upload.title ?? 'New Snype'));
+  }
+  
+  Widget _buildInfoPanel(BuildContext context, _ExifData exifData) {
+    final children = List<Widget>();
+    children.add(
+      Row(children: <Widget>[
+        Icon(Icons.access_time),
+        SizedBox(width: 5),
+        Text(DateFormat('EEE, d MMM yyyy - HH:mm').format(widget.upload.timestamp))
+      ]),
     );
+    if (widget.upload.hasPosition) {
+      children.addAll([
+        SizedBox(height: 10),
+        Row(children: <Widget>[
+          Icon(Icons.map),
+          SizedBox(width: 5),
+          Text('Location')
+        ]),
+        SizedBox(height: 5),
+        _buildMap(),
+        SizedBox(height: 5),
+        Row(children: <Widget>[
+          Icon(Icons.place),
+          SizedBox(width: 5),
+          Text(widget.upload.location.format())
+        ])
+      ]);
+    }
+    if (exifData != null) {
+      children.addAll([
+        SizedBox(height: 10),
+        Row(children: <Widget>[
+          Icon(Icons.image),
+          SizedBox(width: 5),
+          Text(exifData.format)
+        ]),
+        SizedBox(height: 5),
+        Row(children: <Widget>[
+          Icon(Icons.camera),
+          SizedBox(width: 5),
+          Text(exifData.camera)
+        ])
+      ]);
+    }
+    return Column(children: children);
+  }
+
+  Container _buildMap() {
+    return Container(height: 150,
+          decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey)),
+          child: GoogleMap(
+            mapType: MapType.normal,
+            myLocationEnabled: false,
+            myLocationButtonEnabled: false,
+            markers: {Marker(markerId: MarkerId(widget.upload.id), position: LatLng(widget.upload.latitude, widget.upload.longitude))},
+            initialCameraPosition: CameraPosition(zoom: 15.0, target: LatLng(widget.upload.latitude, widget.upload.longitude)))
+      );
   }
 }
