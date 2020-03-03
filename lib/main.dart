@@ -7,6 +7,7 @@ import 'package:social_alert_app/network.dart';
 import 'package:social_alert_app/picture.dart';
 import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/geolocation.dart';
+import 'package:social_alert_app/service/mediaquery.dart';
 import 'package:social_alert_app/service/upload.dart';
 import 'package:social_alert_app/uploads.dart';
 
@@ -23,7 +24,7 @@ class SocialAlertApp extends StatelessWidget {
           Provider<AuthService>(create: (_) => AuthService(), dispose: (_, service) => service.dispose()),
           StreamProvider<UserProfile>(create: (context) => AuthService.current(context).profileStream),
           Provider<UploadService>(create: (context) => UploadService(AuthService.current(context)), dispose: (_, service) => service.dispose()),
-          //StreamProvider<UploadTask>(create: (context) => UploadService.current(context).uploadResultStream),
+          Provider<MediaQueryService>(create: (context) => MediaQueryService(AuthService.current(context))),
         ],
         child: _buildApp()
     );
@@ -51,7 +52,7 @@ class SocialAlertApp extends StatelessWidget {
           AppRoute.Uploads: (context) => UploadsPage(),
           AppRoute.Annotate: (context) => AnnotatePage(ModalRoute.of(context).settings.arguments),
           AppRoute.Network: (context) => NetworkPage(),
-          AppRoute.PictureInfo: (context) => PictureInfoPage(ModalRoute.of(context).settings.arguments)
+          AppRoute.PictureInfo: (context) => LocalPictureInfoPage(ModalRoute.of(context).settings.arguments)
         },
       );
   }

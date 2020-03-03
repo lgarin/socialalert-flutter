@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/picture.dart';
+import 'package:social_alert_app/service/configuration.dart';
 import 'package:social_alert_app/service/geolocation.dart';
 import 'package:social_alert_app/service/upload.dart';
 import 'helper.dart';
@@ -62,7 +63,7 @@ class _AnnotatePageState extends State<AnnotatePage> {
         child: Scaffold(
           backgroundColor: backgroundColor,
           appBar: _buildAppBar(context),
-          body: PicturePreview(
+          body: LocalPicturePreview(
               backgroundColor: backgroundColor,
               image: widget.upload.file,
               fullScreen: _fullImage,
@@ -261,8 +262,6 @@ class _CategoryWidget extends StatefulWidget {
 }
 
 class __CategoryWidgetState extends State<_CategoryWidget> {
-  static const categoryLabels = ['News', 'People', 'Travel', 'Fun', 'Nature', 'Sport', 'Awesome', 'Selfie'];
-  static const categoryTokens = categoryLabels;
   int _selectedIndex;
 
   void _onSelected(int index) {

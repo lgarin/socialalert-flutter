@@ -75,7 +75,7 @@ class _UploadsPageState extends BasePageState<UploadsPage> {
 
   Widget _buildListTile(BuildContext context, UploadTask task) {
     return Consumer<UploadTask>(
-      child: Image.file(task.file, height: 70, width: 70, fit: BoxFit.cover),
+      child: Hero(tag: task.file, child: Image.file(task.file, height: 70, width: 70, fit: BoxFit.cover)),
       builder: (context, task, child) => ListTile(
             leading: child,
             title: Text(task.title ?? '?'),

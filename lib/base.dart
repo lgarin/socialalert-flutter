@@ -78,7 +78,7 @@ abstract class BasePageState<T extends StatefulWidget> extends State<T> {
 
   AppBar buildAppBar() {
     return AppBar(
-      title: Text("Snypix"),
+      title: Text('Snypix'),
       actions: <Widget>[
         Icon(Icons.search),
         SizedBox(width: 20),

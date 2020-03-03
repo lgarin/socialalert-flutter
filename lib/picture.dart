@@ -7,7 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:social_alert_app/service/upload.dart';
 
-class PicturePreview extends StatelessWidget {
+class LocalPicturePreview extends StatelessWidget {
   final Widget child;
   final File image;
   final Color backgroundColor;
@@ -15,7 +15,7 @@ class PicturePreview extends StatelessWidget {
   final VoidCallback fullScreenSwitch;
   final int childHeight;
 
-  PicturePreview({Key key, this.child, this.image, this.backgroundColor, this.fullScreen, this.fullScreenSwitch, this.childHeight}) : super(key: key);
+  LocalPicturePreview({Key key, this.child, this.image, this.backgroundColor, this.fullScreen, this.fullScreenSwitch, this.childHeight}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -52,22 +52,23 @@ class PicturePreview extends StatelessWidget {
         color: Colors.black,
         child: GestureDetector(
             onTap: fullScreenSwitch,
-            child: fullScreen ?
-            Image.file(image, fit: BoxFit.contain, height: screenHeight) :
-            Image.file(image, fit: BoxFit.cover, height: childHeight != null ? screenHeight - childHeight : screenHeight / 3)
+            child: Hero(tag: image, child: fullScreen ?
+              Image.file(image, fit: BoxFit.contain, height: screenHeight) :
+              Image.file(image, fit: BoxFit.cover, height: childHeight != null ? screenHeight - childHeight : screenHeight / 3)
+            )
         )
     );
   }
 }
 
-class PictureInfoPage extends StatefulWidget {
+class LocalPictureInfoPage extends StatefulWidget {
 
   final UploadTask upload;
 
-  PictureInfoPage(this.upload);
+  LocalPictureInfoPage(this.upload);
 
   @override
-  _PictureInfoPageState createState() => _PictureInfoPageState();
+  _LocalPictureInfoPageState createState() => _LocalPictureInfoPageState();
 }
 
 class _ExifData {
@@ -85,7 +86,7 @@ class _ExifData {
   String get camera => cameraMaker + " " + cameraModel;
 }
 
-class _PictureInfoPageState extends State<PictureInfoPage> {
+class _LocalPictureInfoPageState extends State<LocalPictureInfoPage> {
   static const backgroundColor = Color.fromARGB(255, 240, 240, 240);
   bool _fullImage = false;
 
@@ -119,7 +120,7 @@ class _PictureInfoPageState extends State<PictureInfoPage> {
   }
 
   Widget _buildPicturePreview() {
-    return PicturePreview(
+    return LocalPicturePreview(
               backgroundColor: backgroundColor,
               image: widget.upload.file,
               fullScreen: _fullImage,
@@ -189,7 +190,7 @@ class _PictureInfoPageState extends State<PictureInfoPage> {
             mapType: MapType.normal,
             myLocationEnabled: false,
             myLocationButtonEnabled: false,
-            markers: {Marker(markerId: MarkerId(widget.upload.id), position: LatLng(widget.upload.latitude, widget.upload.longitude))},
+            markers: {Marker(icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueCyan), markerId: MarkerId(widget.upload.id), position: LatLng(widget.upload.latitude, widget.upload.longitude))},
             initialCameraPosition: CameraPosition(zoom: 15.0, target: LatLng(widget.upload.latitude, widget.upload.longitude)))
       );
   }

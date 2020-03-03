@@ -442,18 +442,32 @@ class UploadService {
   }
 
   Future<void> _startUploading(UploadTask task) async {
-    final accessToken = await _authService.accessToken;
-    final taskId = await _uploadApi.enqueueImage(title: task.title, file: task.file, accessToken: accessToken);
-    task._markUploading(taskId);
+    try {
+      final accessToken = await _authService.accessToken;
+      final taskId = await _uploadApi.enqueueImage(title: task.title, file: task.file, accessToken: accessToken);
+      task._markUploading(taskId);
+    } catch (e) {
+      task._markUploadError();
+    }
   }
 
   Future<void> _startClaiming(UploadTask task) async {
-    final accessToken = await _authService.accessToken;
-    final param = _ClaimParameter(task._title, task._category, task._description, task.location, task.tags);
-    _uploadApi.claimMedia(mediaUri: task.mediaUri, param: param, accessToken: accessToken)
-      .then((_) => task._markClaimed(), onError: (_) => task._markClaimError())
-      .whenComplete(() => _uploadStreamController.add(task));
-    task._markClaiming();
+    try {
+      final accessToken = await _authService.accessToken;
+      final param = _ClaimParameter(task._title, task._category, task._description, task.location, task.tags);
+      _uploadApi.claimMedia(mediaUri: task.mediaUri, param: param, accessToken: accessToken)
+          .then((_) => task._markClaimed(), onError: (_) => task._markClaimError())
+          .whenComplete(() => _completeClaim(task));
+      task._markClaiming();
+    } catch (e) {
+      task._markClaimError();
+    }
+  }
+
+  Future<void> _completeClaim(UploadTask task) async {
+    final uploads = await currentUploads();
+    await _uploadTaskStore.store(uploads);
+    _uploadStreamController.add(task);
   }
 
   Future<UploadTask> _mapUploadResult(_UploadTaskResult result) async {
