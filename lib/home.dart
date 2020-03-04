@@ -89,31 +89,77 @@ class _HomePageState extends BasePageState<HomePage> with SingleTickerProviderSt
   Widget buildBody(BuildContext context) {
     return TabBarView(
       controller: _categoryController,
-      children: extendedCategoryTokens.map(_createCurrentDisplay).toList(growable: false),
+      children: extendedCategoryTokens.map(_createCurrentDisplay).toList(),
     );
   }
 }
 
-class _GalleryDisplay extends StatelessWidget {
-  static final pageSize = 50;
-  static final spacing = 4.0;
+class _GalleryDisplay extends StatefulWidget {
 
   final String categoryToken;
 
   _GalleryDisplay(this.categoryToken) : super(key: ValueKey(categoryToken));
 
   @override
+  __GalleryDisplayState createState() => __GalleryDisplayState();
+}
+
+class __GalleryDisplayState extends State<_GalleryDisplay> {
+  static final pageSize = 50;
+  static final spacing = 4.0;
+
+  List<MediaInfo> _data;
+  PagingParameter _nextPage = PagingParameter(pageSize: pageSize, pageNumber: 0);
+  Future<QueryResultMediaInfo> _queryResult;
+
+  Future<QueryResultMediaInfo> _loadNextPage() {
+    if (_queryResult == null) {
+      _queryResult = MediaQueryService.current(context).listMedia(widget.categoryToken, _nextPage);
+    }
+    return _queryResult;
+  }
+
+  Future<QueryResultMediaInfo> _triggerReloadFirstPage() {
+    setState(() {
+      _nextPage = PagingParameter(pageSize: pageSize, pageNumber: 0);
+      _queryResult = null;
+      _data = null;
+    });
+    return _loadNextPage();
+  }
+
+  void _setData(QueryResultMediaInfo result) {
+    if (_data == null) {
+      _data = result.content;
+    } else {
+      _data.addAll(result.content);
+    }
+    _nextPage = result.nextPage;
+  }
+
+  Widget _buildAsyncContent(BuildContext context, AsyncSnapshot<QueryResultMediaInfo> snapshot) {
+    if (snapshot.connectionState != ConnectionState.done) {
+      return LoadingCircle();
+    } else if (snapshot.hasData) {
+      _setData(snapshot.data);
+      return RefreshIndicator(
+          child: _buildGalleryContent(context),
+          onRefresh: _triggerReloadFirstPage);
+    } else {
+      return null;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return FutureBuilder<QueryResultMediaInfo>(
-      future: MediaQueryService.current(context).listMedia(pageSize, categoryToken),
-      builder: (context, snapshot) => snapshot.hasData ?
-          _buildGalleryContent(context, snapshot.data) :
-          LoadingCircle(),
+        future: _loadNextPage(),
+        builder: _buildAsyncContent
     );
   }
 
-  Widget _buildGalleryContent(BuildContext context, QueryResultMediaInfo result) {
-    if (result.content.isEmpty) {
+  Widget _buildGalleryContent(BuildContext context) {
+    if (_data.isEmpty) {
       return Center(child: _buildNoContent(context));
     }
     final orientation = MediaQuery.of(context).orientation;
@@ -123,7 +169,7 @@ class _GalleryDisplay extends StatelessWidget {
         mainAxisSpacing: spacing,
         crossAxisSpacing: spacing,
         padding: EdgeInsets.all(spacing),
-        children: result.content.map(_buildGridTile).toList());
+        children: _data.map(_buildGridTile).toList());
 
   }
 
@@ -215,16 +261,24 @@ class _MapDisplay extends StatelessWidget {
 
   _MapDisplay(this.categoryToken) : super(key: ValueKey(categoryToken));
 
+  Widget _buildAsyncMap(BuildContext context, AsyncSnapshot<GeoPosition> snapshot) {
+    if (snapshot.connectionState != ConnectionState.done) {
+      return LoadingCircle();
+    } else if (snapshot.hasData) {
+      return GoogleMap(
+          mapType: MapType.normal,
+          myLocationEnabled: false,
+          myLocationButtonEnabled: false,
+          initialCameraPosition: CameraPosition(zoom: 15.0, target: LatLng(snapshot.data.latitude, snapshot.data.longitude)));
+    } else {
+      return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<GeoPosition>(
       future: GeoLocationService.current(context).readPosition(),
-      builder: (context, snapshot) => snapshot.hasData ?
-        GoogleMap(
-            mapType: MapType.normal,
-            myLocationEnabled: false,
-            myLocationButtonEnabled: false,
-            initialCameraPosition: CameraPosition(zoom: 15.0, target: LatLng(snapshot.data.latitude, snapshot.data.longitude)))
-        : LoadingCircle());
+      builder: _buildAsyncMap);
   }
 }

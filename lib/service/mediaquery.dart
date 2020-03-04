@@ -11,13 +11,13 @@ class PagingParameter {
   final int pageNumber;
   final int pageSize;
   final int timestamp;
-  final int offset;
+
+  PagingParameter({this.pageNumber, this.pageSize}) : timestamp = DateTime.now().millisecondsSinceEpoch;
 
   PagingParameter.fromJson(Map<String, dynamic> json) :
         pageNumber = json['pageNumber'],
         pageSize = json['pageSize'],
-        timestamp = json['timestamp'],
-        offset = json['offset'];
+        timestamp = json['timestamp'];
 }
 
 class MediaInfo {
@@ -67,9 +67,9 @@ class _MediaQueryApi {
     return _httpClient.get(baseServerUrl + uri, headers: headers);
   }
 
-  Future<QueryResultMediaInfo> listMedia({String category, DateTime timestamp, int pageSize, int pageNumber, String accessToken}) async {
+  Future<QueryResultMediaInfo> listMedia({String category, PagingParameter paging, String accessToken}) async {
     final categoryParameter = category != null ? '&category=$category' : '';
-    var url = '/media/search?pageNumber=$pageNumber&pageSize=$pageSize&pagingTimestamp=${timestamp.millisecondsSinceEpoch}$categoryParameter';
+    var url = '/media/search?pageNumber=${paging.pageNumber}&pageSize=${paging.pageSize}&pagingTimestamp=${paging.timestamp}$categoryParameter';
     final response = await _getJson(url, accessToken);
     if (response.statusCode == 200) {
       return QueryResultMediaInfo.fromJson(jsonDecode(response.body));
@@ -89,11 +89,11 @@ class MediaQueryService {
 
   MediaQueryService(this._authService);
 
-  Future<QueryResultMediaInfo> listMedia(int pageSize, String category) async {
+  Future<QueryResultMediaInfo> listMedia(String category, PagingParameter paging) async {
     final accessToken = await _authService.accessToken;
     try {
       return await _api.listMedia(category: category,
-          timestamp: DateTime.now(), pageSize: pageSize, pageNumber: 0, accessToken: accessToken);
+          paging: paging, accessToken: accessToken);
     } catch (e) {
       print(e);
       throw e;

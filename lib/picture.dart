@@ -52,7 +52,7 @@ class LocalPicturePreview extends StatelessWidget {
         color: Colors.black,
         child: GestureDetector(
             onTap: fullScreenSwitch,
-            child: Hero(tag: image, child: fullScreen ?
+            child: Hero(tag: image.path, child: fullScreen ?
               Image.file(image, fit: BoxFit.contain, height: screenHeight) :
               Image.file(image, fit: BoxFit.cover, height: childHeight != null ? screenHeight - childHeight : screenHeight / 3)
             )
