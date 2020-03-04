@@ -1,6 +1,4 @@
-
 import 'dart:convert';
-
 import 'package:flutter/widgets.dart';
 import 'package:http/http.dart';
 import 'package:provider/provider.dart';
@@ -70,6 +68,7 @@ class _MediaQueryApi {
   Future<QueryResultMediaInfo> listMedia({String category, PagingParameter paging, String accessToken}) async {
     final categoryParameter = category != null ? '&category=$category' : '';
     var url = '/media/search?pageNumber=${paging.pageNumber}&pageSize=${paging.pageSize}&pagingTimestamp=${paging.timestamp}$categoryParameter';
+    await Future.delayed(Duration(seconds: 1));
     final response = await _getJson(url, accessToken);
     if (response.statusCode == 200) {
       return QueryResultMediaInfo.fromJson(jsonDecode(response.body));

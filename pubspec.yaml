@@ -22,7 +22,7 @@ dependencies:
   google_maps_flutter:
   intl:
   exifdart:
-  loadmore:
+  async:
 
 dev_dependencies:
   flutter_test:

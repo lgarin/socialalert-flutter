@@ -1,3 +1,4 @@
+import 'package:async/async.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:social_alert_app/base.dart';
@@ -110,25 +111,45 @@ class __GalleryDisplayState extends State<_GalleryDisplay> {
 
   List<MediaInfo> _data;
   PagingParameter _nextPage = PagingParameter(pageSize: pageSize, pageNumber: 0);
-  Future<QueryResultMediaInfo> _queryResult;
+  CancelableOperation<QueryResultMediaInfo> _query;
+
+  @override
+  void dispose() {
+    _clearCurrentQuery();
+    super.dispose();
+  }
 
   Future<QueryResultMediaInfo> _loadNextPage() {
-    if (_queryResult == null) {
-      _queryResult = MediaQueryService.current(context).listMedia(widget.categoryToken, _nextPage);
+    if (_query == null) {
+      _query = CancelableOperation.fromFuture(MediaQueryService.current(context).listMedia(widget.categoryToken, _nextPage));
     }
-    return _queryResult;
+    return _query.value;
+  }
+
+  Future<QueryResultMediaInfo> _triggerLoadNextPage() {
+    return _loadNextPage().whenComplete(_refreshWidget);
   }
 
   Future<QueryResultMediaInfo> _triggerReloadFirstPage() {
-    setState(() {
-      _nextPage = PagingParameter(pageSize: pageSize, pageNumber: 0);
-      _queryResult = null;
-      _data = null;
-    });
-    return _loadNextPage();
+    _clearData();
+    return _triggerLoadNextPage();
+  }
+
+  void _clearCurrentQuery() {
+    if(_query != null) {
+      _query.cancel();
+      _query = null;
+    }
+  }
+
+  void _clearData() {
+    _clearCurrentQuery();
+    _nextPage = PagingParameter(pageSize: pageSize, pageNumber: 0);
+    _data = null;
   }
 
   void _setData(QueryResultMediaInfo result) {
+    _clearCurrentQuery();
     if (_data == null) {
       _data = result.content;
     } else {
@@ -146,8 +167,12 @@ class __GalleryDisplayState extends State<_GalleryDisplay> {
           child: _buildGalleryContent(context),
           onRefresh: _triggerReloadFirstPage);
     } else {
-      return null;
+      return Container(width: 0.0, height: 0.0);
     }
+  }
+
+  void _refreshWidget() {
+    setState(() {});
   }
 
   @override
@@ -158,19 +183,34 @@ class __GalleryDisplayState extends State<_GalleryDisplay> {
     );
   }
 
+  bool _onScroll(ScrollNotification scrollNotification) {
+    if (_query != null || _nextPage == null) {
+      return false;
+    }
+    if (scrollNotification.metrics.maxScrollExtent > scrollNotification.metrics.pixels &&
+        scrollNotification.metrics.maxScrollExtent - scrollNotification.metrics.pixels <= 50) {
+      _triggerReloadFirstPage();
+      return true;
+    }
+    return false;
+  }
+
   Widget _buildGalleryContent(BuildContext context) {
     if (_data.isEmpty) {
       return Center(child: _buildNoContent(context));
     }
     final orientation = MediaQuery.of(context).orientation;
-    return GridView.count(
-        crossAxisCount: (orientation == Orientation.portrait) ? 2 : 3,
-        childAspectRatio: 16.0 / 9.0,
-        mainAxisSpacing: spacing,
-        crossAxisSpacing: spacing,
-        padding: EdgeInsets.all(spacing),
-        children: _data.map(_buildGridTile).toList());
-
+    return NotificationListener<ScrollNotification>(
+        onNotification: _onScroll,
+        child: GridView.count(
+          crossAxisCount: (orientation == Orientation.portrait) ? 2 : 3,
+          childAspectRatio: 16.0 / 9.0,
+          mainAxisSpacing: spacing,
+          crossAxisSpacing: spacing,
+          padding: EdgeInsets.all(spacing),
+          children: _data.map(_buildGridTile).toList()
+        )
+    );
   }
 
   Widget _buildGridTile(MediaInfo media) {
