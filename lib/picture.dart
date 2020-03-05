@@ -98,7 +98,6 @@ class _LocalPictureInfoPageState extends State<LocalPictureInfoPage> {
 
   Future<_ExifData> _buildExifData(BuildContext context) async {
     Map<String, dynamic> tags = await readExif(FileReader(widget.upload.file));
-    print(tags);
     return _ExifData(
       mediaHeight: tags['ImageHeight'] as int,
       mediaWidth: tags['ImageWidth'] as int,

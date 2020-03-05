@@ -31,7 +31,7 @@ class CredentialStore {
       }
       return Credential.fromJson(jsonDecode(json));
     } catch (e) {
-      print(e);
+      print(e.toString());
       return Credential.empty();
     }
   }
@@ -40,7 +40,7 @@ class CredentialStore {
     try {
       await _storage.write(key: key, value: jsonEncode(credential));
     } catch (e) {
-      print(e);
+      print(e.toString());
     }
   }
 }

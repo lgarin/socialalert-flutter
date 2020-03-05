@@ -183,7 +183,7 @@ class _LoginFormState extends State<_LoginForm> {
       await Navigator.pushReplacementNamed(context, AppRoute.Home, arguments: profile);
       return true;
     } catch (e) {
-      await showSimpleDialog(context, "Login failed", e);
+      await showSimpleDialog(context, "Login failed", e.toString());
       return false;
     }
   }

@@ -1,7 +1,6 @@
-import 'package:async/async.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:social_alert_app/base.dart';
 import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/main.dart';
@@ -141,105 +140,124 @@ class __GalleryDisplayState extends State<_GalleryDisplay> {
 
   List<MediaInfo> _data;
   PagingParameter _nextPage = PagingParameter(pageSize: pageSize, pageNumber: 0);
-  CancelableOperation<QueryResultMediaInfo> _query;
+  RefreshController _refreshController = RefreshController(initialRefresh: true);
+
+  @override
+  void initState() {
+    super.initState();
+  }
 
   @override
   void dispose() {
-    _clearCurrentQuery();
+    _refreshController.dispose();
     super.dispose();
   }
 
   Future<QueryResultMediaInfo> _loadNextPage() {
-    if (_query == null) {
-      _query = CancelableOperation.fromFuture(MediaQueryService.current(context).listMedia(widget.categoryToken, _nextPage));
+    return MediaQueryService.current(context).listMedia(widget.categoryToken, _nextPage);
+  }
+
+  void _onRefresh() async{
+    try {
+      _nextPage = PagingParameter(pageSize: pageSize, pageNumber: 0);
+      final result = await _loadNextPage();
+      _data = null;
+      _setData(result);
+      _refreshController.refreshCompleted();
+      if (_nextPage == null) {
+        _refreshController.loadNoData();
+      } else {
+        _refreshController.loadComplete();
+      }
+    } catch (e) {
+      _refreshController.refreshFailed();
+      await showSimpleDialog(context, "Refresh failed", e.toString());
     }
-    return _query.value;
+    _refreshWidget();
   }
 
-  Future<QueryResultMediaInfo> _triggerLoadNextPage() {
-    return _loadNextPage().whenComplete(_refreshWidget);
-  }
-
-  Future<QueryResultMediaInfo> _triggerReloadFirstPage() {
-    _clearData();
-    return _triggerLoadNextPage();
-  }
-
-  void _clearCurrentQuery() {
-    if(_query != null) {
-      _query.cancel();
-      _query = null;
+  void _onLoading() async {
+    try {
+      final result = await _loadNextPage();
+      _setData(result);
+      if (_nextPage == null) {
+        _refreshController.loadNoData();
+      } else {
+        _refreshController.loadComplete();
+      }
+    } catch (e) {
+      _refreshController.loadFailed();
+      await showSimpleDialog(context, "Load failed", e.toString());
     }
+    _refreshWidget();
   }
 
-  void _clearData() {
-    _clearCurrentQuery();
-    _nextPage = PagingParameter(pageSize: pageSize, pageNumber: 0);
-    _data = null;
+  List<MediaInfo> _createNewList(List<MediaInfo> a, List<MediaInfo> b) {
+    final result = List<MediaInfo>(a.length + b.length);
+    List.copyRange(result, 0, a);
+    List.copyRange(result, a.length, b);
+    return result;
   }
 
   void _setData(QueryResultMediaInfo result) {
-    _clearCurrentQuery();
     if (_data == null) {
       _data = result.content;
     } else {
-      _data.addAll(result.content);
+      _data = _createNewList(_data, result.content);
     }
     _nextPage = result.nextPage;
   }
 
-  Widget _buildAsyncContent(BuildContext context, AsyncSnapshot<QueryResultMediaInfo> snapshot) {
-    if (snapshot.connectionState != ConnectionState.done) {
-      return LoadingCircle();
-    } else if (snapshot.hasData) {
-      _setData(snapshot.data);
-      return RefreshIndicator(
-          child: _buildGalleryContent(context),
-          onRefresh: _triggerReloadFirstPage);
-    } else {
-      return Container(width: 0.0, height: 0.0);
-    }
-  }
-
   void _refreshWidget() {
-    setState(() {});
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<QueryResultMediaInfo>(
-        future: _loadNextPage(),
-        builder: _buildAsyncContent
-    );
+    return SmartRefresher(
+        enablePullDown: true,
+        enablePullUp: true,
+        controller: _refreshController,
+        onLoading: _onLoading,
+        onRefresh: _onRefresh,
+        header: WaterDropMaterialHeader(),
+        footer: CustomFooter(
+            loadStyle: LoadStyle.ShowWhenLoading,
+            builder: _buildGalleryFooter
+        ),
+        child: _buildGalleryContent(context));
   }
 
-  bool _onScroll(ScrollNotification scrollNotification) {
-    if (_query != null || _nextPage == null) {
-      return false;
+  Widget _buildGalleryFooter(BuildContext context, LoadStatus mode) {
+    if (mode == LoadStatus.loading) {
+      return Align(
+          alignment: Alignment.bottomCenter,
+          child: RefreshProgressIndicator(
+            backgroundColor: Theme.of(context).primaryColor,
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+          ));
     }
-    if (scrollNotification.metrics.maxScrollExtent > scrollNotification.metrics.pixels &&
-        scrollNotification.metrics.maxScrollExtent - scrollNotification.metrics.pixels <= 50) {
-      _triggerReloadFirstPage();
-      return true;
-    }
-    return false;
+    return SizedBox(height: 0, width: 0,);
   }
 
   Widget _buildGalleryContent(BuildContext context) {
+    if (_data == null) {
+      return SizedBox(height: 0, width: 0,);
+    }
     if (_data.isEmpty) {
       return Center(child: _buildNoContent(context));
     }
+
     final orientation = MediaQuery.of(context).orientation;
-    return NotificationListener<ScrollNotification>(
-        onNotification: _onScroll,
-        child: GridView.count(
-          crossAxisCount: (orientation == Orientation.portrait) ? 2 : 3,
-          childAspectRatio: 16.0 / 9.0,
-          mainAxisSpacing: spacing,
-          crossAxisSpacing: spacing,
-          padding: EdgeInsets.all(spacing),
-          children: _data.map(_buildGridTile).toList()
-        )
+    return GridView.count(
+            crossAxisCount: (orientation == Orientation.portrait) ? 2 : 3,
+            childAspectRatio: 16.0 / 9.0,
+            mainAxisSpacing: __GalleryDisplayState.spacing,
+            crossAxisSpacing: __GalleryDisplayState.spacing,
+            padding: EdgeInsets.all(__GalleryDisplayState.spacing),
+            children: _data.map(_buildGridTile).toList()
     );
   }
 

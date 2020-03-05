@@ -447,6 +447,7 @@ class UploadService {
       final taskId = await _uploadApi.enqueueImage(title: task.title, file: task.file, accessToken: accessToken);
       task._markUploading(taskId);
     } catch (e) {
+      print(e.toString());
       task._markUploadError();
     }
   }
@@ -460,6 +461,7 @@ class UploadService {
           .whenComplete(() => _completeClaim(task));
       task._markClaiming();
     } catch (e) {
+      print(e.toString());
       task._markClaimError();
     }
   }

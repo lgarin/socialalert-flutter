@@ -82,6 +82,7 @@ class GeoLocationService {
     try {
       return await readLocation(latitude: position.latitude, longitude: position.longitude);
     } catch (e) {
+      print(e.toString());
       return null;
     }
   }

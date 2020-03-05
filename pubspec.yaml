@@ -23,6 +23,7 @@ dependencies:
   intl:
   exifdart:
   async:
+  pull_to_refresh:
 
 dev_dependencies:
   flutter_test:
