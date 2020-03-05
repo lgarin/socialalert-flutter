@@ -1,4 +1,5 @@
 import 'package:async/async.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:social_alert_app/base.dart';
@@ -18,6 +19,8 @@ class _HomePageState extends BasePageState<HomePage> with SingleTickerProviderSt
   int _currentDisplayIndex = 0;
   static final extendedCategoryLabels = ['All']..addAll(categoryLabels);
   static final extendedCategoryTokens = <String>[null]..addAll(categoryTokens);
+
+  bool _searching = false;
 
   TabController _categoryController;
 
@@ -50,11 +53,38 @@ class _HomePageState extends BasePageState<HomePage> with SingleTickerProviderSt
 
   Tab _buildTab(String category) => Tab(child: Text(category));
 
+  void _switchSearching() {
+    setState(() {
+      _searching = !_searching;
+    });
+  }
+
+  void _beginSearch(String keyword) {
+    _switchSearching();
+    if (keyword.isNotEmpty) {
+      print(keyword);
+    }
+  }
+
   AppBar buildAppBar({PreferredSizeWidget bottom}) {
     return AppBar(
-      title: Text('Snypix'),
+      title: _searching ? TextField(
+        onSubmitted: _beginSearch,
+        autofocus: true,
+        textInputAction: TextInputAction.search,
+        style: TextStyle(color: Colors.white),
+        decoration: InputDecoration(
+            filled: false,
+            border: InputBorder.none,
+            hintStyle: TextStyle(color: Colors.grey),
+            hintText: "Enter keyword here",
+            prefixIcon: Icon(Icons.search, color: Colors.white)),
+      ) : Text('Snypix'),
       actions: <Widget>[
-        Icon(Icons.search),
+        IconButton(
+          icon: Icon(_searching ? Icons.cancel : Icons.search),
+          onPressed: _switchSearching,
+        ),
         SizedBox(width: 20),
         Icon(Icons.more_vert),
         SizedBox(width: 10),
