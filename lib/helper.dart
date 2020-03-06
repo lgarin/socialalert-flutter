@@ -58,7 +58,7 @@ class LoadingCircle extends StatelessWidget {
 }
 
 class NonEmptyValidator extends TextFieldValidator {
-  NonEmptyValidator({String errorText}) : super(errorText);
+  NonEmptyValidator({@required String errorText}) : super(errorText);
 
   @override
   bool get ignoreEmptyValues => false;

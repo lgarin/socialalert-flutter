@@ -53,7 +53,6 @@ class _HomePageState extends BasePageState<HomePage> with SingleTickerProviderSt
     }
   }
 
-
   Tab _buildTab(String category) => Tab(child: Text(category));
 
   void _switchSearching() {
@@ -66,15 +65,16 @@ class _HomePageState extends BasePageState<HomePage> with SingleTickerProviderSt
   }
 
   void _beginSearch(String keywords) {
-    print(keywords);
     if (keywords.isNotEmpty) {
       setState(() {
         _searchKeywords = keywords;
       });
+    } else {
+      _switchSearching();
     }
   }
 
-  AppBar buildAppBar({PreferredSizeWidget bottom}) {
+  AppBar buildAppBar() {
     return AppBar(
       title: _searching ? _buildSearchField() : Text(appName),
       actions: <Widget>[
@@ -95,7 +95,7 @@ class _HomePageState extends BasePageState<HomePage> with SingleTickerProviderSt
   TextField _buildSearchField() {
     return TextField(
       onSubmitted: _beginSearch,
-      autofocus: true,
+      autofocus: _searchKeywords == null,
       textInputAction: TextInputAction.search,
       style: TextStyle(color: Colors.white),
       decoration: InputDecoration(
@@ -103,7 +103,7 @@ class _HomePageState extends BasePageState<HomePage> with SingleTickerProviderSt
           border: InputBorder.none,
           hintStyle: TextStyle(color: Colors.grey),
           hintText: "Enter keyword here",
-          prefixIcon: Icon(Icons.search, color: Colors.white)
+          icon: Icon(Icons.search, color: Colors.white),
       ),
     );
   }
