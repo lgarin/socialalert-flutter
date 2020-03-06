@@ -15,12 +15,16 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends BasePageState<HomePage> with SingleTickerProviderStateMixin {
-  int _currentDisplayIndex = 0;
+  static const _galleryIndex = 0;
+  static const _feedIndex = 1;
+  static const _mapIndex =2;
+
+  int _currentDisplayIndex = _galleryIndex;
   static final extendedCategoryLabels = ['All']..addAll(categoryLabels);
   static final extendedCategoryTokens = <String>[null]..addAll(categoryTokens);
 
   bool _searching = false;
-
+  String _searchKeywords;
   TabController _categoryController;
 
   _HomePageState() : super(AppRoute.Home);
@@ -38,11 +42,11 @@ class _HomePageState extends BasePageState<HomePage> with SingleTickerProviderSt
 
   Widget _createCurrentDisplay(String categoryToken) {
     switch (_currentDisplayIndex) {
-      case 0:
-        return _GalleryDisplay(categoryToken);
-      case 1:
+      case _galleryIndex:
+        return _GalleryDisplay(categoryToken, _searchKeywords);
+      case _feedIndex:
         return _FeedDisplay(categoryToken);
-      case 2:
+      case _mapIndex:
         return _MapDisplay(categoryToken);
       default:
         return null;
@@ -55,30 +59,24 @@ class _HomePageState extends BasePageState<HomePage> with SingleTickerProviderSt
   void _switchSearching() {
     setState(() {
       _searching = !_searching;
+      if (!_searching) {
+        _searchKeywords = null;
+      }
     });
   }
 
-  void _beginSearch(String keyword) {
-    _switchSearching();
-    if (keyword.isNotEmpty) {
-      print(keyword);
+  void _beginSearch(String keywords) {
+    print(keywords);
+    if (keywords.isNotEmpty) {
+      setState(() {
+        _searchKeywords = keywords;
+      });
     }
   }
 
   AppBar buildAppBar({PreferredSizeWidget bottom}) {
     return AppBar(
-      title: _searching ? TextField(
-        onSubmitted: _beginSearch,
-        autofocus: true,
-        textInputAction: TextInputAction.search,
-        style: TextStyle(color: Colors.white),
-        decoration: InputDecoration(
-            filled: false,
-            border: InputBorder.none,
-            hintStyle: TextStyle(color: Colors.grey),
-            hintText: "Enter keyword here",
-            prefixIcon: Icon(Icons.search, color: Colors.white)),
-      ) : Text('Snypix'),
+      title: _searching ? _buildSearchField() : Text(appName),
       actions: <Widget>[
         IconButton(
           icon: Icon(_searching ? Icons.cancel : Icons.search),
@@ -91,6 +89,22 @@ class _HomePageState extends BasePageState<HomePage> with SingleTickerProviderSt
       bottom: TabBar(isScrollable: true,
         controller: _categoryController,
         tabs: extendedCategoryLabels.map(_buildTab).toList())
+    );
+  }
+
+  TextField _buildSearchField() {
+    return TextField(
+      onSubmitted: _beginSearch,
+      autofocus: true,
+      textInputAction: TextInputAction.search,
+      style: TextStyle(color: Colors.white),
+      decoration: InputDecoration(
+          filled: false,
+          border: InputBorder.none,
+          hintStyle: TextStyle(color: Colors.grey),
+          hintText: "Enter keyword here",
+          prefixIcon: Icon(Icons.search, color: Colors.white)
+      ),
     );
   }
 
@@ -119,6 +133,7 @@ class _HomePageState extends BasePageState<HomePage> with SingleTickerProviderSt
   Widget buildBody(BuildContext context) {
     return TabBarView(
       controller: _categoryController,
+      physics: _currentDisplayIndex != _mapIndex ? BouncingScrollPhysics() : NeverScrollableScrollPhysics(),
       children: extendedCategoryTokens.map(_createCurrentDisplay).toList(),
     );
   }
@@ -127,8 +142,9 @@ class _HomePageState extends BasePageState<HomePage> with SingleTickerProviderSt
 class _GalleryDisplay extends StatefulWidget {
 
   final String categoryToken;
+  final String keywords;
 
-  _GalleryDisplay(this.categoryToken) : super(key: ValueKey(categoryToken));
+  _GalleryDisplay(this.categoryToken, this.keywords) : super(key: ValueKey('$categoryToken/$keywords'));
 
   @override
   __GalleryDisplayState createState() => __GalleryDisplayState();
@@ -154,7 +170,7 @@ class __GalleryDisplayState extends State<_GalleryDisplay> {
   }
 
   Future<QueryResultMediaInfo> _loadNextPage() {
-    return MediaQueryService.current(context).listMedia(widget.categoryToken, _nextPage);
+    return MediaQueryService.current(context).listMedia(widget.categoryToken, widget.keywords, _nextPage);
   }
 
   void _onRefresh() async{

@@ -9,6 +9,8 @@ import 'package:social_alert_app/service/geolocation.dart';
 import 'package:social_alert_app/service/upload.dart';
 
 abstract class BasePageState<T extends StatefulWidget> extends State<T> {
+  final appName = 'Snypix';
+
   final String pageName;
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   StreamSubscription<UploadTask> uploadResultListener;
@@ -78,7 +80,7 @@ abstract class BasePageState<T extends StatefulWidget> extends State<T> {
 
   AppBar buildAppBar() {
     return AppBar(
-      title: Text('Snypix'),
+      title: Text(appName),
       actions: <Widget>[
         Icon(Icons.search),
         SizedBox(width: 20),
