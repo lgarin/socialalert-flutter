@@ -8,16 +8,15 @@ import 'package:social_alert_app/service/geolocation.dart';
 import 'package:social_alert_app/service/upload.dart';
 import 'helper.dart';
 
-class CaptureModel {
+class _CaptureModel {
   final DateTime timestamp;
   final File media;
-  final GeoLocation location;
   final title = TextEditingController();
   final description = TextEditingController();
   String selectedCategory;
   bool autovalidate = false;
 
-  CaptureModel({this.media, this.location})
+  _CaptureModel(this.media)
       : timestamp = DateTime.now();
 
   String get titleInput => title.text.trim();
@@ -27,16 +26,14 @@ class CaptureModel {
   bool hasTitleInput() => titleInput != '';
 }
 
-typedef PublishCallBack = void Function(CaptureModel);
-
 class AnnotatePage extends StatefulWidget {
 
-  final UploadTask upload;
+  final UploadTask _upload;
 
-  AnnotatePage(this.upload);
+  AnnotatePage(this._upload);
 
   @override
-  _AnnotatePageState createState() => _AnnotatePageState();
+  _AnnotatePageState createState() => _AnnotatePageState(_upload);
 }
 
 enum _PopupAction {
@@ -47,7 +44,11 @@ enum _PopupAction {
 class _AnnotatePageState extends State<AnnotatePage> {
   static const backgroundColor = Color.fromARGB(255, 240, 240, 240);
   final _formKey = GlobalKey<FormState>();
+  final UploadTask _upload;
+  final _CaptureModel _model;
   bool _fullImage = false;
+
+  _AnnotatePageState(this._upload) : _model = _CaptureModel(_upload.file);
 
   void _switchFullImage() {
     setState(() {
@@ -57,18 +58,18 @@ class _AnnotatePageState extends State<AnnotatePage> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureProvider<CaptureModel>(
-        create: _createModel,
+    return FutureProvider<GeoLocation>(
+        create: _readLocation,
         lazy: false,
         child: Scaffold(
           backgroundColor: backgroundColor,
           appBar: _buildAppBar(context),
           body: LocalPicturePreview(
               backgroundColor: backgroundColor,
-              image: widget.upload.file,
+              image: _upload.file,
               fullScreen: _fullImage,
               fullScreenSwitch: _switchFullImage,
-              child: _MetadataForm(formKey: _formKey, onPublish: _onPublish),
+              child: _MetadataForm(model: _model, formKey: _formKey, onPublish: _onPublish),
               childHeight: 475)
         )
     );
@@ -90,7 +91,7 @@ class _AnnotatePageState extends State<AnnotatePage> {
   List<PopupMenuEntry<_PopupAction>> _buildPopupMenuItems(BuildContext context) {
     return [
       PopupMenuItem(value: _PopupAction.DELETE,
-        enabled: widget.upload.canBeDeleted(),
+        enabled: _upload.canBeDeleted(),
         child: ListTile(title: Text('Delete'), leading: Icon(Icons.delete))),
       PopupMenuItem(value: _PopupAction.INFO,
         child: ListTile(title: Text('Info'), leading: Icon(Icons.info)))
@@ -101,60 +102,58 @@ class _AnnotatePageState extends State<AnnotatePage> {
     if (selectedItem == _PopupAction.DELETE) {
       showConfirmDialog(context, 'Delete Snype', 'Do you really want to delete this upload?', _onConfirmUploadDeletion);
     } else if (selectedItem == _PopupAction.INFO) {
-      Navigator.of(context).pushNamed(AppRoute.PictureInfo, arguments: widget.upload);
+      Navigator.of(context).pushNamed(AppRoute.PictureInfo, arguments: _upload);
     }
   }
 
   void _onConfirmUploadDeletion() {
-    UploadService.current(context).deleteTask(widget.upload);
+    UploadService.current(context).deleteTask(_upload);
     Navigator.pop(context);
   }
 
-  void _onPublish(CaptureModel model) async {
+  void _onPublish() async {
     final form = _formKey.currentState;
     if (form != null && form.validate()) {
-      widget.upload.annotate(
-        title: model.titleInput,
-        category: model.selectedCategory,
-        description: model.descriptionInput,
-        location: model.location,
+      _upload.annotate(
+        title: _model.titleInput,
+        category: _model.selectedCategory,
+        description: _model.descriptionInput,
       );
-
       try {
-        await UploadService.current(context).manageTask(widget.upload);
+        await UploadService.current(context).manageTask(_upload);
         Navigator.pop(context);
       } catch (e) {
         showSimpleDialog(context, "Upload failed", e.toString());
       }
     } else {
       setState(() {
-        model.autovalidate = true;
+        _model.autovalidate = true;
         _fullImage = false;
       });
     }
   }
 
-  Future<CaptureModel> _createModel(BuildContext context) async {
-    final location = await GeoLocationService.current(context).tryReadLocation(widget.upload.position);
-    return CaptureModel(media: widget.upload.file, location: location);
+  Future<GeoLocation> _readLocation(BuildContext context) async {
+    final location = await GeoLocationService.current(context).tryReadLocation(_upload.position);
+    if (location == null) {
+      return GeoLocation(longitude: _upload.longitude, latitude: _upload.latitude);
+    }
+    return location;
   }
 }
 
 class _PublishIconButton extends StatelessWidget {
-  final PublishCallBack onPublish;
+  final VoidCallback onPublish;
 
   _PublishIconButton({Key key, this.onPublish}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    VoidCallback onPressed;
-
-    final model = Provider.of<CaptureModel>(context);
-    if (model != null) {
-      onPressed = () => onPublish(model);
-    }
-
-    return IconButton(icon: Icon(Icons.cloud_upload), onPressed: onPressed);
+    GeoLocation location = Provider.of(context);
+    return IconButton(
+        icon: Icon(Icons.cloud_upload),
+        onPressed: location != null ? onPublish : null
+    );
   }
 }
 
@@ -162,19 +161,17 @@ class _MetadataForm extends StatelessWidget {
 
   _MetadataForm({
     Key key,
+    @required this.model,
     @required this.formKey,
     @required this.onPublish,
   }) : super(key: key);
 
+  final _CaptureModel model;
   final GlobalKey<FormState> formKey;
-  final PublishCallBack onPublish;
+  final VoidCallback onPublish;
 
   @override
   Widget build(BuildContext context) {
-    final model = Provider.of<CaptureModel>(context);
-    if (model == null) {
-      return LoadingCircle();
-    }
     return Form(
         key: formKey,
         autovalidate: model.autovalidate,
@@ -186,7 +183,7 @@ class _MetadataForm extends StatelessWidget {
             SizedBox(height: 10),
             _DescriptionWidget(model: model),
             SizedBox(height: 10),
-            _PublishButton(model: model, onPublish: onPublish)
+            _PublishButton(onPublish: onPublish)
           ],
         ));
   }
@@ -200,7 +197,7 @@ class _TitleWidget extends StatelessWidget {
     @required this.model,
   }) : super(key: key);
 
-  final CaptureModel model;
+  final _CaptureModel model;
 
   @override
   Widget build(BuildContext context) {
@@ -230,7 +227,7 @@ class _DescriptionWidget extends StatelessWidget {
     @required this.model,
   }) : super(key: key);
 
-  final CaptureModel model;
+  final _CaptureModel model;
 
   @override
   Widget build(BuildContext context) {
@@ -253,7 +250,7 @@ class _DescriptionWidget extends StatelessWidget {
 
 class _CategoryWidget extends StatefulWidget {
 
-  final CaptureModel model;
+  final _CaptureModel model;
 
   _CategoryWidget({Key key, this.model}) : super(key: key);
 
@@ -294,23 +291,21 @@ class _PublishButton extends StatelessWidget {
 
   _PublishButton({
     Key key,
-    @required this.model,
     @required this.onPublish
   }) : super(key: key);
 
-  final PublishCallBack onPublish;
-  final CaptureModel model;
+  final VoidCallback onPublish;
 
   @override
   Widget build(BuildContext context) {
-
+    GeoLocation location = Provider.of(context);
     return SizedBox(width: double.infinity,
         height: 40,
         child:
         RaisedButton(
           child: Text(
               label, style: Theme.of(context).textTheme.button),
-          onPressed: () => onPublish(model),
+          onPressed: location != null ? onPublish : null,
           color: Theme.of(context).buttonColor,
           shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.all(
