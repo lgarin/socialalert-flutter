@@ -69,7 +69,7 @@ class _MediaQueryApi {
     final categoryParameter = category != null ? '&category=$category' : '';
     final keywordsParameter = keywords != null ? '&keywords=$keywords' : '';
     final url = '/media/search?pageNumber=${paging.pageNumber}&pageSize=${paging.pageSize}&pagingTimestamp=${paging.timestamp}$categoryParameter$keywordsParameter';
-    await Future.delayed(Duration(seconds: 1));
+    await Future.delayed(Duration(milliseconds: 500));
     final response = await _getJson(url, accessToken);
     if (response.statusCode == 200) {
       return QueryResultMediaInfo.fromJson(jsonDecode(response.body));

@@ -117,10 +117,12 @@ class _AnnotatePageState extends State<AnnotatePage> {
   void _onPublish() async {
     final form = _formKey.currentState;
     if (form != null && form.validate()) {
+      GeoLocation location = Provider.of(context);
       _upload.annotate(
         title: _model.titleInput,
         category: _model.selectedCategory,
         tags: List.from(_model.tags),
+        location: location
       );
       try {
         await UploadService.current(context).manageTask(_upload);
