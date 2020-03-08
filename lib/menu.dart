@@ -1,9 +1,11 @@
+import 'package:badges/badges.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/geolocation.dart';
+import 'package:social_alert_app/service/upload.dart';
 
 class UserMenu extends StatelessWidget {
   final String currentPage;
@@ -70,7 +72,10 @@ class _MenuBar extends StatelessWidget {
             ListTile(
               enabled: currentPage != AppRoute.Uploads,
               selected: currentPage == AppRoute.Uploads,
-              leading: Icon(Icons.cloud_upload),
+              leading: Consumer<UploadList>(
+                builder: _buildUploadBadge,
+                child: Icon(Icons.cloud_upload),
+              ),
               title: Text('My Uploads'),
               onTap: () {
                 Navigator.pop(context);
@@ -95,6 +100,17 @@ class _MenuBar extends StatelessWidget {
         )
       )
     );
+  }
+
+  Widget _buildUploadBadge(BuildContext context, UploadList uploads, Widget child) {
+    if (uploads != null) {
+      return Badge(
+        badgeColor: Colors.grey,
+        badgeContent: Text(uploads.length.toString()),
+        child: child,
+      );
+    }
+    return child;
   }
 }
 

@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:form_field_validator/form_field_validator.dart';
 import 'package:provider/provider.dart';
 import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/picture.dart';
@@ -11,8 +12,9 @@ import 'helper.dart';
 class _CaptureModel {
   final DateTime timestamp;
   final File media;
+  final tags = Set<String>();
   final title = TextEditingController();
-  final description = TextEditingController();
+  final currentTag = TextEditingController();
   String selectedCategory;
   bool autovalidate = false;
 
@@ -20,8 +22,6 @@ class _CaptureModel {
       : timestamp = DateTime.now();
 
   String get titleInput => title.text.trim();
-
-  String get descriptionInput => description.text.isEmpty ? null : description.text;
 
   bool hasTitleInput() => titleInput != '';
 }
@@ -117,7 +117,7 @@ class _AnnotatePageState extends State<AnnotatePage> {
       _upload.annotate(
         title: _model.titleInput,
         category: _model.selectedCategory,
-        description: _model.descriptionInput,
+        tags: List.from(_model.tags),
       );
       try {
         await UploadService.current(context).manageTask(_upload);
@@ -163,7 +163,7 @@ class _MetadataForm extends StatelessWidget {
     Key key,
     @required this.model,
     @required this.formKey,
-    @required this.onPublish,
+    @required this.onPublish
   }) : super(key: key);
 
   final _CaptureModel model;
@@ -181,7 +181,7 @@ class _MetadataForm extends StatelessWidget {
             SizedBox(height: 10),
             _CategoryWidget(model: model),
             SizedBox(height: 10),
-            _DescriptionWidget(model: model),
+            _TagsWidget(model: model),
             SizedBox(height: 10),
             _PublishButton(onPublish: onPublish)
           ],
@@ -213,38 +213,79 @@ class _TitleWidget extends StatelessWidget {
         decoration: InputDecoration(
             hintText: label,
             icon: Icon(Icons.title)),
-        validator: NonEmptyValidator(errorText: "$label required"),
+        validator: MultiValidator([NonEmptyValidator(errorText: "$label required"), MaxLengthValidator(40, errorText: "Maximum 40 characters allowed")]),
       ),
     );
   }
 }
 
-class _DescriptionWidget extends StatelessWidget {
-  static const label = 'Description';
+class _TagsWidget extends StatelessWidget {
+  static const label = 'Tags';
+  static const maxTags = 4;
 
-  _DescriptionWidget({
-    Key key,
-    @required this.model,
-  }) : super(key: key);
+  _TagsWidget({@required this.model});
 
   final _CaptureModel model;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.all(Radius.circular(10))),
-      padding: EdgeInsets.all(10),
-      child: TextFormField(
-        controller: model.description,
-        maxLines: 5,
-        keyboardType: TextInputType.multiline,
-        decoration: InputDecoration(
-            hintText: label,
-            icon: Icon(Icons.description)),
-      ),
+    return FormField<Set<String>>(
+      initialValue: model.tags,
+      builder: _buildTags,
     );
+  }
+
+  Widget _buildTags(FormFieldState<Set<String>> state) {
+    final tags = state.value;
+    final children = List<Widget>();
+    for (String tag in tags) {
+      children.add(_buildTag(state, tag));
+    }
+    if (tags.length < maxTags) {
+      children.add(_buildInput(state));
+    }
+    return Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.all(Radius.circular(10))),
+        padding: EdgeInsets.all(10),
+        child:Wrap(children: children, spacing: 5, runSpacing: 5,)
+    );
+  }
+
+  Widget _buildInput(FormFieldState<Set<String>> state) {
+    return TextField(
+          controller: model.currentTag,
+          maxLength: 20,
+          autofocus: model.hasTitleInput(),
+          textInputAction: TextInputAction.next,
+          onSubmitted: (value) => _onNewTag(state, value),
+          keyboardType: TextInputType.text,
+          decoration: InputDecoration(
+              icon: Icon(Icons.more),
+              hintText: label),
+    );
+  }
+
+  void _onNewTag(FormFieldState<Set<String>> state, String newTag) {
+    model.tags.add(newTag);
+    model.currentTag.text = '';
+    state.didChange(model.tags);
+  }
+
+  Widget _buildTag(FormFieldState<Set<String>> state, String tag) {
+    return InputChip(
+      key: ValueKey(tag),
+      label: Text(tag),
+      onDeleted: () => _onDeleteTag(state, tag),
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    );
+  }
+
+  void _onDeleteTag(FormFieldState<Set<String>> state, String tag) {
+    model.tags.remove(tag);
+    state.didChange(model.tags);
   }
 }
 
@@ -255,10 +296,10 @@ class _CategoryWidget extends StatefulWidget {
   _CategoryWidget({Key key, this.model}) : super(key: key);
 
   @override
-  __CategoryWidgetState createState() => __CategoryWidgetState();
+  _CategoryWidgetState createState() => _CategoryWidgetState();
 }
 
-class __CategoryWidgetState extends State<_CategoryWidget> {
+class _CategoryWidgetState extends State<_CategoryWidget> {
   int _selectedIndex;
 
   void _onSelected(int index) {
@@ -271,7 +312,7 @@ class __CategoryWidgetState extends State<_CategoryWidget> {
   @override
   Widget build(BuildContext context) {
     return Wrap(
-      spacing: 10,
+      spacing: 5,
      children: List.generate(categoryLabels.length,
         (index) => ChoiceChip(
           key: ValueKey<String>(categoryTokens[index]),
