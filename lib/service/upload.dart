@@ -119,7 +119,7 @@ class UploadTask with ChangeNotifier {
         _title = json['title'],
         _description = json['description'],
         _category = json['category'],
-        _tags = json['tags'],
+        _tags = List<String>.from(json['tags'] ?? []),
         _status = UploadStatus.values[json['status']],
         _mediaUri = json['mediaUri'],
         _uploadTaskId = json["uploadTaskId"],

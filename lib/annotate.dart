@@ -1,11 +1,14 @@
 import 'dart:io';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:form_field_validator/form_field_validator.dart';
 import 'package:provider/provider.dart';
 import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/picture.dart';
 import 'package:social_alert_app/service/configuration.dart';
 import 'package:social_alert_app/service/geolocation.dart';
+import 'package:social_alert_app/service/mediaquery.dart';
 import 'package:social_alert_app/service/upload.dart';
 import 'helper.dart';
 
@@ -255,23 +258,47 @@ class _TagsWidget extends StatelessWidget {
   }
 
   Widget _buildInput(FormFieldState<Set<String>> state) {
-    return TextField(
-          controller: model.currentTag,
-          maxLength: 20,
-          autofocus: model.hasTitleInput(),
-          textInputAction: TextInputAction.next,
-          onSubmitted: (value) => _onNewTag(state, value),
-          keyboardType: TextInputType.text,
-          decoration: InputDecoration(
-              icon: Icon(Icons.more),
-              hintText: label),
+    return TypeAheadFormField(
+          autovalidate: true,
+          direction: AxisDirection.up,
+          suggestionsBoxDecoration: SuggestionsBoxDecoration(borderRadius: BorderRadius.all(Radius.circular(5))),
+          textFieldConfiguration: TextFieldConfiguration(
+            controller: model.currentTag,
+            autofocus: model.hasTitleInput(),
+            textInputAction: TextInputAction.next,
+            onSubmitted: (value) => _onNewTag(state, value),
+            keyboardType: TextInputType.text,
+            decoration: InputDecoration(
+                icon: Icon(Icons.more),
+                hintText: label)
+          ),
+          validator: MaxLengthValidator(30, errorText: "Maximum 30 characters allowed"),
+          itemBuilder: (context, suggestion) => ListTile(title: Text(suggestion)),
+          errorBuilder: (context, error) => null,
+          noItemsFoundBuilder: (context) => null,
+          loadingBuilder: (context) => null,
+          suggestionsCallback: (pattern) => _fetchSuggestions(state.context, pattern),
+          hideOnError: true,
+          hideOnEmpty: true,
+          hideOnLoading: true,
+          onSuggestionSelected: (suggestion) => _onNewTag(state, suggestion),
+          debounceDuration: Duration(milliseconds: 500),
     );
   }
 
+  Future<List<String>> _fetchSuggestions(BuildContext context, String pattern) {
+    if (pattern.length < 3) {
+      return Future.value([]);
+    }
+    return MediaQueryService.current(context).suggestTags(pattern, 5);
+  }
+
   void _onNewTag(FormFieldState<Set<String>> state, String newTag) {
-    model.tags.add(newTag);
-    model.currentTag.text = '';
-    state.didChange(model.tags);
+    if (newTag.isNotEmpty) {
+      model.tags.add(newTag);
+      model.currentTag.text = '';
+      state.didChange(model.tags);
+    }
   }
 
   Widget _buildTag(FormFieldState<Set<String>> state, String tag) {

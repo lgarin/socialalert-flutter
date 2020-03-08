@@ -68,11 +68,20 @@ class _MediaQueryApi {
   Future<QueryResultMediaInfo> listMedia({String category, String keywords, PagingParameter paging, String accessToken}) async {
     final categoryParameter = category != null ? '&category=$category' : '';
     final keywordsParameter = keywords != null ? '&keywords=$keywords' : '';
-    var url = '/media/search?pageNumber=${paging.pageNumber}&pageSize=${paging.pageSize}&pagingTimestamp=${paging.timestamp}$categoryParameter$keywordsParameter';
+    final url = '/media/search?pageNumber=${paging.pageNumber}&pageSize=${paging.pageSize}&pagingTimestamp=${paging.timestamp}$categoryParameter$keywordsParameter';
     await Future.delayed(Duration(seconds: 1));
     final response = await _getJson(url, accessToken);
     if (response.statusCode == 200) {
       return QueryResultMediaInfo.fromJson(jsonDecode(response.body));
+    }
+    throw response.reasonPhrase;
+  }
+
+  Future<List<String>> suggestTags({String term, int maxHitCount, String accessToken}) async {
+    final url = '/media/suggestTags?term=$term&maxHitCount=$maxHitCount';
+    final response = await _getJson(url, accessToken);
+    if (response.statusCode == 200) {
+      return List<String>.from(jsonDecode(response.body));
     }
     throw response.reasonPhrase;
   }
@@ -94,6 +103,16 @@ class MediaQueryService {
     try {
       return await _api.listMedia(category: category, keywords: keywords,
           paging: paging, accessToken: accessToken);
+    } catch (e) {
+      print(e);
+      throw e;
+    }
+  }
+
+  Future<List<String>> suggestTags(String term, int maxHitCount) async {
+    final accessToken = await _authService.accessToken;
+    try {
+      return await _api.suggestTags(term: term, maxHitCount: maxHitCount, accessToken: accessToken);
     } catch (e) {
       print(e);
       throw e;
