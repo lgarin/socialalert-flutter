@@ -163,7 +163,7 @@ class _LoginFormState extends State<_LoginForm> {
 
   Future<LoginModel> _prepareModel(BuildContext context) async {
     final credential = await AuthService.current(context).initialCredential;
-    if (credential.username.isNotEmpty && credential.password.isNotEmpty) {
+    if (credential.isDefined()) {
       _credential = credential;
     }
     return LoginModel.fromCredential(credential);
