@@ -99,6 +99,9 @@ class MediaQueryService {
   MediaQueryService(this._authService);
 
   Future<QueryResultMediaInfo> listMedia(String category, String keywords, PagingParameter paging) async {
+    if (keywords.isEmpty) {
+      keywords = null;
+    }
     final accessToken = await _authService.accessToken;
     try {
       return await _api.listMedia(category: category, keywords: keywords,
@@ -110,6 +113,9 @@ class MediaQueryService {
   }
 
   Future<List<String>> suggestTags(String term, int maxHitCount) async {
+    if (term == null || term.length < 3) {
+      return List<String>();
+    }
     final accessToken = await _authService.accessToken;
     try {
       return await _api.suggestTags(term: term, maxHitCount: maxHitCount, accessToken: accessToken);

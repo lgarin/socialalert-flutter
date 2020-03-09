@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:social_alert_app/base.dart';
@@ -24,7 +26,7 @@ class _HomePageState extends BasePageState<HomePage> with SingleTickerProviderSt
   static final extendedCategoryTokens = <String>[null]..addAll(categoryTokens);
 
   bool _searching = false;
-  String _searchKeywords;
+  final _searchKeywords = TextEditingController();
   TabController _categoryController;
 
   _HomePageState() : super(AppRoute.Home);
@@ -43,7 +45,7 @@ class _HomePageState extends BasePageState<HomePage> with SingleTickerProviderSt
   Widget _createCurrentDisplay(String categoryToken) {
     switch (_currentDisplayIndex) {
       case _galleryIndex:
-        return _GalleryDisplay(categoryToken, _searchKeywords);
+        return _GalleryDisplay(categoryToken, _searchKeywords.text);
       case _feedIndex:
         return _FeedDisplay(categoryToken);
       case _mapIndex:
@@ -59,7 +61,7 @@ class _HomePageState extends BasePageState<HomePage> with SingleTickerProviderSt
     setState(() {
       _searching = !_searching;
       if (!_searching) {
-        _searchKeywords = null;
+        _searchKeywords.clear();
       }
     });
   }
@@ -67,7 +69,7 @@ class _HomePageState extends BasePageState<HomePage> with SingleTickerProviderSt
   void _beginSearch(String keywords) {
     if (keywords.isNotEmpty) {
       setState(() {
-        _searchKeywords = keywords;
+        _searchKeywords.text = keywords;
       });
     } else {
       _switchSearching();
@@ -92,20 +94,39 @@ class _HomePageState extends BasePageState<HomePage> with SingleTickerProviderSt
     );
   }
 
-  TextField _buildSearchField() {
-    return TextField(
-      onSubmitted: _beginSearch,
-      autofocus: _searchKeywords == null,
-      textInputAction: TextInputAction.search,
-      style: TextStyle(color: Colors.white),
-      decoration: InputDecoration(
-          filled: false,
-          border: InputBorder.none,
-          hintStyle: TextStyle(color: Colors.grey),
-          hintText: "Enter keyword here",
-          icon: Icon(Icons.search, color: Colors.white),
-      ),
+  Widget _buildSearchField() {
+    return TypeAheadField<String>(
+        direction: AxisDirection.down,
+        suggestionsBoxDecoration: SuggestionsBoxDecoration(borderRadius: BorderRadius.all(Radius.circular(5))),
+        textFieldConfiguration: TextFieldConfiguration(
+          controller: _searchKeywords,
+          onSubmitted: (v) => _beginSearch(v as String),
+          autofocus: _searchKeywords.text.isEmpty,
+          textInputAction: TextInputAction.search,
+          style: TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+              filled: false,
+              border: InputBorder.none,
+              hintStyle: TextStyle(color: Colors.grey),
+              hintText: "Enter keyword here",
+              icon: Icon(Icons.search, color: Colors.white),
+          )
+        ),
+        itemBuilder: (context, suggestion) => ListTile(title: Text(suggestion)),
+        errorBuilder: (context, error) => null,
+        noItemsFoundBuilder: (context) => null,
+        loadingBuilder: (context) => null,
+        suggestionsCallback: _fetchSuggestions,
+        hideOnError: true,
+        hideOnEmpty: true,
+        hideOnLoading: true,
+        onSuggestionSelected: _beginSearch,
+        debounceDuration: Duration(milliseconds: 500),
     );
+  }
+
+  Future<List<String>> _fetchSuggestions(String pattern) {
+    return MediaQueryService.current(context).suggestTags(pattern, 5);
   }
 
   BottomNavigationBar buildNavBar(BuildContext context) {

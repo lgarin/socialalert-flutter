@@ -289,9 +289,6 @@ class _TagsWidget extends StatelessWidget {
   }
 
   Future<List<String>> _fetchSuggestions(BuildContext context, String pattern) {
-    if (pattern.length < 3) {
-      return Future.value([]);
-    }
     return MediaQueryService.current(context).suggestTags(pattern, 5);
   }
 
