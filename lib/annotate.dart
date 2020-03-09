@@ -73,7 +73,7 @@ class _AnnotatePageState extends State<AnnotatePage> {
               fullScreen: _fullImage,
               fullScreenSwitch: _switchFullImage,
               child: _MetadataForm(model: _model, formKey: _formKey, onPublish: _onPublish),
-              childHeight: 475)
+              childHeight: 440)
         )
     );
   }

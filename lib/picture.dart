@@ -37,6 +37,7 @@ class LocalPicturePreview extends StatelessWidget {
 
   Container _buildChildContainer(BuildContext context) {
     return Container(
+      height: childHeight.ceilToDouble(),
       decoration: BoxDecoration(
           color: backgroundColor,
           borderRadius: BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20))
