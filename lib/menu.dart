@@ -1,6 +1,7 @@
 import 'package:badges/badges.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:social_alert_app/common.dart';
 import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/service/authentication.dart';
@@ -165,19 +166,7 @@ class _Header extends StatelessWidget {
         ]);
   }
 
-  Container _buildAvatar(BuildContext context, UserProfile profile) {
-    return Container(
-      width: 100.0,
-      height: 100.0,
-      decoration: BoxDecoration(
-        color: Theme.of(context).accentColor,
-        image: DecorationImage(
-          image: profile.imageUri != null ? NetworkImage(profile.imageUri) : AssetImage('images/unknown_user.png'),
-          fit: BoxFit.cover,
-        ),
-        borderRadius: BorderRadius.all(Radius.circular(50.0)),
-        border: Border.all(color: Colors.white, width: 4.0),
-      ),
-    );
+  Widget _buildAvatar(BuildContext context, UserProfile profile) {
+    return UserAvatar(radius: 100.0, imageUri: profile.imageUri, online: true);
   }
 }

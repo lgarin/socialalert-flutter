@@ -46,11 +46,16 @@ Future showConfirmDialog(BuildContext context, String title, String message, Voi
 }
 
 class LoadingCircle extends StatelessWidget {
+  final double progressValue;
+
+  const LoadingCircle({Key key, this.progressValue}) : super(key: key);
+
+
   @override
   Widget build(BuildContext context) {
     return Center(
       child: Container(
-        child: CircularProgressIndicator(),
+        child: CircularProgressIndicator(value: progressValue),
         alignment: Alignment(0.0, 0.0),
       ),
     );
@@ -67,5 +72,4 @@ class NonEmptyValidator extends TextFieldValidator {
   bool isValid(String value) {
     return value.trim().isNotEmpty;
   }
-
 }

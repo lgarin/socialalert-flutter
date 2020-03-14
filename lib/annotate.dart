@@ -105,7 +105,7 @@ class _AnnotatePageState extends State<AnnotatePage> {
     if (selectedItem == _PopupAction.DELETE) {
       showConfirmDialog(context, 'Delete Snype', 'Do you really want to delete this upload?', _onConfirmUploadDeletion);
     } else if (selectedItem == _PopupAction.INFO) {
-      Navigator.of(context).pushNamed(AppRoute.PictureInfo, arguments: _upload);
+      Navigator.of(context).pushNamed(AppRoute.LocalPictureInfo, arguments: _upload);
     }
   }
 

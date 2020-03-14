@@ -75,7 +75,7 @@ class _UploadsPageState extends BasePageState<UploadsPage> {
 
   Widget _buildListTile(BuildContext context, UploadTask task) {
     return Consumer<UploadTask>(
-      child: Hero(tag: task.file.path, child: Image.file(task.file, height: 70, width: 70, fit: BoxFit.cover)),
+      child: Hero(tag: task.id, child: Image.file(task.file, height: 70, width: 70, fit: BoxFit.cover)),
       builder: (context, task, child) => ListTile(
             leading: child,
             title: Text(task.title ?? '?'),
@@ -153,7 +153,7 @@ class _UploadsPageState extends BasePageState<UploadsPage> {
     } else if (task.status == UploadStatus.CLAIMED) {
       UploadService.current(context).deleteTask(task);
     } else {
-      Navigator.of(context).pushNamed(AppRoute.PictureInfo, arguments: task);
+      Navigator.of(context).pushNamed(AppRoute.LocalPictureInfo, arguments: task);
     }
   }
 }

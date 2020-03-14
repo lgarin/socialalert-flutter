@@ -168,10 +168,10 @@ class _GalleryDisplay extends StatefulWidget {
   _GalleryDisplay(this.categoryToken, this.keywords) : super(key: ValueKey('$categoryToken/$keywords'));
 
   @override
-  __GalleryDisplayState createState() => __GalleryDisplayState();
+  _GalleryDisplayState createState() => _GalleryDisplayState();
 }
 
-class __GalleryDisplayState extends State<_GalleryDisplay> {
+class _GalleryDisplayState extends State<_GalleryDisplay> {
   static final pageSize = 50;
   static final spacing = 4.0;
 
@@ -291,9 +291,9 @@ class __GalleryDisplayState extends State<_GalleryDisplay> {
     return GridView.count(
             crossAxisCount: (orientation == Orientation.portrait) ? 2 : 3,
             childAspectRatio: 16.0 / 9.0,
-            mainAxisSpacing: __GalleryDisplayState.spacing,
-            crossAxisSpacing: __GalleryDisplayState.spacing,
-            padding: EdgeInsets.all(__GalleryDisplayState.spacing),
+            mainAxisSpacing: _GalleryDisplayState.spacing,
+            crossAxisSpacing: _GalleryDisplayState.spacing,
+            padding: EdgeInsets.all(_GalleryDisplayState.spacing),
             children: _data.map(_buildGridTile).toList()
     );
   }
@@ -303,10 +303,12 @@ class __GalleryDisplayState extends State<_GalleryDisplay> {
         child: GridTile(
           child: Hero(
               tag: media.mediaUri,
-              child: Image.network(MediaQueryService.toThumbnailUrl(media), fit: BoxFit.cover),
+              child: Image.network(MediaQueryService.toThumbnailUrl(media.mediaUri), fit: BoxFit.cover,
+                                    cacheHeight: thumbnailHeight, cacheWidth: thumbnailWidth,),
             ),
           footer: _buildTileFooter(media)
         ),
+        onTap: () => Navigator.of(context).pushNamed(AppRoute.RemotePictureDetail, arguments: media.mediaUri),
     );
   }
 
@@ -317,7 +319,7 @@ class __GalleryDisplayState extends State<_GalleryDisplay> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             SizedBox(height: 4,),
-            Text(media.title, style: TextStyle(fontSize: 14, color: Colors.black)),
+            Text(media.title, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 14, color: Colors.black)),
             SizedBox(height: 4,),
             Row(
               children: <Widget>[

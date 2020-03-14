@@ -38,6 +38,64 @@ class MediaInfo {
   }
 }
 
+enum ApprovalModifier {
+  LIKE,
+  DISLIKE,
+}
+
+const Map<String, ApprovalModifier> _approvalModifierMap = {
+  'LIKE': ApprovalModifier.LIKE,
+  'DISLIKE': ApprovalModifier.DISLIKE,
+};
+
+class MediaUserInfo {
+  final String id;
+  final String username;
+  final bool online;
+  final String imageUri;
+
+  MediaUserInfo.fromJson(Map<String, dynamic> json) :
+        id = json['id'],
+        username = json['username'],
+        online = json['online'],
+        imageUri = json['imageUri'];
+}
+
+class MediaDetail {
+  final String title;
+  final String description;
+  final DateTime creation;
+  final String mediaUri;
+  final int hitCount;
+  final int likeCount;
+  final int dislikeCount;
+  final double latitude;
+  final double longitude;
+  final String locality;
+  final String country;
+  final String category;
+  final List<String> tags;
+  final ApprovalModifier userApprovalModifier;
+  final MediaUserInfo creator;
+
+  MediaDetail.fromJson(Map<String, dynamic> json) :
+        title = json['title'],
+        description = json['description'],
+        creation = DateTime.fromMillisecondsSinceEpoch(json['creation']),
+        mediaUri = json['mediaUri'],
+        hitCount = json['hitCount'],
+        likeCount = json['likeCount'],
+        dislikeCount = json['dislikeCount'],
+        latitude = json['latitude'],
+        longitude = json['longitude'],
+        locality = json['locality'],
+        country = json['country'],
+        category = json['category'],
+        tags = List<String>.from(json['tags']),
+        userApprovalModifier = _approvalModifierMap[json['userApprovalModifier']],
+        creator = MediaUserInfo.fromJson(json['creator']);
+}
+
 class QueryResultMediaInfo {
   final List<MediaInfo> content;
   final PagingParameter nextPage;
@@ -69,7 +127,6 @@ class _MediaQueryApi {
     final categoryParameter = category != null ? '&category=$category' : '';
     final keywordsParameter = keywords != null ? '&keywords=$keywords' : '';
     final url = '/media/search?pageNumber=${paging.pageNumber}&pageSize=${paging.pageSize}&pagingTimestamp=${paging.timestamp}$categoryParameter$keywordsParameter';
-    await Future.delayed(Duration(milliseconds: 500));
     final response = await _getJson(url, accessToken);
     if (response.statusCode == 200) {
       return QueryResultMediaInfo.fromJson(jsonDecode(response.body));
@@ -85,6 +142,15 @@ class _MediaQueryApi {
     }
     throw response.reasonPhrase;
   }
+
+  Future<MediaDetail> viewDetail({String mediaUri, String accessToken}) async {
+    final url = '/media/view/$mediaUri';
+    final response = await _getJson(url, accessToken);
+    if (response.statusCode == 200) {
+      return MediaDetail.fromJson(jsonDecode(response.body));
+    }
+    throw response.reasonPhrase;
+  }
 }
 
 class MediaQueryService {
@@ -94,7 +160,9 @@ class MediaQueryService {
   static MediaQueryService current(BuildContext context) =>
       Provider.of<MediaQueryService>(context, listen: false);
 
-  static String toThumbnailUrl(MediaInfo media) => baseServerUrl + '/file/thumbnail/' + media.mediaUri;
+  static String toThumbnailUrl(String mediaUri) => baseServerUrl + '/file/thumbnail/' + mediaUri;
+
+  static String toPreviewUrl(String mediaUri) => baseServerUrl + '/file/preview/' + mediaUri;
 
   MediaQueryService(this._authService);
 
@@ -123,5 +191,23 @@ class MediaQueryService {
       print(e);
       throw e;
     }
+  }
+
+  Future<MediaDetail> viewDetail(String mediaUri) async {
+    final accessToken = await _authService.accessToken;
+    try {
+      return await _api.viewDetail(mediaUri: mediaUri, accessToken: accessToken);
+    } catch (e) {
+      print(e);
+      throw e;
+    }
+  }
+
+  Future<Map<String, String>> buildImagePreviewHeader() async {
+    final accessToken = await _authService.accessToken;
+    return {
+      'Accept': 'image/jpeg',
+      'Authorization': accessToken
+    };
   }
 }

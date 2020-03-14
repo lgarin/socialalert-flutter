@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:social_alert_app/annotate.dart';
 import 'package:social_alert_app/home.dart';
 import 'package:social_alert_app/login.dart';
+import 'package:social_alert_app/media.dart';
 import 'package:social_alert_app/network.dart';
 import 'package:social_alert_app/picture.dart';
 import 'package:social_alert_app/service/authentication.dart';
@@ -52,7 +53,8 @@ class SocialAlertApp extends StatelessWidget {
           AppRoute.Uploads: (context) => UploadsPage(),
           AppRoute.Annotate: (context) => AnnotatePage(ModalRoute.of(context).settings.arguments),
           AppRoute.Network: (context) => NetworkPage(),
-          AppRoute.PictureInfo: (context) => LocalPictureInfoPage(ModalRoute.of(context).settings.arguments)
+          AppRoute.LocalPictureInfo: (context) => LocalPictureInfoPage(ModalRoute.of(context).settings.arguments),
+          AppRoute.RemotePictureDetail: (context) => RemotePictureDetailPage(ModalRoute.of(context).settings.arguments),
         },
       );
   }
@@ -64,5 +66,6 @@ class AppRoute {
   static const Annotate = 'annotate';
   static const Uploads = 'uploads';
   static const Network = 'network';
-  static const PictureInfo = 'prictureInfo';
+  static const LocalPictureInfo = 'pictureInfo';
+  static const RemotePictureDetail ='pictureDetail';
 }
