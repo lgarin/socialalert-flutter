@@ -64,7 +64,7 @@ class MediaUserInfo {
 class MediaDetail {
   final String title;
   final String description;
-  final DateTime creation;
+  final DateTime timestamp;
   final String mediaUri;
   final int hitCount;
   final int likeCount;
@@ -77,11 +77,13 @@ class MediaDetail {
   final List<String> tags;
   final ApprovalModifier userApprovalModifier;
   final MediaUserInfo creator;
+  final String cameraMaker;
+  final String cameraModel;
 
   MediaDetail.fromJson(Map<String, dynamic> json) :
         title = json['title'],
         description = json['description'],
-        creation = DateTime.fromMillisecondsSinceEpoch(json['creation']),
+        timestamp = DateTime.fromMillisecondsSinceEpoch(json['timestamp']),
         mediaUri = json['mediaUri'],
         hitCount = json['hitCount'],
         likeCount = json['likeCount'],
@@ -93,7 +95,9 @@ class MediaDetail {
         category = json['category'],
         tags = List<String>.from(json['tags']),
         userApprovalModifier = _approvalModifierMap[json['userApprovalModifier']],
-        creator = MediaUserInfo.fromJson(json['creator']);
+        creator = MediaUserInfo.fromJson(json['creator']),
+        cameraMaker = json['cameraMaker'],
+        cameraModel = json['cameraModel'];
 }
 
 class QueryResultMediaInfo {

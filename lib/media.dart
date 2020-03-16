@@ -20,20 +20,59 @@ class RemotePictureDetailPage extends StatefulWidget {
 }
 
 class _RemotePictureDetailPageState extends BasePageState<RemotePictureDetailPage> {
+  static const _infoIndex = 0;
+  static const _feedIndex = 1;
+
+  int _currentDisplayIndex = _infoIndex;
 
   _RemotePictureDetailPageState() : super(AppRoute.RemotePictureDetail);
+
+  void _tabSelected(int index) {
+    setState(() {
+      _currentDisplayIndex = index;
+    });
+  }
+
+  AppBar buildAppBar() {
+    return AppBar(
+      title: Text(appName),
+    );
+  }
+
+  BottomNavigationBar buildNavBar(BuildContext context) {
+    return BottomNavigationBar(
+        currentIndex: _currentDisplayIndex,
+        onTap: _tabSelected,
+        items: <BottomNavigationBarItem>[
+          new BottomNavigationBarItem(
+            icon: Icon(Icons.info_outline),
+            title: Text('Details'),
+          ),
+          new BottomNavigationBarItem(
+            icon: Icon(Icons.create),
+            title: Text('Scribes'),
+          ),
+        ]
+    );
+  }
 
   @override
   Widget buildBody(BuildContext context) {
     return FutureProvider(
         key: ValueKey(widget.mediaUri),
         create: _readPictureDetail,
+        catchError: _handleError,
         child: Consumer<MediaDetail>(
           builder: _buildPictureDetail,
           child: NetworkPreviewImage(imageUri: widget.mediaUri),)
     );
   }
-  
+
+  MediaDetail _handleError(BuildContext context, Object error) {
+   print(error.toString());
+    return null;
+  }
+
   Future<MediaDetail> _readPictureDetail(BuildContext context) {
     return MediaQueryService.current(context).viewDetail(widget.mediaUri);
   }
@@ -51,7 +90,7 @@ class _RemotePictureDetailPageState extends BasePageState<RemotePictureDetailPag
         Text(media.description ?? '', softWrap: true),
         SizedBox(height: 5.0,),
         picture,
-
+        _buildInteractionBanner(context, media),
       ],
     );
   }
@@ -63,8 +102,20 @@ class _RemotePictureDetailPageState extends BasePageState<RemotePictureDetailPag
         SizedBox(width: 5.0,),
         Text(media.creator.username, style: Theme.of(context).textTheme.headline6),
         Spacer(),
-        Timeago(date: media.creation, builder: (_, value) => Text(value, style: TextStyle(fontStyle: FontStyle.italic),)),
+        Timeago(date: media.timestamp, builder: (_, value) => Text(value, style: TextStyle(fontStyle: FontStyle.italic),)),
       ],
+    );
+  }
+
+  Widget _buildInteractionBanner(BuildContext context, MediaDetail media) {
+    return Row(
+        children: <Widget>[
+          RaisedButton.icon(onPressed: () {}, color: Color.fromARGB(255, 231, 40, 102), icon: Icon(Icons.thumb_up), label: Text(media.likeCount.toString())),
+          SizedBox(width: 10.0,),
+          RaisedButton.icon(disabledColor: Color.fromARGB(255, 231, 40, 102), icon: Icon(Icons.thumb_down), label: Text(media.dislikeCount.toString())),
+          SizedBox(width: 10.0,),
+          RaisedButton.icon(onPressed: null, icon: Icon(Icons.remove_red_eye), label: Text(media.hitCount.toString()), disabledTextColor: Colors.black,)
+        ]
     );
   }
 }

@@ -309,7 +309,7 @@ class _UploadApi {
       final baseLocationUrl = baseServerUrl + '/file/download/';
       final mediaUri = response.headers['Location'].substring(baseLocationUrl.length);
       return _UploadTaskResult(taskId: response.taskId, mediaUri: mediaUri, status: UploadStatus.UPLOADED);
-    } else if (response.status == UploadTaskStatus.failed) {
+    } else if (response.status == UploadTaskStatus.failed || response.status == UploadTaskStatus.complete) {
       return _UploadTaskResult(taskId: response.taskId, status: UploadStatus.UPLOAD_ERROR);
     } else {
       return _UploadTaskResult(taskId: response.taskId);
