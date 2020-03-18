@@ -9,7 +9,8 @@ import 'package:social_alert_app/picture.dart';
 import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/geolocation.dart';
 import 'package:social_alert_app/service/mediaquery.dart';
-import 'package:social_alert_app/service/upload.dart';
+import 'package:social_alert_app/service/mediaupdate.dart';
+import 'package:social_alert_app/service/mediaupload.dart';
 import 'package:social_alert_app/uploads.dart';
 
 void main() => runApp(SocialAlertApp());
@@ -24,8 +25,9 @@ class SocialAlertApp extends StatelessWidget {
           StreamProvider<GeoLocation>(create: (context) => GeoLocationService.current(context).locationStream),
           Provider<AuthService>(create: (_) => AuthService(), dispose: (_, service) => service.dispose()),
           StreamProvider<UserProfile>(create: (context) => AuthService.current(context).profileStream),
-          Provider<UploadService>(create: (context) => UploadService(AuthService.current(context)), dispose: (_, service) => service.dispose()),
+          Provider<MediaUploadService>(create: (context) => MediaUploadService(AuthService.current(context)), dispose: (_, service) => service.dispose()),
           Provider<MediaQueryService>(create: (context) => MediaQueryService(AuthService.current(context))),
+          Provider<MediaUpdateService>(create: (context) => MediaUpdateService(AuthService.current(context))),
         ],
         child: _buildApp()
     );

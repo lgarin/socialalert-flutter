@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:social_alert_app/service/upload.dart';
+import 'package:social_alert_app/service/mediaupload.dart';
 
 class LocalPicturePreview extends StatelessWidget {
   final Widget child;
@@ -64,7 +64,7 @@ class LocalPicturePreview extends StatelessWidget {
 
 class LocalPictureInfoPage extends StatefulWidget {
 
-  final UploadTask upload;
+  final MediaUploadTask upload;
 
   LocalPictureInfoPage(this.upload);
 

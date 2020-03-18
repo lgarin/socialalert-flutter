@@ -8,7 +8,21 @@ import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/service/configuration.dart';
 import 'package:social_alert_app/service/mediaquery.dart';
+import 'package:social_alert_app/service/mediaupdate.dart';
 import 'package:timeago_flutter/timeago_flutter.dart';
+
+class _MediaInfoModel with ChangeNotifier {
+  MediaDetail _detail;
+
+  _MediaInfoModel(this._detail);
+
+  MediaDetail get detail => _detail;
+
+  void refresh(MediaDetail newDetail) {
+    _detail = newDetail;
+    notifyListeners();
+  }
+}
 
 class RemotePictureDetailPage extends StatefulWidget {
 
@@ -48,36 +62,36 @@ class _RemotePictureDetailPageState extends BasePageState<RemotePictureDetailPag
     return FutureProvider(
         key: ValueKey(widget.mediaUri),
         create: _readPictureDetail,
-        catchError: _handleError,
-        child: Consumer<MediaDetail>(
+        child: Consumer<_MediaInfoModel>(
           builder: _buildPictureDetail,
           child: NetworkPreviewImage(imageUri: widget.mediaUri),)
     );
   }
 
-  MediaDetail _handleError(BuildContext context, Object error) {
-   print(error.toString());
-    return null;
+  Future<_MediaInfoModel> _readPictureDetail(BuildContext context) async {
+    try {
+      return _MediaInfoModel(await MediaQueryService.current(context).viewDetail(widget.mediaUri));
+    } catch (e) {
+      showSimpleDialog(context, 'Load failed', e.toString());
+      return null;
+    }
   }
 
-  Future<MediaDetail> _readPictureDetail(BuildContext context) {
-    return MediaQueryService.current(context).viewDetail(widget.mediaUri);
-  }
-
-  Widget _buildPictureDetail(BuildContext context, MediaDetail media, Widget picture) {
-    if (media == null) {
+  Widget _buildPictureDetail(BuildContext context, _MediaInfoModel model, Widget picture) {
+    if (model == null) {
       return LoadingCircle();
     }
     return ListView(
       padding: EdgeInsets.all(10.0),
       children: <Widget>[
-        _buildCreatorBanner(context, media),
+        _buildCreatorBanner(context, model.detail),
         Divider(),
-        _buildMediaTitle(media, context),
-        _buildMediaDescription(media),
+        _buildMediaTitle(model.detail, context),
+        _buildMediaDescription(model.detail),
         SizedBox(height: 5.0,),
         picture,
-        ChangeNotifierProvider.value(value: _tabSelectionModel, child: _MediaInteractionBar()),
+        ChangeNotifierProvider.value(value: _tabSelectionModel, child:
+          ChangeNotifierProvider.value(value: model, child: _MediaInteractionBar())),
       ],
     );
   }
@@ -106,63 +120,86 @@ class _RemotePictureDetailPageState extends BasePageState<RemotePictureDetailPag
 
 class _MediaInteractionBar extends StatelessWidget {
 
-  static final buttonColor = Color.fromARGB(255, 231, 40, 102);
-
   @override
   Widget build(BuildContext context) {
     final tabSelectionModel = Provider.of<_MediaTabSelectionModel>(context);
-    final media = Provider.of<MediaDetail>(context);
-    Widget lastWidget = tabSelectionModel.feedSelected ? _buildAddCommentButton(media) : _buildViewCountButton(media);
+    final model = Provider.of<_MediaInfoModel>(context);
+    Widget lastWidget = tabSelectionModel.feedSelected ? _buildAddCommentButton(model) : _buildViewCountButton(model);
     return Row(
         children: <Widget>[
-          _buidLikeButton(media),
+          _ApprovalButton(ApprovalModifier.LIKE),
           SizedBox(width: 10.0,),
-          _buidDislikeButton(media),
+          _ApprovalButton(ApprovalModifier.DISLIKE),
           Spacer(),
           lastWidget
         ]
     );
   }
 
-  RaisedButton _buildAddCommentButton(MediaDetail media) {
-    return RaisedButton.icon(onPressed: () {}, color: Colors.white, icon: Icon(Icons.add_comment), label: Text(media.commentCount.toString()));
+  RaisedButton _buildAddCommentButton(_MediaInfoModel model) {
+    final media = model.detail;
+    return RaisedButton.icon(onPressed: () {}, color: Colors.grey, icon: Icon(Icons.add_comment), label: Text(media.commentCount.toString()));
   }
 
-  RaisedButton _buildViewCountButton(MediaDetail media) {
+  RaisedButton _buildViewCountButton(_MediaInfoModel model) {
+    final media = model.detail;
     return RaisedButton.icon(onPressed: null,
         disabledTextColor: Colors.black,
         icon: Icon(Icons.remove_red_eye),
         label: Text(media.hitCount.toString())
     );
   }
+}
 
-  RaisedButton _buidLikeButton(MediaDetail media) {
-    VoidCallback onPressed;
-    if (media.userApprovalModifier == null || media.userApprovalModifier == ApprovalModifier.DISLIKE) {
-      onPressed = () {
+class _ApprovalButton extends StatelessWidget {
+  static final buttonColor = Color.fromARGB(255, 231, 40, 102);
 
-      };
+  final ApprovalModifier _approval;
+  final ApprovalModifier _inverseApproval;
+
+  static ApprovalModifier _computeInverse(ApprovalModifier modifier) {
+    if (modifier == ApprovalModifier.DISLIKE) {
+      return ApprovalModifier.LIKE;
+    } else if (modifier == ApprovalModifier.LIKE) {
+      return ApprovalModifier.DISLIKE;
+    } else {
+      return null;
     }
-    return RaisedButton.icon(onPressed: onPressed,
-        color: buttonColor,
-        disabledColor: buttonColor,
-        icon: Icon(Icons.thumb_up),
-        label: Text(media.likeCount.toString())
-    );
   }
 
-  RaisedButton _buidDislikeButton(MediaDetail media) {
-    VoidCallback onPressed;
-    if (media.userApprovalModifier == null || media.userApprovalModifier == ApprovalModifier.LIKE) {
-      onPressed = () {
+  _ApprovalButton(this._approval) : _inverseApproval = _computeInverse(_approval);
 
+  IconData _computeIcon(MediaDetail media) {
+    switch (_approval) {
+      case ApprovalModifier.DISLIKE: return Icons.thumb_down;
+      case ApprovalModifier.LIKE: return Icons.thumb_up;
+      default: return null;
+    }
+  }
+
+  String _computeLabel(MediaDetail media) {
+    switch (_approval) {
+      case ApprovalModifier.DISLIKE: return media.dislikeCount.toString();
+      case ApprovalModifier.LIKE: return media.likeCount.toString();
+      default: return null;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final model = Provider.of<_MediaInfoModel>(context);
+    final media = model.detail;
+    VoidCallback onPressed;
+    if (media.userApprovalModifier == null || media.userApprovalModifier == _inverseApproval) {
+      onPressed = () {
+        MediaUpdateService.current(context).changeApproval(media.mediaUri, _approval).then(model.refresh);
       };
     }
     return RaisedButton.icon(onPressed: onPressed,
         color: buttonColor,
         disabledColor: buttonColor,
-        icon: Icon(Icons.thumb_down),
-        label: Text(media.dislikeCount.toString())
+        icon: Icon(_computeIcon(media)),
+        label: Text(_computeLabel(media))
     );
   }
 }

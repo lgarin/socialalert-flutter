@@ -6,21 +6,21 @@ import 'package:provider/provider.dart';
 import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/menu.dart';
 import 'package:social_alert_app/service/geolocation.dart';
-import 'package:social_alert_app/service/upload.dart';
+import 'package:social_alert_app/service/mediaupload.dart';
 
 abstract class BasePageState<T extends StatefulWidget> extends State<T> {
   final appName = 'Snypix';
 
   final String pageName;
   final _scaffoldKey = GlobalKey<ScaffoldState>();
-  StreamSubscription<UploadTask> uploadResultListener;
+  StreamSubscription<MediaUploadTask> uploadResultListener;
 
   BasePageState(this.pageName);
 
   @override
   void initState() {
     super.initState();
-    uploadResultListener = UploadService.current(context).uploadResultStream.listen(_showSnackBar);
+    uploadResultListener = MediaUploadService.current(context).uploadResultStream.listen(_showSnackBar);
   }
 
   @override
@@ -29,7 +29,7 @@ abstract class BasePageState<T extends StatefulWidget> extends State<T> {
     super.dispose();
   }
 
-  void _showSnackBar(UploadTask task) {
+  void _showSnackBar(MediaUploadTask task) {
     if (_scaffoldKey.currentState == null) {
       return;
     }
@@ -39,20 +39,20 @@ abstract class BasePageState<T extends StatefulWidget> extends State<T> {
           content: Text('Title for media is missing', style: TextStyle(color: Colors.orange)),
           action: SnackBarAction(label: 'Edit', onPressed: () => Navigator.pushNamed(context, AppRoute.Annotate, arguments: task))
       ));
-    } else if (task.status == UploadStatus.UPLOADED) {
+    } else if (task.status == MediaUploadStatus.UPLOADED) {
       _scaffoldKey.currentState.showSnackBar(SnackBar(
         content: Text('Upload of "${task.title}" has completed', style: TextStyle(color: Colors.green)),
       ));
-    } else if (task.status == UploadStatus.UPLOAD_ERROR || task.status == UploadStatus.CLAIM_ERROR) {
+    } else if (task.status == MediaUploadStatus.UPLOAD_ERROR || task.status == MediaUploadStatus.CLAIM_ERROR) {
       _scaffoldKey.currentState.showSnackBar(SnackBar(
         content: Text('Upload of "${task.title}" has failed', style: TextStyle(color: Colors.red)),
-        action: SnackBarAction(label: 'Retry', onPressed: () => UploadService.current(context).manageTask(task)),
+        action: SnackBarAction(label: 'Retry', onPressed: () => MediaUploadService.current(context).manageTask(task)),
       ));
     }
   }
 
-  Future<UploadList> _loadUploadList(BuildContext context) async {
-    final uploadList = await UploadService.current(context).currentUploads();
+  Future<MediaUploadList> _loadUploadList(BuildContext context) async {
+    final uploadList = await MediaUploadService.current(context).currentUploads();
     for (final upload in uploadList) {
       if (upload.title == null) {
         _showSnackBar(upload);
@@ -63,7 +63,7 @@ abstract class BasePageState<T extends StatefulWidget> extends State<T> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureProvider<UploadList>(
+    return FutureProvider<MediaUploadList>(
         create: _loadUploadList,
         lazy: false,
         child: Scaffold(
@@ -103,8 +103,8 @@ abstract class BasePageState<T extends StatefulWidget> extends State<T> {
     final position = GeoLocationService.current(context).readPosition();
     final image = await ImagePicker.pickImage(source: ImageSource.camera);
     if (image != null) {
-      final task = UploadTask(file: image, type: UploadType.PICTURE, position: await position);
-      await UploadService.current(context).manageTask(task);
+      final task = MediaUploadTask(file: image, type: MediaUploadType.PICTURE, position: await position);
+      await MediaUploadService.current(context).manageTask(task);
       await Navigator.of(context).pushNamed(AppRoute.Annotate, arguments: task);
     }
   }

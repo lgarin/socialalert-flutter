@@ -9,7 +9,7 @@ import 'package:social_alert_app/picture.dart';
 import 'package:social_alert_app/service/configuration.dart';
 import 'package:social_alert_app/service/geolocation.dart';
 import 'package:social_alert_app/service/mediaquery.dart';
-import 'package:social_alert_app/service/upload.dart';
+import 'package:social_alert_app/service/mediaupload.dart';
 import 'helper.dart';
 
 class _CaptureModel {
@@ -31,7 +31,7 @@ class _CaptureModel {
 
 class AnnotatePage extends StatefulWidget {
 
-  final UploadTask _upload;
+  final MediaUploadTask _upload;
 
   AnnotatePage(this._upload);
 
@@ -47,7 +47,7 @@ enum _PopupAction {
 class _AnnotatePageState extends State<AnnotatePage> {
   static const backgroundColor = Color.fromARGB(255, 240, 240, 240);
   final _formKey = GlobalKey<FormState>();
-  final UploadTask _upload;
+  final MediaUploadTask _upload;
   final _CaptureModel _model;
   bool _fullImage = false;
 
@@ -110,7 +110,7 @@ class _AnnotatePageState extends State<AnnotatePage> {
   }
 
   void _onConfirmUploadDeletion() {
-    UploadService.current(context).deleteTask(_upload);
+    MediaUploadService.current(context).deleteTask(_upload);
     Navigator.pop(context);
   }
 
@@ -125,7 +125,7 @@ class _AnnotatePageState extends State<AnnotatePage> {
         location: location
       );
       try {
-        await UploadService.current(context).manageTask(_upload);
+        await MediaUploadService.current(context).manageTask(_upload);
         Navigator.pop(context);
       } catch (e) {
         showSimpleDialog(context, "Upload failed", e.toString());

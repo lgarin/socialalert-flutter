@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:social_alert_app/base.dart';
 import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/main.dart';
-import 'package:social_alert_app/service/upload.dart';
+import 'package:social_alert_app/service/mediaupload.dart';
 import 'package:timeago_flutter/timeago_flutter.dart';
 
 class UploadsPage extends StatefulWidget {
@@ -18,7 +18,7 @@ enum _UploadErrorAction {
 
 class _UploadErrorItem {
   final _UploadErrorAction action;
-  final UploadTask task;
+  final MediaUploadTask task;
 
   _UploadErrorItem(this.action, this.task);
 }
@@ -31,16 +31,16 @@ class _UploadsPageState extends BasePageState<UploadsPage> {
 
   @override
   Widget buildBody(BuildContext context) {
-    return Consumer<UploadList>(
+    return Consumer<MediaUploadList>(
         builder: (context, uploads, _) => ChangeNotifierProvider.value(value: uploads,
-          child: Consumer<UploadList>(
+          child: Consumer<MediaUploadList>(
             builder: (context, value, _) => _buildList(context, value)
           )
         )
     );
   }
 
-  Widget _buildList(BuildContext context, UploadList uploads) {
+  Widget _buildList(BuildContext context, MediaUploadList uploads) {
     if (uploads == null) {
       return LoadingCircle();
     } else if (uploads.isEmpty) {
@@ -65,7 +65,7 @@ class _UploadsPageState extends BasePageState<UploadsPage> {
     ));
   }
 
-  Widget _buildTask(BuildContext context, UploadTask task) {
+  Widget _buildTask(BuildContext context, MediaUploadTask task) {
     return Card(
           key: ValueKey(task.id),
           margin: EdgeInsets.only(left: 10, right: 10, top: 10),
@@ -73,8 +73,8 @@ class _UploadsPageState extends BasePageState<UploadsPage> {
       );
   }
 
-  Widget _buildListTile(BuildContext context, UploadTask task) {
-    return Consumer<UploadTask>(
+  Widget _buildListTile(BuildContext context, MediaUploadTask task) {
+    return Consumer<MediaUploadTask>(
       child: Hero(tag: task.id, child: Image.file(task.file, height: 70, width: 70, fit: BoxFit.cover)),
       builder: (context, task, child) => ListTile(
             leading: child,
@@ -87,7 +87,7 @@ class _UploadsPageState extends BasePageState<UploadsPage> {
     );
   }
 
-  Widget _buildSubtitle(BuildContext context, UploadTask task) {
+  Widget _buildSubtitle(BuildContext context, MediaUploadTask task) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -100,31 +100,31 @@ class _UploadsPageState extends BasePageState<UploadsPage> {
     );
   }
 
-  Widget _buildIcon(BuildContext context, UploadTask task) {
-    if (task.status == UploadStatus.UPLOADING) {
+  Widget _buildIcon(BuildContext context, MediaUploadTask task) {
+    if (task.status == MediaUploadStatus.UPLOADING) {
       return CircularProgressIndicator(
         value: task.uploadProgress,
       );
-    } else if (task.status == UploadStatus.CLAIMING) {
+    } else if (task.status == MediaUploadStatus.CLAIMING) {
       return CircularProgressIndicator();
-    } else if (task.status == UploadStatus.CREATED) {
+    } else if (task.status == MediaUploadStatus.CREATED) {
       return Icon(Icons.navigate_next, size: iconSize);
-    } else if (task.status == UploadStatus.ANNOTATED || task.status == UploadStatus.UPLOADED) {
+    } else if (task.status == MediaUploadStatus.ANNOTATED || task.status == MediaUploadStatus.UPLOADED) {
       return Icon(Icons.refresh, size: iconSize);
-    } else if (task.status == UploadStatus.UPLOAD_ERROR || task.status == UploadStatus.CLAIM_ERROR) {
+    } else if (task.status == MediaUploadStatus.UPLOAD_ERROR || task.status == MediaUploadStatus.CLAIM_ERROR) {
       return PopupMenuButton(
         child: Icon(Icons.error, size: iconSize),
         itemBuilder: (context) => _buildUploadErrorMenu(context, task),
         onSelected: _onErrorItemSelection,
       );
-    } else if (task.status == UploadStatus.CLAIMED) {
+    } else if (task.status == MediaUploadStatus.CLAIMED) {
       return Icon(Icons.done, size: iconSize);
     } else {
       return null;
     }
   }
 
-  List<PopupMenuItem<_UploadErrorItem>> _buildUploadErrorMenu(BuildContext context, UploadTask task) {
+  List<PopupMenuItem<_UploadErrorItem>> _buildUploadErrorMenu(BuildContext context, MediaUploadTask task) {
     return [
       PopupMenuItem(value: _UploadErrorItem(_UploadErrorAction.RETRY, task),
         child: ListTile(title: Text('Retry'), leading: Icon(Icons.refresh)),
@@ -139,19 +139,19 @@ class _UploadsPageState extends BasePageState<UploadsPage> {
     if (item.action == _UploadErrorAction.DELETE) {
       showConfirmDialog(context, 'Delete Snype', 'Do you really want to delete this upload?', () => _onConfirmUploadDeletion(item.task));
     } else if (item.action == _UploadErrorAction.RETRY) {
-      UploadService.current(context).manageTask(item.task);
+      MediaUploadService.current(context).manageTask(item.task);
     }
   }
 
-  void _onConfirmUploadDeletion(UploadTask task) {
-    UploadService.current(context).deleteTask(task);
+  void _onConfirmUploadDeletion(MediaUploadTask task) {
+    MediaUploadService.current(context).deleteTask(task);
   }
 
-  void _onItemSelected(UploadTask task) {
-    if (task.status == UploadStatus.CREATED) {
+  void _onItemSelected(MediaUploadTask task) {
+    if (task.status == MediaUploadStatus.CREATED) {
       Navigator.of(context).pushNamed(AppRoute.Annotate, arguments: task);
-    } else if (task.status == UploadStatus.CLAIMED) {
-      UploadService.current(context).deleteTask(task);
+    } else if (task.status == MediaUploadStatus.CLAIMED) {
+      MediaUploadService.current(context).deleteTask(task);
     } else {
       Navigator.of(context).pushNamed(AppRoute.LocalPictureInfo, arguments: task);
     }

@@ -6,7 +6,7 @@ import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/geolocation.dart';
-import 'package:social_alert_app/service/upload.dart';
+import 'package:social_alert_app/service/mediaupload.dart';
 
 class UserMenu extends StatelessWidget {
   final String currentPage;
@@ -73,7 +73,7 @@ class _MenuBar extends StatelessWidget {
             ListTile(
               enabled: currentPage != AppRoute.Uploads,
               selected: currentPage == AppRoute.Uploads,
-              leading: Consumer<UploadList>(
+              leading: Consumer<MediaUploadList>(
                 builder: _buildUploadBadge,
                 child: Icon(Icons.cloud_upload),
               ),
@@ -103,7 +103,7 @@ class _MenuBar extends StatelessWidget {
     );
   }
 
-  Widget _buildUploadBadge(BuildContext context, UploadList uploads, Widget child) {
+  Widget _buildUploadBadge(BuildContext context, MediaUploadList uploads, Widget child) {
     if (uploads != null) {
       return Badge(
         badgeColor: Colors.grey,
