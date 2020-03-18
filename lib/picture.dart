@@ -133,7 +133,7 @@ class _LocalPictureInfoPageState extends State<LocalPictureInfoPage> {
   }
 
   AppBar _buildAppBar(BuildContext context) {
-    return AppBar(title: Text(widget.upload.title ?? 'New Snype'));
+    return AppBar(title: Text(widget.upload.title ?? 'New Snype', overflow: TextOverflow.ellipsis));
   }
   
   Widget _buildInfoPanel(BuildContext context, _ExifData exifData) {

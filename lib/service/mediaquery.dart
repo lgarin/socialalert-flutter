@@ -69,6 +69,7 @@ class MediaDetail {
   final int hitCount;
   final int likeCount;
   final int dislikeCount;
+  final int commentCount;
   final double latitude;
   final double longitude;
   final String locality;
@@ -88,6 +89,7 @@ class MediaDetail {
         hitCount = json['hitCount'],
         likeCount = json['likeCount'],
         dislikeCount = json['dislikeCount'],
+        commentCount = json['commentCount'],
         latitude = json['latitude'],
         longitude = json['longitude'],
         locality = json['locality'],

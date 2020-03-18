@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:provider/provider.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:social_alert_app/base.dart';
 import 'package:social_alert_app/helper.dart';
@@ -16,20 +17,120 @@ class HomePage extends StatefulWidget {
   _HomePageState createState() => _HomePageState();
 }
 
+class _KeywordSearchModel extends ChangeNotifier {
+  bool _searching = false;
+  final _searchKeyword = TextEditingController();
+  final ValueChanged<String> _keywordChanged;
+
+  _KeywordSearchModel(this._keywordChanged);
+
+  TextEditingController get controller => _searchKeyword;
+
+  bool get searching => _searching;
+
+  void switchSearching() {
+    if (!_searching) {
+      _searching = true;
+      _searchKeyword.clear();
+    } else {
+      _searching = false;
+      _keywordChanged(null);
+    }
+    notifyListeners();
+  }
+
+  void beginSearch(String keywords) {
+    if (keywords.isNotEmpty) {
+      _searchKeyword.text = keywords;
+      notifyListeners();
+      _keywordChanged(keywords);
+    } else {
+      switchSearching();
+    }
+  }
+
+  String get keyword => _searchKeyword.text;
+}
+
+class _KeywordSearchWidget extends StatelessWidget {
+
+  final String _inactiveText;
+  final SuggestionsCallback<String> _suggestionsCallback;
+
+  _KeywordSearchWidget(this._inactiveText, this._suggestionsCallback);
+
+  @override
+  Widget build(BuildContext context) {
+    final searchModel = Provider.of<_KeywordSearchModel>(context);
+    return searchModel.searching ? _buildSearchField(searchModel) : Text(_inactiveText);
+  }
+
+  Widget _buildSearchField(_KeywordSearchModel searchModel) {
+    return TypeAheadField<String>(
+      direction: AxisDirection.down,
+      suggestionsBoxDecoration: SuggestionsBoxDecoration(borderRadius: BorderRadius.all(Radius.circular(5))),
+      textFieldConfiguration: TextFieldConfiguration(
+          controller: searchModel.controller,
+          onSubmitted: (v) => searchModel.beginSearch(v as String),
+          autofocus: searchModel.keyword.isEmpty,
+          textInputAction: TextInputAction.search,
+          style: TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            filled: false,
+            border: InputBorder.none,
+            hintStyle: TextStyle(color: Colors.grey),
+            hintText: "Enter keyword here",
+            icon: Icon(Icons.search, color: Colors.white),
+          )
+      ),
+      itemBuilder: (context, suggestion) => ListTile(title: Text(suggestion)),
+      errorBuilder: (context, error) => null,
+      noItemsFoundBuilder: (context) => null,
+      loadingBuilder: (context) => null,
+      suggestionsCallback: _suggestionsCallback,
+      hideOnError: true,
+      hideOnEmpty: true,
+      hideOnLoading: true,
+      onSuggestionSelected: searchModel.beginSearch,
+      debounceDuration: Duration(milliseconds: 500),
+    );
+  }
+}
+
+class _SearchTriggerWidget extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final searchModel = Provider.of<_KeywordSearchModel>(context);
+    return IconButton(
+      icon: Icon(searchModel.searching ? Icons.cancel : Icons.search),
+      onPressed: searchModel.switchSearching,
+    );
+  }
+}
+
 class _HomePageState extends BasePageState<HomePage> with SingleTickerProviderStateMixin {
   static const _galleryIndex = 0;
   static const _feedIndex = 1;
-  static const _mapIndex =2;
+  static const _mapIndex = 2;
 
   int _currentDisplayIndex = _galleryIndex;
   static final extendedCategoryLabels = ['All']..addAll(categoryLabels);
   static final extendedCategoryTokens = <String>[null]..addAll(categoryTokens);
 
-  bool _searching = false;
-  final _searchKeywords = TextEditingController();
+  _KeywordSearchModel _searchModel;
   TabController _categoryController;
+  String _keyword = '';
 
   _HomePageState() : super(AppRoute.Home);
+
+  void _beginSearch(String keyword) {
+    keyword = keyword ?? '';
+    if (keyword != _keyword) {
+      setState(() {
+        _keyword = keyword;
+      });
+    }
+  }
 
   void _tabSelected(int index) {
     setState(() {
@@ -39,13 +140,14 @@ class _HomePageState extends BasePageState<HomePage> with SingleTickerProviderSt
 
   void initState() {
     super.initState();
+    _searchModel = _KeywordSearchModel(_beginSearch);
     _categoryController = TabController(length: extendedCategoryLabels.length, vsync: this);
   }
 
-  Widget _createCurrentDisplay(String categoryToken) {
+  Widget _createCurrentDisplay(String categoryToken, String keyword) {
     switch (_currentDisplayIndex) {
       case _galleryIndex:
-        return _GalleryDisplay(categoryToken, _searchKeywords.text);
+        return _GalleryDisplay(categoryToken, keyword);
       case _feedIndex:
         return _FeedDisplay(categoryToken);
       case _mapIndex:
@@ -55,35 +157,19 @@ class _HomePageState extends BasePageState<HomePage> with SingleTickerProviderSt
     }
   }
 
+  Widget _createTabContent(String categoryToken) {
+    return _createCurrentDisplay(categoryToken, _keyword);
+  }
+
   Tab _buildTab(String category) => Tab(child: Text(category));
-
-  void _switchSearching() {
-    setState(() {
-      _searching = !_searching;
-      if (!_searching) {
-        _searchKeywords.clear();
-      }
-    });
-  }
-
-  void _beginSearch(String keywords) {
-    if (keywords.isNotEmpty) {
-      setState(() {
-        _searchKeywords.text = keywords;
-      });
-    } else {
-      _switchSearching();
-    }
-  }
 
   AppBar buildAppBar() {
     return AppBar(
-      title: _searching ? _buildSearchField() : Text(appName),
+      title: ChangeNotifierProvider.value(value: _searchModel,
+          child: _KeywordSearchWidget(appName, _fetchSuggestions)),
       actions: <Widget>[
-        IconButton(
-          icon: Icon(_searching ? Icons.cancel : Icons.search),
-          onPressed: _switchSearching,
-        ),
+        ChangeNotifierProvider.value(value: _searchModel,
+            child: _SearchTriggerWidget()),
         SizedBox(width: 20),
         Icon(Icons.more_vert),
         SizedBox(width: 10),
@@ -92,41 +178,6 @@ class _HomePageState extends BasePageState<HomePage> with SingleTickerProviderSt
         controller: _categoryController,
         tabs: extendedCategoryLabels.map(_buildTab).toList())
     );
-  }
-
-  Widget _buildSearchField() {
-    return TypeAheadField<String>(
-        direction: AxisDirection.down,
-        suggestionsBoxDecoration: SuggestionsBoxDecoration(borderRadius: BorderRadius.all(Radius.circular(5))),
-        textFieldConfiguration: TextFieldConfiguration(
-          controller: _searchKeywords,
-          onSubmitted: (v) => _beginSearch(v as String),
-          autofocus: _searchKeywords.text.isEmpty,
-          textInputAction: TextInputAction.search,
-          style: TextStyle(color: Colors.white),
-          decoration: InputDecoration(
-              filled: false,
-              border: InputBorder.none,
-              hintStyle: TextStyle(color: Colors.grey),
-              hintText: "Enter keyword here",
-              icon: Icon(Icons.search, color: Colors.white),
-          )
-        ),
-        itemBuilder: (context, suggestion) => ListTile(title: Text(suggestion)),
-        errorBuilder: (context, error) => null,
-        noItemsFoundBuilder: (context) => null,
-        loadingBuilder: (context) => null,
-        suggestionsCallback: _fetchSuggestions,
-        hideOnError: true,
-        hideOnEmpty: true,
-        hideOnLoading: true,
-        onSuggestionSelected: _beginSearch,
-        debounceDuration: Duration(milliseconds: 500),
-    );
-  }
-
-  Future<List<String>> _fetchSuggestions(String pattern) {
-    return MediaQueryService.current(context).suggestTags(pattern, 5);
   }
 
   BottomNavigationBar buildNavBar(BuildContext context) {
@@ -155,8 +206,12 @@ class _HomePageState extends BasePageState<HomePage> with SingleTickerProviderSt
     return TabBarView(
       controller: _categoryController,
       physics: _currentDisplayIndex != _mapIndex ? BouncingScrollPhysics() : NeverScrollableScrollPhysics(),
-      children: extendedCategoryTokens.map(_createCurrentDisplay).toList(),
+      children: extendedCategoryTokens.map(_createTabContent).toList(),
     );
+  }
+
+  Future<List<String>> _fetchSuggestions(String pattern) {
+    return MediaQueryService.current(context).suggestTags(pattern, 5);
   }
 }
 
@@ -303,12 +358,12 @@ class _GalleryDisplayState extends State<_GalleryDisplay> {
         child: GridTile(
           child: Hero(
               tag: media.mediaUri,
-              child: Image.network(MediaQueryService.toThumbnailUrl(media.mediaUri), fit: BoxFit.cover,
-                                    cacheHeight: thumbnailHeight, cacheWidth: thumbnailWidth,),
+              child: Image.network(MediaQueryService.toThumbnailUrl(media.mediaUri), key: ValueKey(media.mediaUri),
+                      fit: BoxFit.cover, cacheHeight: thumbnailHeight, cacheWidth: thumbnailWidth),
             ),
           footer: _buildTileFooter(media)
         ),
-        onTap: () => Navigator.of(context).pushNamed(AppRoute.RemotePictureDetail, arguments: media.mediaUri),
+        onTap: () => Navigator.of(context).pushNamed(AppRoute.RemotePictureDetail, arguments: media),
     );
   }
 

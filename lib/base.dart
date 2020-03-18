@@ -109,7 +109,7 @@ abstract class BasePageState<T extends StatefulWidget> extends State<T> {
     }
   }
 
-  BottomNavigationBar buildNavBar(BuildContext context) => null;
+  Widget buildNavBar(BuildContext context) => null;
 
   Widget buildBody(BuildContext context);
 }

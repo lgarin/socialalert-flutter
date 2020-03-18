@@ -1,4 +1,5 @@
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:social_alert_app/base.dart';
@@ -11,48 +12,34 @@ import 'package:timeago_flutter/timeago_flutter.dart';
 
 class RemotePictureDetailPage extends StatefulWidget {
 
-  final String mediaUri;
+  final MediaInfo _media;
 
-  RemotePictureDetailPage(this.mediaUri);
+  RemotePictureDetailPage(this._media);
+
+  String get mediaUri => _media.mediaUri;
+
+  String get mediaTitle => _media.title;
 
   @override
   _RemotePictureDetailPageState createState() => _RemotePictureDetailPageState();
 }
 
 class _RemotePictureDetailPageState extends BasePageState<RemotePictureDetailPage> {
-  static const _infoIndex = 0;
-  static const _feedIndex = 1;
 
-  int _currentDisplayIndex = _infoIndex;
+  final _tabSelectionModel = _MediaTabSelectionModel();
 
   _RemotePictureDetailPageState() : super(AppRoute.RemotePictureDetail);
 
-  void _tabSelected(int index) {
-    setState(() {
-      _currentDisplayIndex = index;
-    });
-  }
-
   AppBar buildAppBar() {
     return AppBar(
-      title: Text(appName),
+      title: Text(widget.mediaTitle, overflow: TextOverflow.ellipsis),
     );
   }
 
-  BottomNavigationBar buildNavBar(BuildContext context) {
-    return BottomNavigationBar(
-        currentIndex: _currentDisplayIndex,
-        onTap: _tabSelected,
-        items: <BottomNavigationBarItem>[
-          new BottomNavigationBarItem(
-            icon: Icon(Icons.info_outline),
-            title: Text('Details'),
-          ),
-          new BottomNavigationBarItem(
-            icon: Icon(Icons.create),
-            title: Text('Scribes'),
-          ),
-        ]
+  Widget buildNavBar(BuildContext context) {
+    return ChangeNotifierProvider.value(
+      value: _tabSelectionModel,
+      child: _MediaBottomNavigationBar(),
     );
   }
 
@@ -86,13 +73,22 @@ class _RemotePictureDetailPageState extends BasePageState<RemotePictureDetailPag
       children: <Widget>[
         _buildCreatorBanner(context, media),
         Divider(),
-        Text(media.title, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.headline6),
-        Text(media.description ?? '', softWrap: true),
+        _buildMediaTitle(media, context),
+        _buildMediaDescription(media),
         SizedBox(height: 5.0,),
         picture,
-        _buildInteractionBanner(context, media),
+        ChangeNotifierProvider.value(value: _tabSelectionModel, child: _MediaInteractionBar()),
       ],
     );
+  }
+
+  Text _buildMediaDescription(MediaDetail media) {
+    return Text(media.description ?? '', softWrap: true);
+  }
+
+  Text _buildMediaTitle(MediaDetail media, BuildContext context) {
+    return Text(media.title, overflow: TextOverflow.ellipsis,
+        style: Theme.of(context).textTheme.headline6);
   }
 
   Widget _buildCreatorBanner(BuildContext context, MediaDetail media) {
@@ -106,17 +102,109 @@ class _RemotePictureDetailPageState extends BasePageState<RemotePictureDetailPag
       ],
     );
   }
+}
 
-  Widget _buildInteractionBanner(BuildContext context, MediaDetail media) {
+class _MediaInteractionBar extends StatelessWidget {
+
+  static final buttonColor = Color.fromARGB(255, 231, 40, 102);
+
+  @override
+  Widget build(BuildContext context) {
+    final tabSelectionModel = Provider.of<_MediaTabSelectionModel>(context);
+    final media = Provider.of<MediaDetail>(context);
+    Widget lastWidget = tabSelectionModel.feedSelected ? _buildAddCommentButton(media) : _buildViewCountButton(media);
     return Row(
         children: <Widget>[
-          RaisedButton.icon(onPressed: () {}, color: Color.fromARGB(255, 231, 40, 102), icon: Icon(Icons.thumb_up), label: Text(media.likeCount.toString())),
+          _buidLikeButton(media),
           SizedBox(width: 10.0,),
-          RaisedButton.icon(disabledColor: Color.fromARGB(255, 231, 40, 102), icon: Icon(Icons.thumb_down), label: Text(media.dislikeCount.toString())),
-          SizedBox(width: 10.0,),
-          RaisedButton.icon(onPressed: null, icon: Icon(Icons.remove_red_eye), label: Text(media.hitCount.toString()), disabledTextColor: Colors.black,)
+          _buidDislikeButton(media),
+          Spacer(),
+          lastWidget
         ]
     );
+  }
+
+  RaisedButton _buildAddCommentButton(MediaDetail media) {
+    return RaisedButton.icon(onPressed: () {}, color: Colors.white, icon: Icon(Icons.add_comment), label: Text(media.commentCount.toString()));
+  }
+
+  RaisedButton _buildViewCountButton(MediaDetail media) {
+    return RaisedButton.icon(onPressed: null,
+        disabledTextColor: Colors.black,
+        icon: Icon(Icons.remove_red_eye),
+        label: Text(media.hitCount.toString())
+    );
+  }
+
+  RaisedButton _buidLikeButton(MediaDetail media) {
+    VoidCallback onPressed;
+    if (media.userApprovalModifier == null || media.userApprovalModifier == ApprovalModifier.DISLIKE) {
+      onPressed = () {
+
+      };
+    }
+    return RaisedButton.icon(onPressed: onPressed,
+        color: buttonColor,
+        disabledColor: buttonColor,
+        icon: Icon(Icons.thumb_up),
+        label: Text(media.likeCount.toString())
+    );
+  }
+
+  RaisedButton _buidDislikeButton(MediaDetail media) {
+    VoidCallback onPressed;
+    if (media.userApprovalModifier == null || media.userApprovalModifier == ApprovalModifier.LIKE) {
+      onPressed = () {
+
+      };
+    }
+    return RaisedButton.icon(onPressed: onPressed,
+        color: buttonColor,
+        disabledColor: buttonColor,
+        icon: Icon(Icons.thumb_down),
+        label: Text(media.dislikeCount.toString())
+    );
+  }
+}
+
+class _MediaBottomNavigationBar extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final tabSelectionModel = Provider.of<_MediaTabSelectionModel>(context);
+    return BottomNavigationBar(
+        currentIndex: tabSelectionModel._currentDisplayIndex,
+        onTap: tabSelectionModel.tabSelected,
+        items: <BottomNavigationBarItem>[
+          new BottomNavigationBarItem(
+            icon: Icon(Icons.info_outline),
+            title: Text('Details'),
+          ),
+          new BottomNavigationBarItem(
+            icon: Icon(Icons.create),
+            title: Text('Scribes'),
+          ),
+        ]
+    );
+  }
+}
+
+class _MediaTabSelectionModel with ChangeNotifier {
+  static const infoIndex = 0;
+  static const feedIndex = 1;
+
+  int _currentDisplayIndex = infoIndex;
+
+  final bucket = PageStorageBucket();
+
+  int get currentDisplayIndex => _currentDisplayIndex;
+
+  bool get feedSelected => _currentDisplayIndex == feedIndex;
+
+  bool get infoSelected => _currentDisplayIndex == infoIndex;
+
+  void tabSelected(int index) {
+    _currentDisplayIndex = index;
+    notifyListeners();
   }
 }
 
@@ -144,21 +232,24 @@ class NetworkPreviewImage extends StatelessWidget {
     final url = MediaQueryService.toPreviewUrl(imageUri);
     return Hero(
         tag: imageUri,
-        child: Image.network(url, cacheWidth: previewHeight, cacheHeight: previewHeight, fit: BoxFit.contain,
-          headers: snapshot.data)
+        child: Image.network(url, cacheWidth: previewHeight, cacheHeight: previewHeight, fit: BoxFit.fitWidth,
+          headers: snapshot.data, loadingBuilder: _loadingBuilder)
     );
   }
 
   Widget _loadingBuilder(BuildContext context, Widget child, ImageChunkEvent loadingProgress) {
     if (loadingProgress == null) {
-      return LoadingCircle();
-    }
-    final percentage = 100 * (loadingProgress.cumulativeBytesLoaded ?? 0) / loadingProgress.expectedTotalBytes;
-    print(percentage);
-    if (percentage >= 100.0) {
-      print('complete');
       return child;
     }
-    return LoadingCircle(progressValue: percentage / 100.0);
+    final progress = loadingProgress.expectedTotalBytes == null ? null :
+      loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes;
+    return Container(
+      decoration: BoxDecoration(border: Border.all()),
+      height: previewHeight.roundToDouble() / MediaQuery.of(context).devicePixelRatio,
+      width: previewWidth.roundToDouble() / MediaQuery.of(context).devicePixelRatio,
+      child: Center(
+        child: CircularProgressIndicator(value: progress)
+      )
+    );
   }
 }
