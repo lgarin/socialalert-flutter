@@ -6,6 +6,7 @@ import 'package:social_alert_app/base.dart';
 import 'package:social_alert_app/common.dart';
 import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/main.dart';
+import 'package:social_alert_app/picture.dart';
 import 'package:social_alert_app/service/configuration.dart';
 import 'package:social_alert_app/service/mediaquery.dart';
 import 'package:social_alert_app/service/mediaupdate.dart';
@@ -86,21 +87,22 @@ class _RemotePictureDetailPageState extends BasePageState<RemotePictureDetailPag
       children: <Widget>[
         _buildCreatorBanner(context, model.detail),
         Divider(),
-        _buildMediaTitle(model.detail, context),
-        _buildMediaDescription(model.detail),
+        _buildMediaTitle(context, model.detail),
+        _buildMediaDescription(context, model.detail),
         SizedBox(height: 5.0,),
         picture,
-        ChangeNotifierProvider.value(value: _tabSelectionModel, child:
-          ChangeNotifierProvider.value(value: model, child: _MediaInteractionBar())),
+        ChangeNotifierProvider.value(value: model,
+          child: _tabSelectionModel.buildBottomPanel()
+        )
       ],
     );
   }
 
-  Text _buildMediaDescription(MediaDetail media) {
+  Text _buildMediaDescription(BuildContext context, MediaDetail media) {
     return Text(media.description ?? '', softWrap: true);
   }
 
-  Text _buildMediaTitle(MediaDetail media, BuildContext context) {
+  Text _buildMediaTitle(BuildContext context, MediaDetail media) {
     return Text(media.title, overflow: TextOverflow.ellipsis,
         style: Theme.of(context).textTheme.headline6);
   }
@@ -118,13 +120,64 @@ class _RemotePictureDetailPageState extends BasePageState<RemotePictureDetailPag
   }
 }
 
-class _MediaInteractionBar extends StatelessWidget {
+class _MediaDetailPanel extends StatelessWidget {
+
+  _MediaDetailPanel({Key key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final tabSelectionModel = Provider.of<_MediaTabSelectionModel>(context);
     final model = Provider.of<_MediaInfoModel>(context);
-    Widget lastWidget = tabSelectionModel.feedSelected ? _buildAddCommentButton(model) : _buildViewCountButton(model);
+    final media = model.detail;
+    return Column(
+      children: <Widget>[
+        _MediaInteractionBar(feed: false),
+        Divider(),
+        PictureInfoPanel(timestamp: media.timestamp, location: media.location, camera: media.camera, format: media.format)
+      ],
+    );
+  }
+}
+
+class _MediaFeedPanel extends StatelessWidget {
+
+  _MediaFeedPanel({Key key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+        children: <Widget>[
+          _MediaInteractionBar(feed: true),
+          Divider(),
+          _buildNoContent(context)
+        ]
+    );
+  }
+
+  Column _buildNoContent(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        Icon(Icons.create, size: 100, color: Colors.grey),
+        Text('No content yet', style: Theme
+            .of(context)
+            .textTheme
+            .headline6),
+        Text('Be the first to post some comments here.')
+      ],
+    );
+  }
+}
+
+class _MediaInteractionBar extends StatelessWidget {
+
+  final bool feed;
+
+  const _MediaInteractionBar({Key key, this.feed}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final model = Provider.of<_MediaInfoModel>(context);
+    Widget lastWidget = feed ? _buildAddCommentButton(model) : _buildViewCountButton(model);
     return Row(
         children: <Widget>[
           _ApprovalButton(ApprovalModifier.LIKE),
@@ -242,6 +295,25 @@ class _MediaTabSelectionModel with ChangeNotifier {
   void tabSelected(int index) {
     _currentDisplayIndex = index;
     notifyListeners();
+  }
+
+  final List<Widget> _pages = [
+    _MediaDetailPanel(
+      key: PageStorageKey('Detail'),
+    ),
+    _MediaFeedPanel(
+      key: PageStorageKey('Feed'),
+    ),
+  ];
+
+  Widget buildBottomPanel() {
+    return ChangeNotifierProvider.value(value: this,
+      child: Consumer<_MediaTabSelectionModel>(
+        builder: (context, value, _) => PageStorage(
+          child: _pages[_currentDisplayIndex],
+          bucket: bucket)
+      )
+    );
   }
 }
 

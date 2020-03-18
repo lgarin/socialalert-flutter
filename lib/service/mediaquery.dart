@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/widgets.dart';
 import 'package:http/http.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/configuration.dart';
+import 'package:social_alert_app/service/geolocation.dart';
 
 class PagingParameter {
   final int pageNumber;
@@ -62,6 +64,9 @@ class MediaUserInfo {
 }
 
 class MediaDetail {
+  static final oneMega = 1000 * 1000;
+  static final numberFormat = new NumberFormat('0.0');
+
   final String title;
   final String description;
   final DateTime timestamp;
@@ -100,6 +105,28 @@ class MediaDetail {
         creator = MediaUserInfo.fromJson(json['creator']),
         cameraMaker = json['cameraMaker'],
         cameraModel = json['cameraModel'];
+
+  GeoLocation get location {
+    if (latitude != null && longitude != null) {
+      return GeoLocation(longitude: longitude,
+          latitude: latitude,
+          locality: locality,
+          country: country,
+          address: null);
+    } else {
+      return null;
+    }
+  }
+
+  String get format => numberFormat.format(previewHeight * previewWidth / oneMega) + 'MP - $previewWidth x $previewHeight';
+
+  String get camera {
+    if (cameraModel != null && cameraMaker != null) {
+      return cameraMaker + " " + cameraModel;
+    } else {
+      return null;
+    }
+  }
 }
 
 class QueryResultMediaInfo {

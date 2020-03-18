@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:social_alert_app/service/geolocation.dart';
 import 'package:social_alert_app/service/mediaupload.dart';
 
 class LocalPicturePreview extends StatelessWidget {
@@ -137,15 +138,33 @@ class _LocalPictureInfoPageState extends State<LocalPictureInfoPage> {
   }
   
   Widget _buildInfoPanel(BuildContext context, _ExifData exifData) {
+    return PictureInfoPanel(timestamp: widget.upload.timestamp,
+      location: widget.upload.hasPosition ? widget.upload.location : null,
+      format: exifData?.format,
+      camera: exifData?.camera,
+    );
+  }
+}
+
+class PictureInfoPanel extends StatelessWidget {
+
+  final DateTime timestamp;
+  final GeoLocation location;
+  final String format;
+  final String camera;
+
+  const PictureInfoPanel({Key key, this.timestamp, this.location, this.format, this.camera}) : super(key: key);
+
+  Widget build(BuildContext context) {
     final children = List<Widget>();
     children.add(
       Row(children: <Widget>[
         Icon(Icons.access_time),
         SizedBox(width: 5),
-        Text(DateFormat('EEE, d MMM yyyy - HH:mm').format(widget.upload.timestamp))
+        Text(DateFormat('EEE, d MMM yyyy - HH:mm').format(timestamp))
       ]),
     );
-    if (widget.upload.hasPosition) {
+    if (location != null) {
       children.addAll([
         SizedBox(height: 10),
         Row(children: <Widget>[
@@ -159,23 +178,23 @@ class _LocalPictureInfoPageState extends State<LocalPictureInfoPage> {
         Row(children: <Widget>[
           Icon(Icons.place),
           SizedBox(width: 5),
-          Text(widget.upload.location.format())
+          Text(location.format())
         ])
       ]);
     }
-    if (exifData != null) {
+    if (format != null && camera != null) {
       children.addAll([
         SizedBox(height: 10),
         Row(children: <Widget>[
           Icon(Icons.image),
           SizedBox(width: 5),
-          Text(exifData.format)
+          Text(format)
         ]),
         SizedBox(height: 5),
         Row(children: <Widget>[
           Icon(Icons.camera),
           SizedBox(width: 5),
-          Text(exifData.camera)
+          Text(camera)
         ])
       ]);
     }
@@ -183,15 +202,20 @@ class _LocalPictureInfoPageState extends State<LocalPictureInfoPage> {
   }
 
   Container _buildMap() {
+    final position = LatLng(location.latitude, location.longitude);
     return Container(height: 150,
-          decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey)),
-          child: GoogleMap(
+        decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey)),
+        child: GoogleMap(
             mapType: MapType.normal,
             myLocationEnabled: false,
             myLocationButtonEnabled: false,
-            markers: {Marker(icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueCyan), markerId: MarkerId(widget.upload.id), position: LatLng(widget.upload.latitude, widget.upload.longitude))},
-            initialCameraPosition: CameraPosition(zoom: 15.0, target: LatLng(widget.upload.latitude, widget.upload.longitude)))
-      );
+            markers: {
+              Marker(icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueCyan),
+                  markerId: MarkerId(''),
+                  position: position)
+            },
+            initialCameraPosition: CameraPosition(zoom: 15.0, target: position))
+    );
   }
 }
