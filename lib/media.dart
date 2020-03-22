@@ -40,10 +40,13 @@ class RemotePictureDetailPage extends StatefulWidget {
 }
 
 class _RemotePictureDetailPageState extends BasePageState<RemotePictureDetailPage> {
+  static const spacing = 5.0;
 
   final _tabSelectionModel = _MediaTabSelectionModel();
 
   _RemotePictureDetailPageState() : super(AppRoute.RemotePictureDetail);
+
+  Widget buildDrawer() => null;
 
   AppBar buildAppBar() {
     return AppBar(
@@ -64,32 +67,33 @@ class _RemotePictureDetailPageState extends BasePageState<RemotePictureDetailPag
         key: ValueKey(widget.mediaUri),
         create: _readPictureDetail,
         child: Consumer<_MediaInfoModel>(
-          builder: _buildPictureDetail,
+          builder: _buildContent,
           child: NetworkPreviewImage(imageUri: widget.mediaUri),)
     );
   }
 
   Future<_MediaInfoModel> _readPictureDetail(BuildContext context) async {
     try {
-      return _MediaInfoModel(await MediaQueryService.current(context).viewDetail(widget.mediaUri));
+      final detail = await MediaQueryService.current(context).viewDetail(widget.mediaUri);
+      return _MediaInfoModel(detail);
     } catch (e) {
       showSimpleDialog(context, 'Load failed', e.toString());
       return null;
     }
   }
 
-  Widget _buildPictureDetail(BuildContext context, _MediaInfoModel model, Widget picture) {
+  Widget _buildContent(BuildContext context, _MediaInfoModel model, Widget picture) {
     if (model == null) {
       return LoadingCircle();
     }
     return ListView(
-      padding: EdgeInsets.all(10.0),
+      padding: EdgeInsets.all(2 * spacing),
       children: <Widget>[
         _buildCreatorBanner(context, model.detail),
         Divider(),
         _buildMediaTitle(context, model.detail),
         _buildMediaDescription(context, model.detail),
-        SizedBox(height: 5.0,),
+        SizedBox(height: spacing),
         picture,
         ChangeNotifierProvider.value(value: model,
           child: _tabSelectionModel.buildBottomPanel()
@@ -111,7 +115,7 @@ class _RemotePictureDetailPageState extends BasePageState<RemotePictureDetailPag
     return Row(
       children: <Widget>[
         UserAvatar(imageUri: media.creator.imageUri, online: media.creator.online, radius: 50.0),
-        SizedBox(width: 5.0,),
+        SizedBox(width: spacing),
         Text(media.creator.username, style: Theme.of(context).textTheme.headline6),
         Spacer(),
         Timeago(date: media.timestamp, builder: (_, value) => Text(value, style: TextStyle(fontStyle: FontStyle.italic),)),
@@ -336,13 +340,15 @@ class NetworkPreviewImage extends StatelessWidget {
 
   Widget _buildImage(BuildContext context, AsyncSnapshot<Map<String, String>> snapshot) {
     if (snapshot.connectionState != ConnectionState.done) {
-      return LoadingCircle();
+      return _buildProgressIndicator(context, null);
     }
+    final orientation = MediaQuery.of(context).orientation;
     final url = MediaQueryService.toPreviewUrl(imageUri);
     return Hero(
         tag: imageUri,
-        child: Image.network(url, cacheWidth: previewHeight, cacheHeight: previewHeight, fit: BoxFit.fitWidth,
-          headers: snapshot.data, loadingBuilder: _loadingBuilder)
+        child: Image.network(url, cacheWidth: previewHeight, cacheHeight: previewHeight,
+            fit: orientation == Orientation.portrait ? BoxFit.fitWidth : BoxFit.fitHeight,
+            headers: snapshot.data, loadingBuilder: _loadingBuilder)
     );
   }
 
@@ -352,13 +358,17 @@ class NetworkPreviewImage extends StatelessWidget {
     }
     final progress = loadingProgress.expectedTotalBytes == null ? null :
       loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes;
+    return _buildProgressIndicator(context, progress);
+  }
+  
+  Widget _buildProgressIndicator(BuildContext context, double progress) {
     return Container(
-      decoration: BoxDecoration(border: Border.all()),
-      height: previewHeight.roundToDouble() / MediaQuery.of(context).devicePixelRatio,
-      width: previewWidth.roundToDouble() / MediaQuery.of(context).devicePixelRatio,
-      child: Center(
-        child: CircularProgressIndicator(value: progress)
-      )
+        decoration: BoxDecoration(border: Border.all()),
+        height: previewHeight.roundToDouble() / MediaQuery.of(context).devicePixelRatio,
+        width: previewWidth.roundToDouble() / MediaQuery.of(context).devicePixelRatio,
+        child: Center(
+            child: CircularProgressIndicator(value: progress)
+        )
     );
   }
 }

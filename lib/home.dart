@@ -355,15 +355,16 @@ class _GalleryDisplayState extends State<_GalleryDisplay> {
 
   Widget _buildGridTile(MediaInfo media) {
     return GestureDetector(
-        child: GridTile(
+      child: GridTile(
           child: Hero(
-              tag: media.mediaUri,
-              child: Image.network(MediaQueryService.toThumbnailUrl(media.mediaUri), key: ValueKey(media.mediaUri),
-                      fit: BoxFit.cover, cacheHeight: thumbnailHeight, cacheWidth: thumbnailWidth),
-            ),
+            key: ValueKey(media.mediaUri),
+            tag: media.mediaUri,
+            child: Image.network(MediaQueryService.toThumbnailUrl(media.mediaUri),
+                fit: BoxFit.cover, cacheHeight: thumbnailHeight, cacheWidth: thumbnailWidth),
+          ),
           footer: _buildTileFooter(media)
-        ),
-        onTap: () => Navigator.of(context).pushNamed(AppRoute.RemotePictureDetail, arguments: media),
+      ),
+      onTap: () => Navigator.of(context).pushNamed(AppRoute.RemotePictureDetail, arguments: media),
     );
   }
 

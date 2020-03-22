@@ -69,7 +69,7 @@ abstract class BasePageState<T extends StatefulWidget> extends State<T> {
         child: Scaffold(
             key: _scaffoldKey,
             appBar: buildAppBar(),
-            drawer: UserMenu(currentPage: pageName),
+            drawer: buildDrawer(),
             body: buildBody(context),
             floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
             floatingActionButton: buildCaptureButton(context),
@@ -89,6 +89,8 @@ abstract class BasePageState<T extends StatefulWidget> extends State<T> {
       ],
     );
   }
+
+  Widget buildDrawer() => UserMenu(currentPage: pageName);
 
   FloatingActionButton buildCaptureButton(BuildContext context) {
     return FloatingActionButton(
