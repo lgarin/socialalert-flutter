@@ -120,7 +120,7 @@ abstract class BasePageState<T extends StatefulWidget> extends State<T> {
 }
 
 abstract class BasePagingState<T extends StatefulWidget, E> extends State<T> {
-  static final pageSize = 50;
+  static final pageSize = 20;
 
   List<E> _data;
   PagingParameter _nextPage = PagingParameter(pageSize: pageSize, pageNumber: 0);

@@ -126,7 +126,7 @@ class _LocalPictureInfoPageState extends State<LocalPictureInfoPage> {
               image: widget.upload.file,
               fullScreen: _fullImage,
               fullScreenSwitch: _switchFullImage,
-              childHeight: 410,
+              childHeight: 460,
               child: Consumer<_ExifData>(
                 builder: (context, exifData, _) => _buildInfoPanel(context, exifData)
               )
@@ -203,7 +203,7 @@ class PictureInfoPanel extends StatelessWidget {
 
   Container _buildMap() {
     final position = LatLng(location.latitude, location.longitude);
-    return Container(height: 150,
+    return Container(height: 200,
         decoration: BoxDecoration(
             border: Border.all(color: Colors.grey)),
         child: GoogleMap(
