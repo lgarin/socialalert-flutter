@@ -1,6 +1,7 @@
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:form_field_validator/form_field_validator.dart';
 import 'package:provider/provider.dart';
 import 'package:social_alert_app/base.dart';
 import 'package:social_alert_app/common.dart';
@@ -46,8 +47,15 @@ class _RemotePictureDetailPageState extends BasePageState<RemotePictureDetailPag
   static const spacing = 5.0;
 
   final _tabSelectionModel = _MediaTabSelectionModel();
+  final _scrollController = ScrollController();
 
   _RemotePictureDetailPageState() : super(AppRoute.RemotePictureDetail);
+
+  @override
+  void initState() {
+    super.initState();
+    _tabSelectionModel.addListener(() => _scrollController.jumpTo(_scrollController.position.maxScrollExtent));
+  }
 
   Widget buildDrawer() => null;
 
@@ -90,6 +98,7 @@ class _RemotePictureDetailPageState extends BasePageState<RemotePictureDetailPag
       return LoadingCircle();
     }
     return ListView(
+      controller: _scrollController,
       padding: EdgeInsets.all(2 * spacing),
       children: <Widget>[
         _buildCreatorBanner(context, model.detail),
@@ -118,7 +127,7 @@ class _RemotePictureDetailPageState extends BasePageState<RemotePictureDetailPag
     return Row(
       children: <Widget>[
         UserAvatar(imageUri: media.creator.imageUri, online: media.creator.online, radius: 50.0),
-        SizedBox(width: spacing),
+        SizedBox(width: 2 * spacing),
         Text(media.creator.username, style: Theme.of(context).textTheme.headline6),
         Spacer(),
         Timeago(date: media.timestamp, builder: (_, value) => Text(value, style: TextStyle(fontStyle: FontStyle.italic),)),
@@ -188,22 +197,8 @@ class _MediaFeedPanelState extends State<_MediaFeedPanel> {
         children: <Widget>[
           _buildInteractionBar(media),
           Divider(),
-          _editingComment ? _buildNewCommentForm(context) : _buildNoContent(context)
+          _editingComment ? _buildNewCommentForm(context) : SizedBox(height: 350, child: _MediaCommentList(model.mediaUri))
         ]
-    );
-  }
-
-  Column _buildNoContent(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: <Widget>[
-        Icon(Icons.create, size: 100, color: Colors.grey),
-        Text('No content yet', style: Theme
-            .of(context)
-            .textTheme
-            .headline6),
-        Text('Be the first to post some comments here.')
-      ],
     );
   }
 
@@ -269,7 +264,10 @@ class _MediaFeedPanelState extends State<_MediaFeedPanel> {
         decoration: InputDecoration(
             labelText: 'Comment',
             icon: Icon(Icons.insert_comment)),
-        validator: NonEmptyValidator(errorText: "Comment required"),
+        validator: MultiValidator([
+          NonEmptyValidator(errorText: "Comment required"),
+          MaxLengthValidator(50, errorText: "Maximum length reached")
+        ])
       ),
     );
   }
@@ -302,6 +300,68 @@ class _MediaFeedPanelState extends State<_MediaFeedPanel> {
       showSimpleDialog(context, "Post failed", e.toString());
     }
     MediaQueryService.current(context).viewDetail(model.mediaUri).then(model.refresh);
+  }
+}
+
+class _MediaCommentList extends StatefulWidget {
+
+  final String mediaUri;
+
+  _MediaCommentList(this.mediaUri) : super(key: ValueKey(mediaUri));
+
+  @override
+  _MediaCommentListState createState() => _MediaCommentListState();
+}
+
+class _MediaCommentListState extends BasePagingState<_MediaCommentList, MediaCommentInfo> {
+  @override
+  Widget buildContent(BuildContext context, List<MediaCommentInfo> data) {
+    if (data.isEmpty) {
+      return _buildNoContent(context);
+    }
+
+    return ListView(
+      children: ListTile.divideTiles(
+        context: context,
+        tiles: data.map(_buildTile).toList(),
+      ).toList(),
+    );
+  }
+
+  ListTile _buildTile(MediaCommentInfo commentInfo) {
+    return ListTile(
+      key: ValueKey(commentInfo.id),
+      leading: UserAvatar(imageUri: commentInfo.creator.imageUri, online: commentInfo.creator.online, radius: 50.0),
+      title: Row(
+        children: <Widget>[
+          Text(commentInfo.creator.username, style: Theme.of(context).textTheme.subtitle1,),
+          Spacer(),
+          Timeago(date: commentInfo.creation,
+            builder: (_, value) => Text(value, style: Theme.of(context).textTheme.caption),
+          )
+        ],
+      ),
+      subtitle: Text(commentInfo.comment, softWrap: true),
+    );
+  }
+
+  @override
+  Future<ResultPage<MediaCommentInfo>> loadNextPage(PagingParameter parameter) {
+    return MediaQueryService.current(context).listComments(widget.mediaUri, parameter);
+  }
+
+  Column _buildNoContent(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        Icon(Icons.create, size: 100, color: Colors.grey),
+        Text('No content yet', style: Theme
+            .of(context)
+            .textTheme
+            .headline6),
+        Text('Be the first to post some comments here.')
+      ],
+    );
   }
 }
 

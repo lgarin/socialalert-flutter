@@ -50,7 +50,7 @@ class _MediaQueryApi {
   }
 
   Future<MediaCommentPage> listComments({String mediaUri, PagingParameter paging, String accessToken}) async {
-    final url = '/media/comments/$mediaUri';
+    final url = '/media/comments/$mediaUri?pageNumber=${paging.pageNumber}&pageSize=${paging.pageSize}&pagingTimestamp=${paging.timestamp}';
     final response = await _getJson(url, accessToken);
     if (response.statusCode == 200) {
       return MediaCommentPage.fromJson(jsonDecode(response.body));
