@@ -5,7 +5,7 @@ import 'package:http/http.dart';
 import 'package:provider/provider.dart';
 import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/configuration.dart';
-import 'package:social_alert_app/service/mediaquery.dart';
+import 'package:social_alert_app/service/mediamodel.dart';
 
 class _MediaQueryApi {
 
@@ -13,12 +13,12 @@ class _MediaQueryApi {
 
   final _httpClient = Client();
 
-  Future<Response> _postJson(String uri, String accessToken) {
+  Future<Response> _postJson(String uri, String accessToken, String body) {
     final headers = {
       'Accept': jsonMediaType,
       'Authorization': accessToken
     };
-    return _httpClient.post(baseServerUrl + uri, headers: headers);
+    return _httpClient.post(baseServerUrl + uri, headers: headers, body: body);
   }
 
   String _toApprovalUri(ApprovalModifier modifier) {
@@ -33,9 +33,18 @@ class _MediaQueryApi {
 
   Future<MediaDetail> changeApproval({String mediaUri, ApprovalModifier modifier, String accessToken}) async {
     final url = '/media/approval/${_toApprovalUri(modifier)}/$mediaUri';
-    final response = await _postJson(url, accessToken);
+    final response = await _postJson(url, accessToken, null);
     if (response.statusCode == 200) {
       return MediaDetail.fromJson(jsonDecode(response.body));
+    }
+    throw response.reasonPhrase;
+  }
+
+  Future<MediaCommentInfo> postComment({String mediaUri, String comment, String accessToken}) async {
+    final url = '/media/comment/$mediaUri';
+    final response = await _postJson(url, accessToken, comment);
+    if (response.statusCode == 200) {
+      return MediaCommentInfo.fromJson(jsonDecode(response.body));
     }
     throw response.reasonPhrase;
   }
@@ -54,6 +63,16 @@ class MediaUpdateService {
     final accessToken = await _authService.accessToken;
     try {
       return await _api.changeApproval(mediaUri: mediaUri, modifier: modifier, accessToken: accessToken);
+    } catch (e) {
+      print(e);
+      throw e;
+    }
+  }
+
+  Future<MediaCommentInfo> postComment(String mediaUri, String comment) async {
+    final accessToken = await _authService.accessToken;
+    try {
+      return await _api.postComment(mediaUri: mediaUri, comment: comment, accessToken: accessToken);
     } catch (e) {
       print(e);
       throw e;

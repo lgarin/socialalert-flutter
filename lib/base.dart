@@ -3,9 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:pull_to_refresh/pull_to_refresh.dart';
+import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/menu.dart';
 import 'package:social_alert_app/service/geolocation.dart';
+import 'package:social_alert_app/service/mediamodel.dart';
 import 'package:social_alert_app/service/mediaupload.dart';
 
 abstract class BasePageState<T extends StatefulWidget> extends State<T> {
@@ -114,4 +117,114 @@ abstract class BasePageState<T extends StatefulWidget> extends State<T> {
   Widget buildNavBar(BuildContext context) => null;
 
   Widget buildBody(BuildContext context);
+}
+
+abstract class BasePagingState<T extends StatefulWidget, E> extends State<T> {
+  static final pageSize = 50;
+
+  List<E> _data;
+  PagingParameter _nextPage = PagingParameter(pageSize: pageSize, pageNumber: 0);
+  RefreshController _refreshController = RefreshController(initialRefresh: true);
+
+  @override
+  void dispose() {
+    _refreshController.dispose();
+    super.dispose();
+  }
+
+  Future<ResultPage<E>> loadNextPage(PagingParameter parameter);
+
+  void _onRefresh() async{
+    try {
+      _nextPage = PagingParameter(pageSize: pageSize, pageNumber: 0);
+      final result = await loadNextPage(_nextPage);
+      _data = null;
+      _setData(result);
+      _refreshController.refreshCompleted();
+      if (_nextPage == null) {
+        _refreshController.loadNoData();
+      } else {
+        _refreshController.loadComplete();
+      }
+    } catch (e) {
+      _refreshController.refreshFailed();
+      await showSimpleDialog(context, "Refresh failed", e.toString());
+    }
+    _refreshWidget();
+  }
+
+  void _onLoading() async {
+    try {
+      final result = await loadNextPage(_nextPage);
+      _setData(result);
+      if (_nextPage == null) {
+        _refreshController.loadNoData();
+      } else {
+        _refreshController.loadComplete();
+      }
+    } catch (e) {
+      _refreshController.loadFailed();
+      await showSimpleDialog(context, "Load failed", e.toString());
+    }
+    _refreshWidget();
+  }
+
+  List<E> _createNewList(List<E> a, List<E> b) {
+    final result = List<E>(a.length + b.length);
+    List.copyRange(result, 0, a);
+    List.copyRange(result, a.length, b);
+    return result;
+  }
+
+  void _setData(ResultPage<E> result) {
+    if (_data == null) {
+      _data = result.content;
+    } else {
+      _data = _createNewList(_data, result.content);
+    }
+    _nextPage = result.nextPage;
+  }
+
+  void _refreshWidget() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SmartRefresher(
+        enablePullDown: true,
+        enablePullUp: true,
+        controller: _refreshController,
+        onLoading: _onLoading,
+        onRefresh: _onRefresh,
+        header: WaterDropMaterialHeader(),
+        footer: CustomFooter(
+            loadStyle: LoadStyle.ShowWhenLoading,
+            builder: _buildFooter
+        ),
+        child: _buildBody(context));
+  }
+
+  Widget _buildFooter(BuildContext context, LoadStatus mode) {
+    if (mode == LoadStatus.loading) {
+      return Align(
+          alignment: Alignment.bottomCenter,
+          child: RefreshProgressIndicator(
+            backgroundColor: Theme.of(context).primaryColor,
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+          ));
+    }
+    return SizedBox(height: 0, width: 0,);
+  }
+
+  Widget _buildBody(BuildContext context) {
+    if (_data == null) {
+      return SizedBox(height: 0, width: 0,);
+    }
+    return buildContent(context, _data);
+  }
+
+  Widget buildContent(BuildContext context, List<E> data);
 }

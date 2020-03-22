@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
-import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:social_alert_app/base.dart';
 import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/service/configuration.dart';
 import 'package:social_alert_app/service/geolocation.dart';
+import 'package:social_alert_app/service/mediamodel.dart';
 import 'package:social_alert_app/service/mediaquery.dart';
 
 class HomePage extends StatefulWidget {
@@ -226,119 +226,15 @@ class _GalleryDisplay extends StatefulWidget {
   _GalleryDisplayState createState() => _GalleryDisplayState();
 }
 
-class _GalleryDisplayState extends State<_GalleryDisplay> {
-  static final pageSize = 50;
+class _GalleryDisplayState extends BasePagingState<_GalleryDisplay, MediaInfo> {
   static final spacing = 4.0;
 
-  List<MediaInfo> _data;
-  PagingParameter _nextPage = PagingParameter(pageSize: pageSize, pageNumber: 0);
-  RefreshController _refreshController = RefreshController(initialRefresh: true);
-
-  @override
-  void initState() {
-    super.initState();
+  Future<MediaInfoPage> loadNextPage(PagingParameter parameter) {
+    return MediaQueryService.current(context).listMedia(widget.categoryToken, widget.keywords, parameter);
   }
 
-  @override
-  void dispose() {
-    _refreshController.dispose();
-    super.dispose();
-  }
-
-  Future<QueryResultMediaInfo> _loadNextPage() {
-    return MediaQueryService.current(context).listMedia(widget.categoryToken, widget.keywords, _nextPage);
-  }
-
-  void _onRefresh() async{
-    try {
-      _nextPage = PagingParameter(pageSize: pageSize, pageNumber: 0);
-      final result = await _loadNextPage();
-      _data = null;
-      _setData(result);
-      _refreshController.refreshCompleted();
-      if (_nextPage == null) {
-        _refreshController.loadNoData();
-      } else {
-        _refreshController.loadComplete();
-      }
-    } catch (e) {
-      _refreshController.refreshFailed();
-      await showSimpleDialog(context, "Refresh failed", e.toString());
-    }
-    _refreshWidget();
-  }
-
-  void _onLoading() async {
-    try {
-      final result = await _loadNextPage();
-      _setData(result);
-      if (_nextPage == null) {
-        _refreshController.loadNoData();
-      } else {
-        _refreshController.loadComplete();
-      }
-    } catch (e) {
-      _refreshController.loadFailed();
-      await showSimpleDialog(context, "Load failed", e.toString());
-    }
-    _refreshWidget();
-  }
-
-  List<MediaInfo> _createNewList(List<MediaInfo> a, List<MediaInfo> b) {
-    final result = List<MediaInfo>(a.length + b.length);
-    List.copyRange(result, 0, a);
-    List.copyRange(result, a.length, b);
-    return result;
-  }
-
-  void _setData(QueryResultMediaInfo result) {
-    if (_data == null) {
-      _data = result.content;
-    } else {
-      _data = _createNewList(_data, result.content);
-    }
-    _nextPage = result.nextPage;
-  }
-
-  void _refreshWidget() {
-    if (mounted) {
-      setState(() {});
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SmartRefresher(
-        enablePullDown: true,
-        enablePullUp: true,
-        controller: _refreshController,
-        onLoading: _onLoading,
-        onRefresh: _onRefresh,
-        header: WaterDropMaterialHeader(),
-        footer: CustomFooter(
-            loadStyle: LoadStyle.ShowWhenLoading,
-            builder: _buildGalleryFooter
-        ),
-        child: _buildGalleryContent(context));
-  }
-
-  Widget _buildGalleryFooter(BuildContext context, LoadStatus mode) {
-    if (mode == LoadStatus.loading) {
-      return Align(
-          alignment: Alignment.bottomCenter,
-          child: RefreshProgressIndicator(
-            backgroundColor: Theme.of(context).primaryColor,
-            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-          ));
-    }
-    return SizedBox(height: 0, width: 0,);
-  }
-
-  Widget _buildGalleryContent(BuildContext context) {
-    if (_data == null) {
-      return SizedBox(height: 0, width: 0,);
-    }
-    if (_data.isEmpty) {
+  Widget buildContent(BuildContext context, List<MediaInfo> data) {
+    if (data.isEmpty) {
       return Center(child: _buildNoContent(context));
     }
 
@@ -349,7 +245,7 @@ class _GalleryDisplayState extends State<_GalleryDisplay> {
             mainAxisSpacing: _GalleryDisplayState.spacing,
             crossAxisSpacing: _GalleryDisplayState.spacing,
             padding: EdgeInsets.all(_GalleryDisplayState.spacing),
-            children: _data.map(_buildGridTile).toList()
+            children: data.map(_buildGridTile).toList()
     );
   }
 
@@ -399,16 +295,16 @@ class _GalleryDisplayState extends State<_GalleryDisplay> {
 
   Column _buildNoContent(BuildContext context) {
     return Column(
-    mainAxisAlignment: MainAxisAlignment.center,
-    children: <Widget>[
-      Icon(Icons.panorama, size: 100, color: Colors.grey),
-      Text('No content yet', style: Theme
-          .of(context)
-          .textTheme
-          .headline6),
-      Text('Be the first to post some media here.')
-    ],
-  );
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        Icon(Icons.panorama, size: 100, color: Colors.grey),
+        Text('No content yet', style: Theme
+            .of(context)
+            .textTheme
+            .headline6),
+        Text('Be the first to post some media here.')
+      ],
+    );
   }
 }
 

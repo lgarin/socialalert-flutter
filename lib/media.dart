@@ -8,6 +8,7 @@ import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/picture.dart';
 import 'package:social_alert_app/service/configuration.dart';
+import 'package:social_alert_app/service/mediamodel.dart';
 import 'package:social_alert_app/service/mediaquery.dart';
 import 'package:social_alert_app/service/mediaupdate.dart';
 import 'package:timeago_flutter/timeago_flutter.dart';
@@ -16,6 +17,8 @@ class _MediaInfoModel with ChangeNotifier {
   MediaDetail _detail;
 
   _MediaInfoModel(this._detail);
+
+  String get mediaUri => _detail.mediaUri;
 
   MediaDetail get detail => _detail;
 
@@ -64,15 +67,15 @@ class _RemotePictureDetailPageState extends BasePageState<RemotePictureDetailPag
   @override
   Widget buildBody(BuildContext context) {
     return FutureProvider(
-        key: ValueKey(widget.mediaUri),
-        create: _readPictureDetail,
+        create: _buildMediaModel,
         child: Consumer<_MediaInfoModel>(
           builder: _buildContent,
-          child: NetworkPreviewImage(imageUri: widget.mediaUri),)
+          child: NetworkPreviewImage(imageUri: widget.mediaUri)
+        )
     );
   }
 
-  Future<_MediaInfoModel> _readPictureDetail(BuildContext context) async {
+  Future<_MediaInfoModel> _buildMediaModel(BuildContext context) async {
     try {
       final detail = await MediaQueryService.current(context).viewDetail(widget.mediaUri);
       return _MediaInfoModel(detail);
@@ -96,7 +99,7 @@ class _RemotePictureDetailPageState extends BasePageState<RemotePictureDetailPag
         SizedBox(height: spacing),
         picture,
         ChangeNotifierProvider.value(value: model,
-          child: _tabSelectionModel.buildBottomPanel()
+            child: _tabSelectionModel.buildBottomPanel()
         )
       ],
     );
@@ -134,25 +137,58 @@ class _MediaDetailPanel extends StatelessWidget {
     final media = model.detail;
     return Column(
       children: <Widget>[
-        _MediaInteractionBar(feed: false),
+        _buildInteractionBar(media),
         Divider(),
         PictureInfoPanel(timestamp: media.timestamp, location: media.location, camera: media.camera, format: media.format)
       ],
     );
   }
+
+  Widget _buildInteractionBar(MediaDetail media) {
+    return Row(
+        children: <Widget>[
+          _ApprovalButton(ApprovalModifier.LIKE),
+          SizedBox(width: 10.0,),
+          _ApprovalButton(ApprovalModifier.DISLIKE),
+          Spacer(),
+          _buildViewCountButton(media)
+        ]
+    );
+  }
+
+  RaisedButton _buildViewCountButton(MediaDetail media) {
+    return RaisedButton.icon(onPressed: null,
+        disabledTextColor: Colors.black,
+        icon: Icon(Icons.remove_red_eye),
+        label: Text(media.hitCount.toString())
+    );
+  }
 }
 
-class _MediaFeedPanel extends StatelessWidget {
+class _MediaFeedPanel extends StatefulWidget {
 
   _MediaFeedPanel({Key key}) : super(key: key);
 
   @override
+  _MediaFeedPanelState createState() => _MediaFeedPanelState();
+}
+
+class _MediaFeedPanelState extends State<_MediaFeedPanel> {
+
+  static final buttonColor = Color.fromARGB(255, 231, 40, 102);
+
+  final _formKey = GlobalKey<FormState>();
+  var _editingComment = false;
+
+  @override
   Widget build(BuildContext context) {
+    final model = Provider.of<_MediaInfoModel>(context);
+    final media = model.detail;
     return Column(
         children: <Widget>[
-          _MediaInteractionBar(feed: true),
+          _buildInteractionBar(media),
           Divider(),
-          _buildNoContent(context)
+          _editingComment ? _buildNewCommentForm(context) : _buildNoContent(context)
         ]
     );
   }
@@ -170,41 +206,102 @@ class _MediaFeedPanel extends StatelessWidget {
       ],
     );
   }
-}
 
-class _MediaInteractionBar extends StatelessWidget {
+  Widget _buildCancelButton(BuildContext context) {
+    if (!_editingComment) {
+      return SizedBox(width: 0);
+    }
+    return FlatButton.icon(
+        label: Text('Cancel'),
+        icon: Icon(Icons.cancel),
+        color: Colors.grey,
+        onPressed: _endEditingComment,
+      );
+  }
 
-  final bool feed;
+  void _startEditingComment() {
+    setState(() {
+      _editingComment = true;
+    });
+  }
 
-  const _MediaInteractionBar({Key key, this.feed}) : super(key: key);
+  void _endEditingComment() {
+    setState(() {
+      _editingComment = false;
+    });
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    final model = Provider.of<_MediaInfoModel>(context);
-    Widget lastWidget = feed ? _buildAddCommentButton(model) : _buildViewCountButton(model);
+  FlatButton _buildSubmitButton(BuildContext context) {
+    return FlatButton.icon(
+        label: Text('Post'),
+        icon: Icon(Icons.add_comment),
+        color: buttonColor,
+        onPressed: _editingComment ? _onPostComment : _startEditingComment
+    );
+  }
+
+  void _onPostComment() {
+    final formState = _formKey.currentState;
+    if (formState != null && formState.validate()) {
+      formState.save();
+      _endEditingComment();
+    }
+  }
+
+  Widget _buildNewCommentForm(BuildContext context) {
+    return Form(
+        key: _formKey,
+        child: _buildCommentField(context)
+    );
+  }
+
+  Container _buildCommentField(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.all(Radius.circular(10))),
+      padding: EdgeInsets.all(10),
+      child: TextFormField(
+        onSaved: _postComment,
+        autofocus: true,
+        maxLines: null,
+        keyboardType: TextInputType.multiline,
+        decoration: InputDecoration(
+            labelText: 'Comment',
+            icon: Icon(Icons.insert_comment)),
+        validator: NonEmptyValidator(errorText: "Comment required"),
+      ),
+    );
+  }
+
+  Widget _buildInteractionBar(MediaDetail media) {
     return Row(
         children: <Widget>[
-          _ApprovalButton(ApprovalModifier.LIKE),
+         _buildSubmitButton(context),
           SizedBox(width: 10.0,),
-          _ApprovalButton(ApprovalModifier.DISLIKE),
+          _buildCancelButton(context),
           Spacer(),
-          lastWidget
+          _buildCommentCountButton(media)
         ]
     );
   }
 
-  RaisedButton _buildAddCommentButton(_MediaInfoModel model) {
-    final media = model.detail;
-    return RaisedButton.icon(onPressed: () {}, color: Colors.grey, icon: Icon(Icons.add_comment), label: Text(media.commentCount.toString()));
+  RaisedButton _buildCommentCountButton(MediaDetail media) {
+    return RaisedButton.icon(
+        onPressed: null,
+        disabledTextColor: Colors.black,
+        icon: Icon(Icons.mode_comment),
+        label: Text(media.commentCount.toString()));
   }
 
-  RaisedButton _buildViewCountButton(_MediaInfoModel model) {
-    final media = model.detail;
-    return RaisedButton.icon(onPressed: null,
-        disabledTextColor: Colors.black,
-        icon: Icon(Icons.remove_red_eye),
-        label: Text(media.hitCount.toString())
-    );
+  void _postComment(String comment) async {
+    final model = Provider.of<_MediaInfoModel>(context, listen: false);
+    try {
+      await MediaUpdateService.current(context).postComment(model.mediaUri, comment);
+    } catch (e) {
+      showSimpleDialog(context, "Post failed", e.toString());
+    }
+    MediaQueryService.current(context).viewDetail(model.mediaUri).then(model.refresh);
   }
 }
 
@@ -249,7 +346,7 @@ class _ApprovalButton extends StatelessWidget {
     VoidCallback onPressed;
     if (media.userApprovalModifier == null || media.userApprovalModifier == _inverseApproval) {
       onPressed = () {
-        MediaUpdateService.current(context).changeApproval(media.mediaUri, _approval).then(model.refresh);
+        MediaUpdateService.current(context).changeApproval(model.mediaUri, _approval).then(model.refresh);
       };
     }
     return RaisedButton.icon(onPressed: onPressed,
