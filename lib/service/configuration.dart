@@ -7,3 +7,5 @@ final thumbnailHeight = 320;
 final thumbnailWidth = 480;
 final previewHeight = 640;
 final previewWidth = 960;
+
+final maxCommentLength = 4000;

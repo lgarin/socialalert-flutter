@@ -143,14 +143,14 @@ packages:
       name: google_api_availability
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.0.2"
+    version: "2.0.3"
   google_maps_flutter:
     dependency: "direct main"
     description:
       name: google_maps_flutter
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.5.24+1"
+    version: "0.5.25"
   http:
     dependency: "direct main"
     description:
@@ -192,7 +192,7 @@ packages:
       name: location_permissions
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.0.4+1"
+    version: "2.0.5"
   matcher:
     dependency: transitive
     description:
@@ -227,7 +227,7 @@ packages:
       name: pedantic
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.8.0+1"
+    version: "1.9.0"
   petitparser:
     dependency: transitive
     description:
@@ -302,7 +302,7 @@ packages:
       name: test_api
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.2.11"
+    version: "0.2.15"
   timeago:
     dependency: transitive
     description:

@@ -23,7 +23,8 @@ class _MediaQueryApi {
   Future<MediaInfoPage> listMedia({String category, String keywords, PagingParameter paging, String accessToken}) async {
     final categoryParameter = category != null ? '&category=$category' : '';
     final keywordsParameter = keywords != null ? '&keywords=$keywords' : '';
-    final url = '/media/search?pageNumber=${paging.pageNumber}&pageSize=${paging.pageSize}&pagingTimestamp=${paging.timestamp}$categoryParameter$keywordsParameter';
+    final timestampParameter = paging.timestamp != null ? '&pagingTimestamp=${paging.timestamp}' : '';
+    final url = '/media/search?pageNumber=${paging.pageNumber}&pageSize=${paging.pageSize}$timestampParameter$categoryParameter$keywordsParameter';
     final response = await _getJson(url, accessToken);
     if (response.statusCode == 200) {
       return MediaInfoPage.fromJson(jsonDecode(response.body));
@@ -50,7 +51,8 @@ class _MediaQueryApi {
   }
 
   Future<MediaCommentPage> listComments({String mediaUri, PagingParameter paging, String accessToken}) async {
-    final url = '/media/comments/$mediaUri?pageNumber=${paging.pageNumber}&pageSize=${paging.pageSize}&pagingTimestamp=${paging.timestamp}';
+    final timestampParameter = paging.timestamp != null ? '&pagingTimestamp=${paging.timestamp}' : '';
+    final url = '/media/comments/$mediaUri?pageNumber=${paging.pageNumber}&pageSize=${paging.pageSize}$timestampParameter';
     final response = await _getJson(url, accessToken);
     if (response.statusCode == 200) {
       return MediaCommentPage.fromJson(jsonDecode(response.body));

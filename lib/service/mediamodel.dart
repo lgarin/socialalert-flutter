@@ -1,5 +1,6 @@
 
 
+import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 import 'package:social_alert_app/service/configuration.dart';
 import 'package:social_alert_app/service/geolocation.dart';
@@ -9,7 +10,7 @@ class PagingParameter {
   final int pageSize;
   final int timestamp;
 
-  PagingParameter({this.pageNumber, this.pageSize}) : timestamp = DateTime.now().millisecondsSinceEpoch;
+  PagingParameter({@required this.pageNumber, @required this.pageSize}) : timestamp = null;
 
   PagingParameter.fromJson(Map<String, dynamic> json) :
         pageNumber = json['pageNumber'],

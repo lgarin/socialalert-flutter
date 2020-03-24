@@ -1,4 +1,6 @@
 
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:form_field_validator/form_field_validator.dart';
@@ -107,6 +109,7 @@ class _RemotePictureDetailPageState extends BasePageState<RemotePictureDetailPag
         _buildMediaDescription(context, model.detail),
         SizedBox(height: spacing),
         picture,
+        _buildMediaTagList(context, model.detail),
         ChangeNotifierProvider.value(value: model,
             child: _tabSelectionModel.buildBottomPanel()
         )
@@ -121,6 +124,21 @@ class _RemotePictureDetailPageState extends BasePageState<RemotePictureDetailPag
   Text _buildMediaTitle(BuildContext context, MediaDetail media) {
     return Text(media.title, overflow: TextOverflow.ellipsis,
         style: Theme.of(context).textTheme.headline6);
+  }
+
+  Widget _buildMediaTagList(BuildContext context, MediaDetail media) {
+    final children = List<Widget>();
+    if (media.category != null) {
+      children.add(Chip(label: Text(media.category), backgroundColor: Colors.blueAccent));
+    }
+    for (final tag in media.tags ?? []) {
+      children.add(Chip(label: Text(tag), backgroundColor: Colors.grey));
+    }
+    return Wrap(
+      spacing: spacing,
+      runSpacing: spacing,
+      children: children
+    );
   }
 
   Widget _buildCreatorBanner(BuildContext context, MediaDetail media) {
@@ -185,7 +203,6 @@ class _MediaFeedPanel extends StatefulWidget {
 class _MediaFeedPanelState extends State<_MediaFeedPanel> {
 
   static final buttonColor = Color.fromARGB(255, 231, 40, 102);
-
   final _formKey = GlobalKey<FormState>();
   var _editingComment = false;
 
@@ -197,7 +214,7 @@ class _MediaFeedPanelState extends State<_MediaFeedPanel> {
         children: <Widget>[
           _buildInteractionBar(media),
           Divider(),
-          _editingComment ? _buildNewCommentForm(context) : SizedBox(height: 350, child: _MediaCommentList(model.mediaUri))
+          _editingComment ? _buildNewCommentForm(context) : SizedBox(height: 350, child: _MediaCommentList(model.mediaUri, media.commentCount))
         ]
     );
   }
@@ -228,8 +245,8 @@ class _MediaFeedPanelState extends State<_MediaFeedPanel> {
 
   FlatButton _buildSubmitButton(BuildContext context) {
     return FlatButton.icon(
-        label: Text('Post'),
-        icon: Icon(Icons.add_comment),
+        label: Text(_editingComment ? 'Post' : 'Add'),
+        icon: Icon(_editingComment ? Icons.send : Icons.add_comment),
         color: buttonColor,
         onPressed: _editingComment ? _onPostComment : _startEditingComment
     );
@@ -239,7 +256,6 @@ class _MediaFeedPanelState extends State<_MediaFeedPanel> {
     final formState = _formKey.currentState;
     if (formState != null && formState.validate()) {
       formState.save();
-      _endEditingComment();
     }
   }
 
@@ -266,7 +282,7 @@ class _MediaFeedPanelState extends State<_MediaFeedPanel> {
             icon: Icon(Icons.insert_comment)),
         validator: MultiValidator([
           NonEmptyValidator(errorText: "Comment required"),
-          MaxLengthValidator(50, errorText: "Maximum length reached")
+          MaxLengthValidator(maxCommentLength, errorText: "Maximum length reached")
         ])
       ),
     );
@@ -296,6 +312,7 @@ class _MediaFeedPanelState extends State<_MediaFeedPanel> {
     final model = Provider.of<_MediaInfoModel>(context, listen: false);
     try {
       await MediaUpdateService.current(context).postComment(model.mediaUri, comment);
+      _endEditingComment();
     } catch (e) {
       showSimpleDialog(context, "Post failed", e.toString());
     }
@@ -307,13 +324,14 @@ class _MediaCommentList extends StatefulWidget {
 
   final String mediaUri;
 
-  _MediaCommentList(this.mediaUri) : super(key: ValueKey(mediaUri));
+  _MediaCommentList(this.mediaUri, int commentCount) : super(key: ValueKey('$mediaUri/$commentCount'));
 
   @override
   _MediaCommentListState createState() => _MediaCommentListState();
 }
 
 class _MediaCommentListState extends BasePagingState<_MediaCommentList, MediaCommentInfo> {
+
   @override
   Widget buildContent(BuildContext context, List<MediaCommentInfo> data) {
     if (data.isEmpty) {
