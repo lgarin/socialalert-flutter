@@ -31,7 +31,7 @@ class _MediaQueryApi {
     }
   }
 
-  Future<MediaDetail> changeApproval({String mediaUri, ApprovalModifier modifier, String accessToken}) async {
+  Future<MediaDetail> changeMediaApproval({String mediaUri, ApprovalModifier modifier, String accessToken}) async {
     final url = '/media/approval/${_toApprovalUri(modifier)}/$mediaUri';
     final response = await _postJson(url, accessToken, null);
     if (response.statusCode == 200) {
@@ -48,6 +48,15 @@ class _MediaQueryApi {
     }
     throw response.reasonPhrase;
   }
+
+  Future<MediaCommentInfo> changeCommentApproval({String commentId, ApprovalModifier modifier, String accessToken}) async {
+    final url = '/media/comment/approval/${_toApprovalUri(modifier)}/$commentId';
+    final response = await _postJson(url, accessToken, null);
+    if (response.statusCode == 200) {
+      return MediaCommentInfo.fromJson(jsonDecode(response.body));
+    }
+    throw response.reasonPhrase;
+  }
 }
 
 class MediaUpdateService {
@@ -59,10 +68,10 @@ class MediaUpdateService {
 
   MediaUpdateService(this._authService);
 
-  Future<MediaDetail> changeApproval(String mediaUri, ApprovalModifier modifier) async {
+  Future<MediaDetail> changeMediaApproval(String mediaUri, ApprovalModifier modifier) async {
     final accessToken = await _authService.accessToken;
     try {
-      return await _api.changeApproval(mediaUri: mediaUri, modifier: modifier, accessToken: accessToken);
+      return await _api.changeMediaApproval(mediaUri: mediaUri, modifier: modifier, accessToken: accessToken);
     } catch (e) {
       print(e);
       throw e;
@@ -73,6 +82,16 @@ class MediaUpdateService {
     final accessToken = await _authService.accessToken;
     try {
       return await _api.postComment(mediaUri: mediaUri, comment: comment, accessToken: accessToken);
+    } catch (e) {
+      print(e);
+      throw e;
+    }
+  }
+
+  Future<MediaCommentInfo> changeCommentApproval(String commentId, ApprovalModifier modifier) async {
+    final accessToken = await _authService.accessToken;
+    try {
+      return await _api.changeCommentApproval(commentId: commentId, modifier: modifier, accessToken: accessToken);
     } catch (e) {
       print(e);
       throw e;

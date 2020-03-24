@@ -150,16 +150,36 @@ class MediaCommentInfo {
   final DateTime creation;
   final String id;
   final CreatorInfo creator;
+  final int likeCount;
+  final int dislikeCount;
 
   MediaCommentInfo.fromJson(Map<String, dynamic> json) :
         comment = json['comment'],
         creation = DateTime.fromMillisecondsSinceEpoch(json['creation']),
         id = json['id'],
-        creator = CreatorInfo.fromJson(json['creator']);
+        creator = CreatorInfo.fromJson(json['creator']),
+        likeCount = json['likeCount'],
+        dislikeCount = json['dislikeCount'];
 
   static List<MediaCommentInfo> fromJsonList(List<dynamic> json) {
     return json.map((e) => MediaCommentInfo.fromJson(e)).toList();
   }
+
+  String get approvalDelta {
+    if (likeCount < dislikeCount) {
+      return '- ${dislikeCount - likeCount}';
+    }
+    return '+ ${likeCount - dislikeCount}';
+  }
+
+  @deprecated
+  MediaCommentInfo.copy(MediaCommentInfo src) :
+  comment = src.comment,
+  creation =src.creation,
+  id = src.id,
+  creator = src.creator,
+  likeCount = 9,
+  dislikeCount = 8;
 }
 
 class MediaCommentPage extends ResultPage<MediaCommentInfo> {

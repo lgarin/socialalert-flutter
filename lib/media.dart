@@ -214,7 +214,7 @@ class _MediaFeedPanelState extends State<_MediaFeedPanel> {
         children: <Widget>[
           _buildInteractionBar(media),
           Divider(),
-          _editingComment ? _buildNewCommentForm(context) : SizedBox(height: 350, child: _MediaCommentList(model.mediaUri, media.commentCount))
+          _editingComment ? _buildNewCommentForm(context) : SizedBox(height: 350, child: _MediaCommentList(model.mediaUri))
         ]
     );
   }
@@ -245,7 +245,7 @@ class _MediaFeedPanelState extends State<_MediaFeedPanel> {
 
   FlatButton _buildSubmitButton(BuildContext context) {
     return FlatButton.icon(
-        label: Text(_editingComment ? 'Post' : 'Add'),
+        label: Text(_editingComment ? 'Post' : 'Add comment'),
         icon: Icon(_editingComment ? Icons.send : Icons.add_comment),
         color: buttonColor,
         onPressed: _editingComment ? _onPostComment : _startEditingComment
@@ -324,10 +324,31 @@ class _MediaCommentList extends StatefulWidget {
 
   final String mediaUri;
 
-  _MediaCommentList(this.mediaUri, int commentCount) : super(key: ValueKey('$mediaUri/$commentCount'));
+  _MediaCommentList(this.mediaUri) : super(key: ValueKey(mediaUri));
 
   @override
   _MediaCommentListState createState() => _MediaCommentListState();
+}
+
+enum _CommentAction {
+  LIKE,
+  DISLIKE,
+}
+
+class _CommentActionItem {
+  final _CommentAction action;
+  final MediaCommentInfo item;
+
+  _CommentActionItem(this.action, this.item);
+
+  ApprovalModifier get modifier {
+    switch (action) {
+      case _CommentAction.LIKE: return ApprovalModifier.LIKE;
+      case _CommentAction.DISLIKE: return ApprovalModifier.DISLIKE;
+      default: return null;
+    }
+  }
+  String get commentId => item.id;
 }
 
 class _MediaCommentListState extends BasePagingState<_MediaCommentList, MediaCommentInfo> {
@@ -355,12 +376,45 @@ class _MediaCommentListState extends BasePagingState<_MediaCommentList, MediaCom
           Text(commentInfo.creator.username, style: Theme.of(context).textTheme.subtitle1,),
           Spacer(),
           Timeago(date: commentInfo.creation,
-            builder: (_, value) => Text(value, style: Theme.of(context).textTheme.caption),
+            builder: (_, value) => Text(value, style: Theme.of(context).textTheme.caption.copyWith(fontStyle: FontStyle.italic)),
           )
         ],
       ),
       subtitle: Text(commentInfo.comment, softWrap: true),
+      trailing: PopupMenuButton(
+        child: Column(children: <Widget>[
+          SizedBox(height: 2.0),
+          Icon(Icons.thumbs_up_down),
+          SizedBox(height: 2.0),
+          Text(commentInfo.approvalDelta)
+        ]),
+        itemBuilder: (context) => _buildActionMenu(context, commentInfo),
+        onSelected: _onActionSelection,
+      ),
     );
+  }
+
+  void _onActionSelection(_CommentActionItem selection) {
+    if (selection.action == _CommentAction.LIKE || selection.action == _CommentAction.DISLIKE) {
+      MediaUpdateService.current(context).changeCommentApproval(selection.commentId, selection.modifier)
+          .catchError((error) => showSimpleDialog(context, 'Failure', error.toString()))
+          .then(_refreshItem);
+    }
+  }
+
+  void _refreshItem(MediaCommentInfo newInfo) {
+    replaceItem((item) => item.id == newInfo.id, newInfo);
+  }
+
+  List<PopupMenuItem<_CommentActionItem>> _buildActionMenu(BuildContext context, MediaCommentInfo commentInfo) {
+    return [
+      PopupMenuItem(value: _CommentActionItem(_CommentAction.LIKE, commentInfo),
+        child: ListTile(title: Text(commentInfo.likeCount.toString()), leading: Icon(Icons.thumb_up)),
+      ),
+      PopupMenuItem(value:  _CommentActionItem(_CommentAction.DISLIKE, commentInfo),
+        child: ListTile(title: Text(commentInfo.dislikeCount.toString()), leading: Icon(Icons.thumb_down)),
+      )
+    ];
   }
 
   @override
@@ -377,7 +431,7 @@ class _MediaCommentListState extends BasePagingState<_MediaCommentList, MediaCom
             .of(context)
             .textTheme
             .headline6),
-        Text('Be the first to post some comments here.')
+        Text('Be the first to post a comment here.')
       ],
     );
   }
@@ -424,7 +478,9 @@ class _ApprovalButton extends StatelessWidget {
     VoidCallback onPressed;
     if (media.userApprovalModifier == null || media.userApprovalModifier == _inverseApproval) {
       onPressed = () {
-        MediaUpdateService.current(context).changeApproval(model.mediaUri, _approval).then(model.refresh);
+        MediaUpdateService.current(context).changeMediaApproval(model.mediaUri, _approval)
+            .catchError((error) => showSimpleDialog(context, 'Failure', error.toString()))
+            .then(model.refresh);
       };
     }
     return RaisedButton.icon(onPressed: onPressed,

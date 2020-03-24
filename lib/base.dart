@@ -176,6 +176,15 @@ abstract class BasePagingState<T extends StatefulWidget, E> extends State<T> {
     return result;
   }
 
+  void replaceItem(bool Function(E) test, E newValue)  {
+    final index = _data.indexWhere(test);
+    if (index != null) {
+      setState(() {
+        _data[index] = newValue;
+      });
+    }
+  }
+
   void _setData(ResultPage<E> result) {
     if (_data == null) {
       _data = result.content;
