@@ -108,13 +108,18 @@ class _RemotePictureDetailPageState extends BasePageState<RemotePictureDetailPag
         _buildMediaTitle(context, model.detail),
         _buildMediaDescription(context, model.detail),
         SizedBox(height: spacing),
-        picture,
+        WillPopScope(child: picture, onWillPop: () => _onCloseDetailPage(model)),
         _buildMediaTagList(context, model.detail),
         ChangeNotifierProvider.value(value: model,
             child: _tabSelectionModel.buildBottomPanel()
         )
       ],
     );
+  }
+
+  Future<bool> _onCloseDetailPage(_MediaInfoModel model) {
+    Navigator.pop(context, model.detail);
+    return Future.value(false);
   }
 
   Text _buildMediaDescription(BuildContext context, MediaDetail media) {
@@ -409,9 +414,11 @@ class _MediaCommentListState extends BasePagingState<_MediaCommentList, MediaCom
   List<PopupMenuItem<_CommentActionItem>> _buildActionMenu(BuildContext context, MediaCommentInfo commentInfo) {
     return [
       PopupMenuItem(value: _CommentActionItem(_CommentAction.LIKE, commentInfo),
+        enabled: commentInfo.userApprovalModifier != ApprovalModifier.LIKE,
         child: ListTile(title: Text(commentInfo.likeCount.toString()), leading: Icon(Icons.thumb_up)),
       ),
       PopupMenuItem(value:  _CommentActionItem(_CommentAction.DISLIKE, commentInfo),
+        enabled: commentInfo.userApprovalModifier != ApprovalModifier.DISLIKE,
         child: ListTile(title: Text(commentInfo.dislikeCount.toString()), leading: Icon(Icons.thumb_down)),
       )
     ];

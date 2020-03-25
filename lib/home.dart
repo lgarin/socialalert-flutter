@@ -260,8 +260,15 @@ class _GalleryDisplayState extends BasePagingState<_GalleryDisplay, MediaInfo> {
           ),
           footer: _buildTileFooter(media)
       ),
-      onTap: () => Navigator.of(context).pushNamed(AppRoute.RemotePictureDetail, arguments: media),
+      onTap: () => _onGridTileSelection(media),
     );
+  }
+
+  void _onGridTileSelection(MediaInfo media) async {
+    final newValue = await Navigator.of(context).pushNamed<MediaDetail>(AppRoute.RemotePictureDetail, arguments: media);
+    if (newValue != null) {
+      replaceItem((item) => item.mediaUri == media.mediaUri, newValue);
+    }
   }
 
   GridTileBar _buildTileFooter(MediaInfo media) {

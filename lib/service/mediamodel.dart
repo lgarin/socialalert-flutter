@@ -60,17 +60,12 @@ class CreatorInfo {
         imageUri = json['imageUri'];
 }
 
-class MediaDetail {
+class MediaDetail extends MediaInfo {
   static final oneMega = 1000 * 1000;
   static final numberFormat = new NumberFormat('0.0');
 
-  final String title;
   final String description;
   final DateTime timestamp;
-  final String mediaUri;
-  final int hitCount;
-  final int likeCount;
-  final int dislikeCount;
   final int commentCount;
   final double latitude;
   final double longitude;
@@ -84,13 +79,8 @@ class MediaDetail {
   final String cameraModel;
 
   MediaDetail.fromJson(Map<String, dynamic> json) :
-        title = json['title'],
         description = json['description'],
         timestamp = DateTime.fromMillisecondsSinceEpoch(json['timestamp']),
-        mediaUri = json['mediaUri'],
-        hitCount = json['hitCount'],
-        likeCount = json['likeCount'],
-        dislikeCount = json['dislikeCount'],
         commentCount = json['commentCount'],
         latitude = json['latitude'],
         longitude = json['longitude'],
@@ -101,7 +91,8 @@ class MediaDetail {
         userApprovalModifier = _approvalModifierMap[json['userApprovalModifier']],
         creator = CreatorInfo.fromJson(json['creator']),
         cameraMaker = json['cameraMaker'],
-        cameraModel = json['cameraModel'];
+        cameraModel = json['cameraModel'],
+        super.fromJson(json);
 
   GeoLocation get location {
     if (latitude != null && longitude != null) {
@@ -152,6 +143,7 @@ class MediaCommentInfo {
   final CreatorInfo creator;
   final int likeCount;
   final int dislikeCount;
+  final ApprovalModifier userApprovalModifier;
 
   MediaCommentInfo.fromJson(Map<String, dynamic> json) :
         comment = json['comment'],
@@ -159,7 +151,8 @@ class MediaCommentInfo {
         id = json['id'],
         creator = CreatorInfo.fromJson(json['creator']),
         likeCount = json['likeCount'],
-        dislikeCount = json['dislikeCount'];
+        dislikeCount = json['dislikeCount'],
+        userApprovalModifier = _approvalModifierMap[json['userApprovalModifier']];
 
   static List<MediaCommentInfo> fromJsonList(List<dynamic> json) {
     return json.map((e) => MediaCommentInfo.fromJson(e)).toList();
@@ -171,15 +164,6 @@ class MediaCommentInfo {
     }
     return '+ ${likeCount - dislikeCount}';
   }
-
-  @deprecated
-  MediaCommentInfo.copy(MediaCommentInfo src) :
-  comment = src.comment,
-  creation =src.creation,
-  id = src.id,
-  creator = src.creator,
-  likeCount = 9,
-  dislikeCount = 8;
 }
 
 class MediaCommentPage extends ResultPage<MediaCommentInfo> {

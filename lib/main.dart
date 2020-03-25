@@ -8,6 +8,7 @@ import 'package:social_alert_app/network.dart';
 import 'package:social_alert_app/picture.dart';
 import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/geolocation.dart';
+import 'package:social_alert_app/service/mediamodel.dart';
 import 'package:social_alert_app/service/mediaquery.dart';
 import 'package:social_alert_app/service/mediaupdate.dart';
 import 'package:social_alert_app/service/mediaupload.dart';
@@ -49,16 +50,35 @@ class SocialAlertApp extends StatelessWidget {
           ),
         ),
         initialRoute: AppRoute.Login,
-        routes: {
-          AppRoute.Login: (context) => LoginPage(),
-          AppRoute.Home: (context) => HomePage(),
-          AppRoute.Uploads: (context) => UploadsPage(),
-          AppRoute.Annotate: (context) => AnnotatePage(ModalRoute.of(context).settings.arguments),
-          AppRoute.Network: (context) => NetworkPage(),
-          AppRoute.LocalPictureInfo: (context) => LocalPictureInfoPage(ModalRoute.of(context).settings.arguments),
-          AppRoute.RemotePictureDetail: (context) => RemotePictureDetailPage(ModalRoute.of(context).settings.arguments),
-        },
+        onGenerateRoute: _buildRoute,
       );
+  }
+
+  MaterialPageRoute _buildRoute(RouteSettings settings) {
+    switch (settings.name) {
+      case AppRoute.Login: return MaterialPageRoute(
+        builder: (context) => LoginPage()
+      );
+      case AppRoute.Home: return MaterialPageRoute(
+          builder: (context) => HomePage()
+      );
+      case AppRoute.Uploads: return MaterialPageRoute(
+          builder: (context) => UploadsPage()
+      );
+      case AppRoute.Annotate: return MaterialPageRoute(
+          builder: (context) => AnnotatePage(settings.arguments)
+      );
+      case AppRoute.Network: return MaterialPageRoute(
+          builder: (context) => NetworkPage()
+      );
+      case AppRoute.LocalPictureInfo: return MaterialPageRoute(
+          builder: (context) => LocalPictureInfoPage(settings.arguments)
+      );
+      case AppRoute.RemotePictureDetail: return MaterialPageRoute<MediaDetail>(
+        builder: (context) => RemotePictureDetailPage(settings.arguments)
+      );
+      default: return null;
+    }
   }
 }
 
