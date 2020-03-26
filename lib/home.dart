@@ -302,7 +302,7 @@ class _MediaThumbnailTile extends StatelessWidget {
 
   GridTileBar _buildTileFooter(MediaInfo media) {
     return GridTileBar(
-        backgroundColor: Colors.white54,
+        backgroundColor: Colors.white30,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
@@ -371,6 +371,7 @@ class _MapDisplayState extends State<_MapDisplay> {
 
   final _listController = ScrollController();
   CameraPosition _lastPostion;
+  LatLngBounds _lastBounds;
   List<MediaInfo> _mediaList = [];
   GoogleMapController _mapController;
 
@@ -413,18 +414,23 @@ class _MapDisplayState extends State<_MapDisplay> {
   }
 
   Widget _buildThumbnailList() {
+    if (_mediaList.isEmpty) {
+      return SizedBox(height: 0);
+    }
     return Container(
-      height: 100,
-      child: ListView(
-      scrollDirection: Axis.horizontal,
-      controller: _listController,
-      children: _mediaList.map(_toThumbnail).toList(growable: false),
+      height: 90,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        controller: _listController,
+        itemCount: _mediaList.length,
+        itemBuilder: _toThumbnail,
       )
     );
   }
 
-  Widget _toThumbnail(MediaInfo media) {
-    return Container(width: 200,
+  Widget _toThumbnail(BuildContext context, int index) {
+    final media = _mediaList[index];
+    return Container(width: 160,
         padding: EdgeInsets.symmetric(horizontal: 2.0, vertical: 4.0),
         color: Colors.black,
         child: _MediaThumbnailTile(media: media, onTapCallback: _onThumbnailTap, onDoubleTapCallback: _onThumbnailSelection,));
@@ -439,7 +445,8 @@ class _MapDisplayState extends State<_MapDisplay> {
   }
 
   Marker _toMarker(MediaInfo media) {
-    return Marker(markerId: MarkerId(media.mediaUri), position: LatLng(media.latitude, media.longitude), infoWindow: InfoWindow(title: media.title));
+    return Marker(markerId: MarkerId(media.mediaUri), position: LatLng(media.latitude, media.longitude),
+        infoWindow: InfoWindow(title: media.title, onTap: () => _onThumbnailSelection(media)));
   }
 
   void _setMapController(GoogleMapController controller) {
@@ -456,12 +463,24 @@ class _MapDisplayState extends State<_MapDisplay> {
       builder: _buildInitialContent);
   }
 
+  static bool _areNear(LatLngBounds a, LatLngBounds b) {
+    const tolerance = 0.005;
+    return (a.southwest.longitude - b.southwest.longitude).abs() < tolerance &&
+        (a.southwest.latitude - b.southwest.latitude).abs() < tolerance &&
+        (a.northeast.longitude - b.northeast.longitude).abs() < tolerance &&
+        (a.northeast.latitude - b.northeast.latitude).abs() < tolerance;
+  }
+
   void _onMapMoved() async {
     final bounds = await _mapController.getVisibleRegion();
+    if (_lastBounds != null && _areNear(_lastBounds, bounds)) {
+      return;
+    }
     try {
       final result = await MediaQueryService.current(context).listMedia(
           widget.categoryToken, widget.keywords, PagingParameter(pageSize: 50, pageNumber: 0), bounds: bounds);
       setState(() {
+        _lastBounds = bounds;
         _mediaList = result.content;
       });
     } catch (e) {
