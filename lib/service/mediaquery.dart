@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/widgets.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart';
 import 'package:provider/provider.dart';
 import 'package:social_alert_app/service/authentication.dart';
@@ -20,11 +21,12 @@ class _MediaQueryApi {
     return _httpClient.get(baseServerUrl + uri, headers: headers);
   }
 
-  Future<MediaInfoPage> listMedia({String category, String keywords, PagingParameter paging, String accessToken}) async {
+  Future<MediaInfoPage> listMedia({String category, String keywords, LatLngBounds bounds, PagingParameter paging, String accessToken}) async {
     final categoryParameter = category != null ? '&category=$category' : '';
     final keywordsParameter = keywords != null ? '&keywords=$keywords' : '';
+    final boundsParameter = bounds != null ? '&minLongitude=${bounds.southwest.longitude}&maxLongitude=${bounds.northeast.longitude}&minLatitude=${bounds.southwest.latitude}&maxLatitude=${bounds.northeast.latitude}' : '';
     final timestampParameter = paging.timestamp != null ? '&pagingTimestamp=${paging.timestamp}' : '';
-    final url = '/media/search?pageNumber=${paging.pageNumber}&pageSize=${paging.pageSize}$timestampParameter$categoryParameter$keywordsParameter';
+    final url = '/media/search?pageNumber=${paging.pageNumber}&pageSize=${paging.pageSize}$timestampParameter$categoryParameter$keywordsParameter$boundsParameter';
     final response = await _getJson(url, accessToken);
     if (response.statusCode == 200) {
       return MediaInfoPage.fromJson(jsonDecode(response.body));
@@ -74,13 +76,13 @@ class MediaQueryService {
 
   MediaQueryService(this._authService);
 
-  Future<MediaInfoPage> listMedia(String category, String keywords, PagingParameter paging) async {
+  Future<MediaInfoPage> listMedia(String category, String keywords, PagingParameter paging, {LatLngBounds bounds}) async {
     if (keywords.isEmpty) {
       keywords = null;
     }
     final accessToken = await _authService.accessToken;
     try {
-      return await _api.listMedia(category: category, keywords: keywords,
+      return await _api.listMedia(category: category, keywords: keywords, bounds: bounds,
           paging: paging, accessToken: accessToken);
     } catch (e) {
       print(e);

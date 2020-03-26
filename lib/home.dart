@@ -151,7 +151,7 @@ class _HomePageState extends BasePageState<HomePage> with SingleTickerProviderSt
       case _feedIndex:
         return _FeedDisplay(categoryToken);
       case _mapIndex:
-        return _MapDisplay(categoryToken);
+        return _MapDisplay(categoryToken, keyword);
       default:
         return null;
     }
@@ -250,18 +250,7 @@ class _GalleryDisplayState extends BasePagingState<_GalleryDisplay, MediaInfo> {
   }
 
   Widget _buildGridTile(MediaInfo media) {
-    return GestureDetector(
-      child: GridTile(
-          child: Hero(
-            key: ValueKey(media.mediaUri),
-            tag: media.mediaUri,
-            child: Image.network(MediaQueryService.toThumbnailUrl(media.mediaUri),
-                fit: BoxFit.cover, cacheHeight: thumbnailHeight, cacheWidth: thumbnailWidth),
-          ),
-          footer: _buildTileFooter(media)
-      ),
-      onTap: () => _onGridTileSelection(media),
-    );
+    return _MediaThumbnailTile(media: media, onTapCallback: _onGridTileSelection);
   }
 
   void _onGridTileSelection(MediaInfo media) async {
@@ -271,9 +260,49 @@ class _GalleryDisplayState extends BasePagingState<_GalleryDisplay, MediaInfo> {
     }
   }
 
+  Column _buildNoContent(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        Icon(Icons.panorama, size: 100, color: Colors.grey),
+        Text('No content yet', style: Theme
+            .of(context)
+            .textTheme
+            .headline6),
+        Text('Be the first to post some media here.')
+      ],
+    );
+  }
+}
+
+typedef MediaSelectionCallback = void Function(MediaInfo);
+
+class _MediaThumbnailTile extends StatelessWidget {
+  final MediaInfo media;
+  final MediaSelectionCallback onTapCallback;
+  final MediaSelectionCallback onDoubleTapCallback;
+
+  _MediaThumbnailTile({@required this.media, this.onTapCallback, this.onDoubleTapCallback}) : super(key: ValueKey(media.mediaUri));
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      child: GridTile(
+          child: Hero(
+            tag: media.mediaUri,
+            child: Image.network(MediaQueryService.toThumbnailUrl(media.mediaUri),
+                fit: BoxFit.cover, cacheHeight: thumbnailHeight, cacheWidth: thumbnailWidth),
+          ),
+          footer: _buildTileFooter(media)
+      ),
+      onTap: onTapCallback != null ? () => onTapCallback(media) : null,
+      onDoubleTap:  onDoubleTapCallback != null ? () => onDoubleTapCallback(media) : null,
+    );
+  }
+
   GridTileBar _buildTileFooter(MediaInfo media) {
     return GridTileBar(
-      backgroundColor: Colors.white54,
+        backgroundColor: Colors.white54,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
@@ -297,20 +326,6 @@ class _GalleryDisplayState extends BasePagingState<_GalleryDisplay, MediaInfo> {
             )
           ],
         )
-      );
-  }
-
-  Column _buildNoContent(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: <Widget>[
-        Icon(Icons.panorama, size: 100, color: Colors.grey),
-        Text('No content yet', style: Theme
-            .of(context)
-            .textTheme
-            .headline6),
-        Text('Be the first to post some media here.')
-      ],
     );
   }
 }
@@ -341,30 +356,120 @@ class _FeedDisplay extends StatelessWidget {
   }
 }
 
-class _MapDisplay extends StatelessWidget {
+class _MapDisplay extends StatefulWidget {
 
   final String categoryToken;
+  final String keywords;
 
-  _MapDisplay(this.categoryToken) : super(key: ValueKey(categoryToken));
+  _MapDisplay(this.categoryToken, this.keywords) : super(key: ValueKey('$categoryToken/$keywords'));
 
-  Widget _buildAsyncMap(BuildContext context, AsyncSnapshot<GeoPosition> snapshot) {
+  @override
+  _MapDisplayState createState() => _MapDisplayState();
+}
+
+class _MapDisplayState extends State<_MapDisplay> {
+
+  final _listController = ScrollController();
+  CameraPosition _lastPostion;
+  List<MediaInfo> _mediaList = [];
+  GoogleMapController _mapController;
+
+  Widget _buildInitialContent(BuildContext context, AsyncSnapshot<GeoPosition> snapshot) {
     if (snapshot.connectionState != ConnectionState.done) {
       return LoadingCircle();
     } else if (snapshot.hasData) {
-      return GoogleMap(
-          mapType: MapType.normal,
-          myLocationEnabled: false,
-          myLocationButtonEnabled: false,
-          initialCameraPosition: CameraPosition(zoom: 15.0, target: LatLng(snapshot.data.latitude, snapshot.data.longitude)));
+      _lastPostion = CameraPosition(zoom: 15.0, target: LatLng(snapshot.data.latitude, snapshot.data.longitude));
+      return _buildContent();
     } else {
-      return null;
+      _lastPostion = CameraPosition(zoom: 15.0, target: LatLng(0.0, 0.0));
+      showSimpleDialog(context, 'No GPS signal', 'Current position not available');
+      return _buildContent();
     }
+  }
+
+  Widget _buildContent() {
+    return Column(
+        crossAxisAlignment:CrossAxisAlignment.start,
+      children: <Widget>[
+        Expanded(child: _buildMap()),
+        _buildThumbnailList(),
+      ],
+    );
+  }
+
+  GoogleMap _buildMap() {
+    return GoogleMap(
+        markers: _mediaList.map(_toMarker).toSet(),
+        onMapCreated: _setMapController,
+        minMaxZoomPreference: MinMaxZoomPreference(10.0, 20.0),
+        mapType: MapType.normal,
+        myLocationEnabled: false,
+        myLocationButtonEnabled: false,
+        compassEnabled: false,
+        initialCameraPosition: _lastPostion,
+        onCameraMove: _onMapMoving,
+        onCameraIdle: _onMapMoved,
+    );
+  }
+
+  Widget _buildThumbnailList() {
+    return Container(
+      height: 100,
+      child: ListView(
+      scrollDirection: Axis.horizontal,
+      controller: _listController,
+      children: _mediaList.map(_toThumbnail).toList(growable: false),
+      )
+    );
+  }
+
+  Widget _toThumbnail(MediaInfo media) {
+    return Container(width: 200,
+        padding: EdgeInsets.symmetric(horizontal: 2.0, vertical: 4.0),
+        color: Colors.black,
+        child: _MediaThumbnailTile(media: media, onTapCallback: _onThumbnailTap, onDoubleTapCallback: _onThumbnailSelection,));
+  }
+
+  void _onThumbnailTap(MediaInfo media) {
+    _mapController.animateCamera(CameraUpdate.newLatLng(LatLng(media.latitude, media.longitude)));
+  }
+
+  void _onThumbnailSelection(MediaInfo media) {
+    Navigator.of(context).pushNamed(AppRoute.RemotePictureDetail, arguments: media);
+  }
+
+  Marker _toMarker(MediaInfo media) {
+    return Marker(markerId: MarkerId(media.mediaUri), position: LatLng(media.latitude, media.longitude), infoWindow: InfoWindow(title: media.title));
+  }
+
+  void _setMapController(GoogleMapController controller) {
+    _mapController = controller;
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_lastPostion != null) {
+      return _buildContent();
+    }
     return FutureBuilder<GeoPosition>(
       future: GeoLocationService.current(context).readPosition(),
-      builder: _buildAsyncMap);
+      builder: _buildInitialContent);
+  }
+
+  void _onMapMoved() async {
+    final bounds = await _mapController.getVisibleRegion();
+    try {
+      final result = await MediaQueryService.current(context).listMedia(
+          widget.categoryToken, widget.keywords, PagingParameter(pageSize: 50, pageNumber: 0), bounds: bounds);
+      setState(() {
+        _mediaList = result.content;
+      });
+    } catch (e) {
+      await showSimpleDialog(context, "Query failed", e.toString());
+    }
+  }
+
+  void _onMapMoving(CameraPosition position) {
+    _lastPostion = position;
   }
 }

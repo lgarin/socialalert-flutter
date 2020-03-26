@@ -24,13 +24,17 @@ class MediaInfo {
   final int hitCount;
   final int likeCount;
   final int dislikeCount;
+  final double latitude;
+  final double longitude;
 
   MediaInfo.fromJson(Map<String, dynamic> json) :
         title = json['title'],
         mediaUri = json['mediaUri'],
         hitCount = json['hitCount'],
         likeCount = json['likeCount'],
-        dislikeCount = json['dislikeCount'];
+        dislikeCount = json['dislikeCount'],
+        latitude = json['latitude'],
+        longitude = json['longitude'];
 
   static List<MediaInfo> fromJsonList(List<dynamic> json) {
     return json.map((e) => MediaInfo.fromJson(e)).toList();
@@ -67,8 +71,6 @@ class MediaDetail extends MediaInfo {
   final String description;
   final DateTime timestamp;
   final int commentCount;
-  final double latitude;
-  final double longitude;
   final String locality;
   final String country;
   final String category;
@@ -82,8 +84,6 @@ class MediaDetail extends MediaInfo {
         description = json['description'],
         timestamp = DateTime.fromMillisecondsSinceEpoch(json['timestamp']),
         commentCount = json['commentCount'],
-        latitude = json['latitude'],
-        longitude = json['longitude'],
         locality = json['locality'],
         country = json['country'],
         category = json['category'],
