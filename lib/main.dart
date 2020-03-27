@@ -12,7 +12,7 @@ import 'package:social_alert_app/service/mediamodel.dart';
 import 'package:social_alert_app/service/mediaquery.dart';
 import 'package:social_alert_app/service/mediaupdate.dart';
 import 'package:social_alert_app/service/mediaupload.dart';
-import 'package:social_alert_app/uploads.dart';
+import 'package:social_alert_app/upload.dart';
 
 void main() => runApp(SocialAlertApp());
 

@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:form_field_validator/form_field_validator.dart';
 import 'package:provider/provider.dart';
 import 'package:social_alert_app/base.dart';
-import 'package:social_alert_app/common.dart';
+import 'package:social_alert_app/user.dart';
 import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/picture.dart';
