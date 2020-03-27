@@ -20,9 +20,16 @@ class MapDisplay extends StatefulWidget {
 }
 
 class _MapDisplayState extends State<MapDisplay> {
+  static const thumbnailTileWidth = 160.0;
+  static const thumbnailTileHeight = 90.0;
+  static const maxThumbnailCount = 100;
 
+  static const minZoomLevel = 10.0;
+  static const maxZoomLevel = 20.0;
+  static const defaultZoomLevel = 15.0;
+
+  static CameraPosition _lastPosition;
   final _listController = ScrollController();
-  CameraPosition _lastPostion;
   LatLngBounds _lastBounds;
   List<MediaInfo> _mediaList = [];
   GoogleMapController _mapController;
@@ -31,10 +38,10 @@ class _MapDisplayState extends State<MapDisplay> {
     if (snapshot.connectionState != ConnectionState.done) {
       return LoadingCircle();
     } else if (snapshot.hasData) {
-      _lastPostion = CameraPosition(zoom: 15.0, target: LatLng(snapshot.data.latitude, snapshot.data.longitude));
+      _lastPosition = CameraPosition(zoom: defaultZoomLevel, target: LatLng(snapshot.data.latitude, snapshot.data.longitude));
       return _buildContent();
     } else {
-      _lastPostion = CameraPosition(zoom: 15.0, target: LatLng(0.0, 0.0));
+      _lastPosition = CameraPosition(zoom: defaultZoomLevel, target: LatLng(0.0, 0.0));
       showSimpleDialog(context, 'No GPS signal', 'Current position not available');
       return _buildContent();
     }
@@ -54,12 +61,12 @@ class _MapDisplayState extends State<MapDisplay> {
     return GoogleMap(
       markers: _mediaList.map(_toMarker).toSet(),
       onMapCreated: _setMapController,
-      minMaxZoomPreference: MinMaxZoomPreference(10.0, 20.0),
+      minMaxZoomPreference: MinMaxZoomPreference(minZoomLevel, maxZoomLevel),
       mapType: MapType.normal,
       myLocationEnabled: false,
       myLocationButtonEnabled: false,
       compassEnabled: false,
-      initialCameraPosition: _lastPostion,
+      initialCameraPosition: _lastPosition,
       onCameraMove: _onMapMoving,
       onCameraIdle: _onMapMoved,
     );
@@ -70,7 +77,7 @@ class _MapDisplayState extends State<MapDisplay> {
       return SizedBox(height: 0);
     }
     return Container(
-        height: 90,
+        height: thumbnailTileHeight,
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
           controller: _listController,
@@ -82,22 +89,34 @@ class _MapDisplayState extends State<MapDisplay> {
 
   Widget _toThumbnail(BuildContext context, int index) {
     final media = _mediaList[index];
-    return Container(width: 160,
+
+    return Container(width: thumbnailTileWidth,
         padding: EdgeInsets.symmetric(horizontal: 2.0, vertical: 4.0),
-        color: Colors.black,
+        color: Colors.grey.shade800,
         child: MediaThumbnailTile(media: media, onTapCallback: _onThumbnailTap, onDoubleTapCallback: _onThumbnailSelection,));
   }
 
   void _onThumbnailTap(MediaInfo media) {
     _mapController.animateCamera(CameraUpdate.newLatLng(LatLng(media.latitude, media.longitude)));
+    _mapController.showMarkerInfoWindow(MarkerId(media.mediaUri));
   }
 
   void _onThumbnailSelection(MediaInfo media) {
     Navigator.of(context).pushNamed(AppRoute.RemotePictureDetail, arguments: media);
   }
 
+  void _onMarkerSelection(MediaInfo media) {
+    setState(() {
+      _mediaList.remove(media);
+      _mediaList.insert(0, media);
+      _listController.jumpTo(0.0);
+    });
+  }
+
   Marker _toMarker(MediaInfo media) {
-    return Marker(markerId: MarkerId(media.mediaUri), position: LatLng(media.latitude, media.longitude),
+    return Marker(markerId: MarkerId(media.mediaUri),
+        position: LatLng(media.latitude, media.longitude),
+        onTap: () => _onMarkerSelection(media),
         infoWindow: InfoWindow(title: media.title, onTap: () => _onThumbnailSelection(media)));
   }
 
@@ -107,7 +126,7 @@ class _MapDisplayState extends State<MapDisplay> {
 
   @override
   Widget build(BuildContext context) {
-    if (_lastPostion != null) {
+    if (_lastPosition != null) {
       return _buildContent();
     }
     return FutureBuilder<GeoPosition>(
@@ -130,7 +149,11 @@ class _MapDisplayState extends State<MapDisplay> {
     }
     try {
       final result = await MediaQueryService.current(context).listMedia(
-          widget.categoryToken, widget.keywords, PagingParameter(pageSize: 50, pageNumber: 0), bounds: bounds);
+          widget.categoryToken, widget.keywords, PagingParameter(pageSize: maxThumbnailCount, pageNumber: 0), bounds: bounds);
+      if (result.nextPage != null) {
+        // TODO
+        print('switch to statistic mode');
+      }
       setState(() {
         _lastBounds = bounds;
         _mediaList = result.content;
@@ -141,6 +164,6 @@ class _MapDisplayState extends State<MapDisplay> {
   }
 
   void _onMapMoving(CameraPosition position) {
-    _lastPostion = position;
+    _lastPosition = position;
   }
 }
