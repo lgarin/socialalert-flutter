@@ -1,4 +1,6 @@
+import 'dart:ui';
 
+import 'package:fluster/fluster.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:social_alert_app/helper.dart';
@@ -19,6 +21,37 @@ class MapDisplay extends StatefulWidget {
   _MapDisplayState createState() => _MapDisplayState();
 }
 
+class _MediaCluster extends Clusterable {
+
+  final List<MediaInfo> _items;
+
+  _MediaCluster({int clusterId, double latitude, double longitude}) : _items = [], super(
+    latitude: latitude,
+    longitude: longitude,
+    isCluster: true,
+    clusterId: clusterId,
+    markerId: clusterId.toString()
+  );
+
+  _MediaCluster.single(MediaInfo media) : _items = [media], super(
+    latitude: media.latitude,
+    longitude: media.longitude,
+    isCluster: false,
+    markerId: media.mediaUri
+  );
+
+  void addMedia(MediaInfo media) {
+    if (isCluster) {
+      _items.add(media);
+    }
+  }
+
+  int get size => _items.length;
+
+  Iterable<MediaInfo> get items => _items.reversed;
+  MediaInfo get singleItem => !isCluster ? _items.first : null;
+}
+
 class _MapDisplayState extends State<MapDisplay> {
   static const thumbnailTileWidth = 160.0;
   static const thumbnailTileHeight = 90.0;
@@ -28,11 +61,14 @@ class _MapDisplayState extends State<MapDisplay> {
   static const maxZoomLevel = 20.0;
   static const defaultZoomLevel = 15.0;
 
+  static const clusterMarkerRadius = 80.0;
+
   static CameraPosition _lastPosition;
   final _listController = ScrollController();
   LatLngBounds _lastBounds;
   List<MediaInfo> _mediaList = [];
   GoogleMapController _mapController;
+  List<_MediaCluster> _clusterList = [];
 
   Widget _buildInitialContent(BuildContext context, AsyncSnapshot<GeoPosition> snapshot) {
     if (snapshot.connectionState != ConnectionState.done) {
@@ -51,15 +87,23 @@ class _MapDisplayState extends State<MapDisplay> {
     return Column(
       crossAxisAlignment:CrossAxisAlignment.start,
       children: <Widget>[
-        Expanded(child: _buildMap()),
+        Expanded(child: _buildMarkersAndMap()),
         _buildThumbnailList(),
       ],
     );
   }
 
-  GoogleMap _buildMap() {
+  Widget _buildMarkersAndMap() {
+    return FutureBuilder<Iterable<Marker>>(
+      future: Future.wait(_clusterList.map(_toClusterMarker)),
+      initialData: {},
+      builder: _buildMap,
+    );
+  }
+
+  Widget _buildMap(BuildContext context, AsyncSnapshot<Iterable<Marker>> snapshot) {
     return GoogleMap(
-      markers: _mediaList.map(_toMarker).toSet(),
+      markers: snapshot.data.toSet(),
       onMapCreated: _setMapController,
       minMaxZoomPreference: MinMaxZoomPreference(minZoomLevel, maxZoomLevel),
       mapType: MapType.normal,
@@ -98,7 +142,9 @@ class _MapDisplayState extends State<MapDisplay> {
 
   void _onThumbnailTap(MediaInfo media) {
     _mapController.animateCamera(CameraUpdate.newLatLng(LatLng(media.latitude, media.longitude)));
-    _mapController.showMarkerInfoWindow(MarkerId(media.mediaUri));
+    if (_clusterList.any((element) => element.markerId == media.mediaUri)) {
+      _mapController.showMarkerInfoWindow(MarkerId(media.mediaUri));
+    }
   }
 
   void _onThumbnailSelection(MediaInfo media) {
@@ -113,11 +159,31 @@ class _MapDisplayState extends State<MapDisplay> {
     });
   }
 
-  Marker _toMarker(MediaInfo media) {
+  void _onClusterSelection(_MediaCluster cluster) {
+    setState(() {
+      for (final media in cluster.items) {
+        _mediaList.remove(media);
+        _mediaList.insert(0, media);
+      }
+      _listController.jumpTo(0.0);
+    });
+  }
+
+  Marker _toMediaMarker(MediaInfo media) {
     return Marker(markerId: MarkerId(media.mediaUri),
         position: LatLng(media.latitude, media.longitude),
         onTap: () => _onMarkerSelection(media),
         infoWindow: InfoWindow(title: media.title, onTap: () => _onThumbnailSelection(media)));
+  }
+
+  Future<Marker> _toClusterMarker(_MediaCluster cluster) async {
+    if (!cluster.isCluster) {
+      return _toMediaMarker(cluster.items.first);
+    }
+    return Marker(markerId: MarkerId(cluster.markerId),
+      position: LatLng(cluster.latitude, cluster.longitude),
+      icon: await _getClusterMarker(cluster.size, Colors.redAccent, Colors.white, clusterMarkerRadius / 2),
+      onTap: () => _onClusterSelection(cluster));
   }
 
   void _setMapController(GoogleMapController controller) {
@@ -146,24 +212,86 @@ class _MapDisplayState extends State<MapDisplay> {
     final bounds = await _mapController.getVisibleRegion();
     if (_lastBounds != null && _areNear(_lastBounds, bounds)) {
       return;
+    } else if (bounds.northeast == LatLng(0.0, 0.0) && bounds.southwest == LatLng(0.0, 0.0)) {
+      // is it a bug?
+      return;
     }
+
+    final zoomLevel = await _mapController.getZoomLevel();
     try {
-      final result = await MediaQueryService.current(context).listMedia(
-          widget.categoryToken, widget.keywords, PagingParameter(pageSize: maxThumbnailCount, pageNumber: 0), bounds: bounds);
-      if (result.nextPage != null) {
-        // TODO
-        print('switch to statistic mode');
-      }
+      final result = await _queryMatchingMedia(bounds);
+      final clusters = _buildClusters(result.content, bounds, zoomLevel);
+
       setState(() {
+        _clusterList = clusters;
         _lastBounds = bounds;
         _mediaList = result.content;
       });
     } catch (e) {
+      print(e);
       await showSimpleDialog(context, "Query failed", e.toString());
     }
+  }
+
+  Future<MediaInfoPage> _queryMatchingMedia(LatLngBounds bounds) async {
+    return await MediaQueryService.current(context).listMedia(
+        widget.categoryToken, widget.keywords, PagingParameter(pageSize: maxThumbnailCount, pageNumber: 0), bounds: bounds);
+  }
+
+  List<_MediaCluster> _buildClusters(List<MediaInfo> items, LatLngBounds bounds, double zoomLevel) {
+    if (items.isEmpty) {
+      return [];
+    }
+
+    final clusterBuilder = Fluster<_MediaCluster>(
+        minZoom: minZoomLevel.floor(),
+        maxZoom: maxZoomLevel.ceil(),
+        radius: (MediaQuery.of(context).devicePixelRatio * clusterMarkerRadius).toInt(),
+        extent: 2048,
+        nodeSize: 64,
+        points: items.map((e) => _MediaCluster.single(e)).toList(growable: false),
+        createCluster: (BaseCluster cluster, double longitude, double latitude) {
+          return _MediaCluster(
+              clusterId: cluster.id,
+              latitude: latitude,
+              longitude: longitude);
+        });
+    final result = clusterBuilder.clusters([bounds.southwest.longitude, bounds.southwest.latitude, bounds.northeast.longitude, bounds.northeast.latitude], zoomLevel.round());
+    for (final cluster in result.where((element) => element.isCluster)) {
+      for (final child in clusterBuilder.points(cluster.clusterId)) {
+        cluster.addMedia(child.singleItem);
+      }
+    }
+    return result;
   }
 
   void _onMapMoving(CameraPosition position) {
     _lastPosition = position;
   }
+
+  static Future<BitmapDescriptor> _getClusterMarker(int clusterSize, Color clusterColor, Color textColor, double radius) async {
+    final pictureRecorder = PictureRecorder();
+    final canvas = Canvas(pictureRecorder);
+    final paint = Paint();
+
+    final textSpan = TextSpan(text: clusterSize.toString(),
+      style: TextStyle(fontSize: radius - 5, fontWeight: FontWeight.bold, color: textColor),
+    );
+    final textPainter = TextPainter(textDirection: TextDirection.ltr, text: textSpan);
+
+    canvas.drawCircle(Offset(radius, radius), radius, paint..color = clusterColor);
+    textPainter.layout();
+    textPainter.paint(canvas,
+      Offset(radius - textPainter.width / 2, radius - textPainter.height / 2),
+    );
+
+    final image = await pictureRecorder.endRecording().toImage(
+      radius.toInt() * 2,
+      radius.toInt() * 2,
+    );
+
+    final data = await image.toByteData(format: ImageByteFormat.png);
+    return BitmapDescriptor.fromBytes(data.buffer.asUint8List());
+  }
+
 }

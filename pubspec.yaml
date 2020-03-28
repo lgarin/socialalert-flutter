@@ -26,6 +26,7 @@ dependencies:
   pull_to_refresh:
   flutter_typeahead:
   badges:
+  fluster:
 
 dev_dependencies:
   flutter_test:
