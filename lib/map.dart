@@ -1,4 +1,4 @@
-import 'dart:ui';
+import 'dart:math';
 
 import 'package:fluster/fluster.dart';
 import 'package:flutter/material.dart';
@@ -21,35 +21,96 @@ class MapDisplay extends StatefulWidget {
   _MapDisplayState createState() => _MapDisplayState();
 }
 
-class _MediaCluster extends Clusterable {
+abstract class _Cluster<T extends _Cluster<T>> extends Clusterable {
+
+  static const maxDisplayCount = 99;
+
+  _Cluster(BaseCluster cluster, LatLng position) :
+      super(
+        latitude: position.latitude,
+        longitude: position.longitude,
+        pointsSize: cluster.pointsSize,
+        isCluster: true,
+        clusterId: cluster.id,
+        markerId: cluster.id.toString()
+      );
+
+  _Cluster.single({@required String markerId, @required double latitude, @required double longitude, @required int itemCount}) :
+      super(
+          latitude: latitude,
+          longitude: longitude,
+          pointsSize: itemCount,
+          isCluster: false,
+          markerId: markerId
+      );
+
+  void addChild(T child);
+
+  String get text => pointsSize >= maxDisplayCount ? '$maxDisplayCount+' : pointsSize.toString();
+}
+
+class _MediaCluster extends _Cluster<_MediaCluster> {
 
   final List<MediaInfo> _items;
 
-  _MediaCluster({int clusterId, double latitude, double longitude}) : _items = [], super(
-    latitude: latitude,
-    longitude: longitude,
-    isCluster: true,
-    clusterId: clusterId,
-    markerId: clusterId.toString()
-  );
+  _MediaCluster(BaseCluster cluster, LatLng position)
+      : _items = [],
+        super(cluster, position);
 
-  _MediaCluster.single(MediaInfo media) : _items = [media], super(
-    latitude: media.latitude,
-    longitude: media.longitude,
-    isCluster: false,
-    markerId: media.mediaUri
-  );
+  _MediaCluster.single(MediaInfo media)
+      : _items = [media],
+        super.single(
+          latitude: media.latitude,
+          longitude: media.longitude,
+          markerId: media.mediaUri,
+          itemCount: 1
+        );
 
-  void addMedia(MediaInfo media) {
-    if (isCluster) {
-      _items.add(media);
+  void addChild(_MediaCluster child) {
+    _items.addAll(child._items);
+  }
+
+  Iterable<MediaInfo> get items => _items;
+  MediaInfo get singleItem => !isCluster ? _items.first : null;
+}
+
+class _StatisticCluster extends _Cluster<_StatisticCluster> {
+
+  double _minLat;
+  double _maxLat;
+  double _minLon;
+  double _maxLon;
+
+  _StatisticCluster(BaseCluster cluster, LatLng position) :
+        super(cluster, position);
+
+  _StatisticCluster.single(GeoStatistic item) :
+        _minLat = item.minLat,
+        _maxLat = item.maxLat,
+        _minLon = item.minLon,
+        _maxLon = item.maxLon,
+        super.single(
+          latitude: item.centerLat,
+          longitude: item.centerLon,
+          itemCount: item.count,
+          markerId: '${item.minLat}/${item.maxLat}/${item.minLon}/${item.maxLon}'
+        );
+
+  void addChild(_StatisticCluster item) {
+    if (_minLat == null || _maxLat == null || _minLon == null || _maxLon == null) {
+      _minLat = item._minLat;
+      _maxLat = item._maxLat;
+      _minLon = item._minLon;
+      _maxLon = item._maxLon;
+    } else {
+      _minLat = min(_minLat, item._minLat);
+      _maxLat = max(_maxLat, item._maxLat);
+      _minLon = min(_minLon, item._minLon);
+      _maxLon = max(_maxLon, item._maxLon);
     }
   }
 
-  int get size => _items.length;
-
-  Iterable<MediaInfo> get items => _items.reversed;
-  MediaInfo get singleItem => !isCluster ? _items.first : null;
+  LatLngBounds get bounds => LatLngBounds(southwest: LatLng(_minLat, _minLon), northeast: LatLng(_maxLat, _maxLon));
 }
 
 class _MapDisplayState extends State<MapDisplay> {
@@ -66,9 +127,10 @@ class _MapDisplayState extends State<MapDisplay> {
   static CameraPosition _lastPosition;
   final _listController = ScrollController();
   LatLngBounds _lastBounds;
+  List<MediaInfo> _fullMediaList = [];
   List<MediaInfo> _mediaList = [];
   GoogleMapController _mapController;
-  List<_MediaCluster> _clusterList = [];
+  List<_Cluster> _clusterList = [];
 
   Widget _buildInitialContent(BuildContext context, AsyncSnapshot<GeoPosition> snapshot) {
     if (snapshot.connectionState != ConnectionState.done) {
@@ -96,14 +158,14 @@ class _MapDisplayState extends State<MapDisplay> {
   Widget _buildMarkersAndMap() {
     return FutureBuilder<Iterable<Marker>>(
       future: Future.wait(_clusterList.map(_toClusterMarker)),
-      initialData: {},
+      initialData: [],
       builder: _buildMap,
     );
   }
 
   Widget _buildMap(BuildContext context, AsyncSnapshot<Iterable<Marker>> snapshot) {
     return GoogleMap(
-      markers: snapshot.data.toSet(),
+      markers: snapshot.requireData.toSet(),
       onMapCreated: _setMapController,
       minMaxZoomPreference: MinMaxZoomPreference(minZoomLevel, maxZoomLevel),
       mapType: MapType.normal,
@@ -153,37 +215,59 @@ class _MapDisplayState extends State<MapDisplay> {
 
   void _onMarkerSelection(MediaInfo media) {
     setState(() {
-      _mediaList.remove(media);
-      _mediaList.insert(0, media);
+      _mediaList = [media];
       _listController.jumpTo(0.0);
     });
   }
 
   void _onClusterSelection(_MediaCluster cluster) {
     setState(() {
-      for (final media in cluster.items) {
-        _mediaList.remove(media);
-        _mediaList.insert(0, media);
-      }
+      _mediaList = cluster.items.toList(growable: false);
       _listController.jumpTo(0.0);
     });
   }
 
-  Marker _toMediaMarker(MediaInfo media) {
+  void _onStatisticSelection(_StatisticCluster cluster) async {
+    final result = await _queryMatchingMedia(cluster.bounds);
+    setState(() {
+      _mediaList = result.content;
+      _listController.jumpTo(0.0);
+    });
+  }
+
+  Future<Marker> _toMediaSingleMarker(MediaInfo media) async {
     return Marker(markerId: MarkerId(media.mediaUri),
         position: LatLng(media.latitude, media.longitude),
+        icon: await drawMapLocationMarker(clusterMarkerRadius / 2),
+        consumeTapEvents: true,
         onTap: () => _onMarkerSelection(media),
         infoWindow: InfoWindow(title: media.title, onTap: () => _onThumbnailSelection(media)));
   }
 
-  Future<Marker> _toClusterMarker(_MediaCluster cluster) async {
-    if (!cluster.isCluster) {
-      return _toMediaMarker(cluster.items.first);
-    }
+  Future<Marker> _toMediaClusterMarker(_MediaCluster cluster) async {
     return Marker(markerId: MarkerId(cluster.markerId),
-      position: LatLng(cluster.latitude, cluster.longitude),
-      icon: await _getClusterMarker(cluster.size, Colors.redAccent, Colors.white, clusterMarkerRadius / 2),
-      onTap: () => _onClusterSelection(cluster));
+        position: LatLng(cluster.latitude, cluster.longitude),
+        icon: await drawMapClusterMarker(cluster.text, clusterMarkerRadius / 2),
+        consumeTapEvents: true,
+        onTap: () => _onClusterSelection(cluster));
+  }
+
+  Future<Marker> _toStatisticClusterMarker(_StatisticCluster cluster) async {
+    return Marker(markerId: MarkerId(cluster.markerId),
+        position: LatLng(cluster.latitude, cluster.longitude),
+        icon: await drawMapClusterMarker(cluster.text, clusterMarkerRadius / 2),
+        consumeTapEvents: true,
+        onTap: () => _onStatisticSelection(cluster));
+  }
+
+  Future<Marker> _toClusterMarker(_Cluster cluster) async {
+    if (cluster is _MediaCluster) {
+      return cluster.isCluster ? _toMediaClusterMarker(cluster) : _toMediaSingleMarker(cluster.items.first);
+    } else if (cluster is _StatisticCluster) {
+      return _toStatisticClusterMarker(cluster);
+    } else {
+      throw 'Unsupported cluster type';
+    }
   }
 
   void _setMapController(GoogleMapController controller) {
@@ -211,18 +295,31 @@ class _MapDisplayState extends State<MapDisplay> {
   void _onMapMoved() async {
     final bounds = await _mapController.getVisibleRegion();
     if (_lastBounds != null && _areNear(_lastBounds, bounds)) {
+      setState(() {
+        _mediaList = _fullMediaList;
+      });
       return;
     } else if (bounds.northeast == LatLng(0.0, 0.0) && bounds.southwest == LatLng(0.0, 0.0)) {
       // is it a bug?
+      setState(() {
+        _mediaList = _fullMediaList;
+      });
       return;
     }
 
     final zoomLevel = await _mapController.getZoomLevel();
     try {
       final result = await _queryMatchingMedia(bounds);
-      final clusters = _buildClusters(result.content, bounds, zoomLevel);
+      List<Clusterable> clusters;
+      if (result.nextPage != null) {
+        final statistic = await MediaQueryService.current(context).mapMediaCount(widget.categoryToken, widget.keywords, bounds);
+        clusters = _buildStatisticClusters(statistic, bounds, zoomLevel);
+      } else {
+        clusters = _buildMediaClusters(result.content, bounds, zoomLevel);
+      }
 
       setState(() {
+        _fullMediaList = result.content;
         _clusterList = clusters;
         _lastBounds = bounds;
         _mediaList = result.content;
@@ -233,65 +330,62 @@ class _MapDisplayState extends State<MapDisplay> {
     }
   }
 
-  Future<MediaInfoPage> _queryMatchingMedia(LatLngBounds bounds) async {
-    return await MediaQueryService.current(context).listMedia(
+  Future<MediaInfoPage> _queryMatchingMedia(LatLngBounds bounds) {
+    return MediaQueryService.current(context).listMedia(
         widget.categoryToken, widget.keywords, PagingParameter(pageSize: maxThumbnailCount, pageNumber: 0), bounds: bounds);
   }
 
-  List<_MediaCluster> _buildClusters(List<MediaInfo> items, LatLngBounds bounds, double zoomLevel) {
-    if (items.isEmpty) {
-      return [];
-    }
-
-    final clusterBuilder = Fluster<_MediaCluster>(
-        minZoom: minZoomLevel.floor(),
-        maxZoom: maxZoomLevel.ceil(),
-        radius: (MediaQuery.of(context).devicePixelRatio * clusterMarkerRadius).toInt(),
-        extent: 2048,
-        nodeSize: 64,
-        points: items.map((e) => _MediaCluster.single(e)).toList(growable: false),
-        createCluster: (BaseCluster cluster, double longitude, double latitude) {
-          return _MediaCluster(
-              clusterId: cluster.id,
-              latitude: latitude,
-              longitude: longitude);
-        });
-    final result = clusterBuilder.clusters([bounds.southwest.longitude, bounds.southwest.latitude, bounds.northeast.longitude, bounds.northeast.latitude], zoomLevel.round());
+  List<T> _addClusterChildren<T extends _Cluster<T>>(Fluster<T> clusterBuilder, LatLngBounds bounds, double zoomLevel) {
+    final boundingBox = [bounds.southwest.longitude, bounds.southwest.latitude, bounds.northeast.longitude, bounds.northeast.latitude];
+    final result = clusterBuilder.clusters(boundingBox, zoomLevel.round());
     for (final cluster in result.where((element) => element.isCluster)) {
       for (final child in clusterBuilder.points(cluster.clusterId)) {
-        cluster.addMedia(child.singleItem);
+        cluster.addChild(child);
       }
     }
     return result;
   }
 
+  Fluster<T> _createClusterBuilder<T extends _Cluster<T>, E>(
+      Iterable<E> items,
+      T Function(E) singleFactory,
+      T Function(BaseCluster, LatLng) clusterFactory) {
+    return Fluster<T>(
+        minZoom: minZoomLevel.floor(),
+        maxZoom: maxZoomLevel.ceil(),
+        radius: (MediaQuery.of(context).devicePixelRatio * clusterMarkerRadius).toInt(),
+        extent: 2048,
+        nodeSize: 64,
+        points: items.map(singleFactory).toList(growable: false),
+        createCluster: (BaseCluster cluster, double lon, double lat) => clusterFactory(cluster, LatLng(lat, lon))
+    );
+  }
+
+  List<_MediaCluster> _buildMediaClusters(List<MediaInfo> items, LatLngBounds bounds, double zoomLevel) {
+    if (items.isEmpty) {
+      return [];
+    }
+
+    final builder = _createClusterBuilder(items,
+      (e) => _MediaCluster.single(e),
+      (cluster, position) => _MediaCluster(cluster, position)
+    );
+    return _addClusterChildren(builder, bounds, zoomLevel);
+  }
+
+  List<_StatisticCluster> _buildStatisticClusters(List<GeoStatistic> items, LatLngBounds bounds, double zoomLevel) {
+    if (items.isEmpty) {
+      return [];
+    }
+
+    final builder = _createClusterBuilder(items,
+      (e) => _StatisticCluster.single(e),
+      (cluster, position) => _StatisticCluster(cluster, position)
+    );
+    return _addClusterChildren(builder, bounds, zoomLevel);
+  }
+
   void _onMapMoving(CameraPosition position) {
     _lastPosition = position;
   }
-
-  static Future<BitmapDescriptor> _getClusterMarker(int clusterSize, Color clusterColor, Color textColor, double radius) async {
-    final pictureRecorder = PictureRecorder();
-    final canvas = Canvas(pictureRecorder);
-    final paint = Paint();
-
-    final textSpan = TextSpan(text: clusterSize.toString(),
-      style: TextStyle(fontSize: radius - 5, fontWeight: FontWeight.bold, color: textColor),
-    );
-    final textPainter = TextPainter(textDirection: TextDirection.ltr, text: textSpan);
-
-    canvas.drawCircle(Offset(radius, radius), radius, paint..color = clusterColor);
-    textPainter.layout();
-    textPainter.paint(canvas,
-      Offset(radius - textPainter.width / 2, radius - textPainter.height / 2),
-    );
-
-    final image = await pictureRecorder.endRecording().toImage(
-      radius.toInt() * 2,
-      radius.toInt() * 2,
-    );
-
-    final data = await image.toByteData(format: ImageByteFormat.png);
-    return BitmapDescriptor.fromBytes(data.buffer.asUint8List());
-  }
-
 }

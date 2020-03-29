@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/service/geolocation.dart';
 import 'package:social_alert_app/service/mediaupload.dart';
 
@@ -173,7 +174,7 @@ class PictureInfoPanel extends StatelessWidget {
           Text('Location')
         ]),
         SizedBox(height: 5),
-        _buildMap(),
+        _buildMarkerAndMap(context),
         SizedBox(height: 5),
         Row(children: <Widget>[
           Icon(Icons.place),
@@ -201,21 +202,32 @@ class PictureInfoPanel extends StatelessWidget {
     return Column(children: children);
   }
 
-  Container _buildMap() {
-    final position = LatLng(location.latitude, location.longitude);
+  Container _buildMarkerAndMap(BuildContext context) {
+
     return Container(height: 200,
         decoration: BoxDecoration(
             border: Border.all(color: Colors.grey)),
-        child: GoogleMap(
-            mapType: MapType.normal,
-            myLocationEnabled: false,
-            myLocationButtonEnabled: false,
-            markers: {
-              Marker(icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueCyan),
-                  markerId: MarkerId(''),
-                  position: position)
-            },
-            initialCameraPosition: CameraPosition(zoom: 15.0, target: position))
+        child: FutureBuilder<Set<Marker>>(
+          future: _buildMarkers(context),
+          builder: _buildMap,
+          initialData: {},
+        )
     );
+  }
+
+  Future<Set<Marker>> _buildMarkers(BuildContext context) async {
+    final position = LatLng(location.latitude, location.longitude);
+    final icon = await drawMapLocationMarker(40.0);
+    return {Marker(icon: icon, markerId: MarkerId(''), position: position)};
+  }
+
+  GoogleMap _buildMap(BuildContext context, AsyncSnapshot<Set<Marker>> snapshot) {
+    final position = LatLng(location.latitude, location.longitude);
+    return GoogleMap(
+          mapType: MapType.normal,
+          myLocationEnabled: false,
+          myLocationButtonEnabled: false,
+          markers: snapshot.requireData,
+          initialCameraPosition: CameraPosition(zoom: 15.0, target: position));
   }
 }

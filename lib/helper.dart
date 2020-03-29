@@ -1,5 +1,9 @@
+import 'dart:math';
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:form_field_validator/form_field_validator.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 Future showSimpleDialog(BuildContext context, String title, String message) {
   return showDialog(
@@ -72,4 +76,55 @@ class NonEmptyValidator extends TextFieldValidator {
   bool isValid(String value) {
     return value.trim().isNotEmpty;
   }
+}
+
+final _markerColor = Color.fromARGB(255, 231, 40, 102);
+
+Future<BitmapDescriptor> drawMapClusterMarker(String text, double radius) async {
+  final pictureRecorder = PictureRecorder();
+  final canvas = Canvas(pictureRecorder);
+  final paint = Paint();
+
+  final textSpan = TextSpan(text: text,
+    style: TextStyle(fontSize: radius - 5, fontWeight: FontWeight.bold, color: Colors.white),
+  );
+  final textPainter = TextPainter(textDirection: TextDirection.ltr, text: textSpan);
+
+  canvas.drawCircle(Offset(radius, radius), radius, paint..color = _markerColor);
+  textPainter.layout();
+  textPainter.paint(canvas,
+  Offset(radius - textPainter.width / 2, radius - textPainter.height / 2),
+  );
+
+  final image = await pictureRecorder.endRecording().toImage(
+  radius.toInt() * 2,
+  radius.toInt() * 2,
+  );
+
+  final data = await image.toByteData(format: ImageByteFormat.png);
+  return BitmapDescriptor.fromBytes(data.buffer.asUint8List());
+}
+
+Future<BitmapDescriptor> drawMapLocationMarker(double radius) async {
+  final pictureRecorder = PictureRecorder();
+  final canvas = Canvas(pictureRecorder);
+  final paint = Paint();
+  final path = Path();
+
+  paint.color = _markerColor;
+  paint.style = PaintingStyle.fill;
+  path.moveTo(radius, 2 * radius);
+  path.arcTo(Rect.fromLTWH(0.25 * radius, 0, 1.5 * radius, 1.5 * radius), pi - 0.5, pi + 1, false);
+  path.close();
+  canvas.drawPath(path, paint);
+
+  canvas.drawCircle(Offset(radius, radius / 1.5), 0.25 * radius, paint..color = Colors.white);
+
+  final image = await pictureRecorder.endRecording().toImage(
+    radius.toInt() * 2,
+    radius.toInt() * 2,
+  );
+
+  final data = await image.toByteData(format: ImageByteFormat.png);
+  return BitmapDescriptor.fromBytes(data.buffer.asUint8List());
 }

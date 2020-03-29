@@ -169,3 +169,26 @@ class MediaCommentInfo {
 class MediaCommentPage extends ResultPage<MediaCommentInfo> {
   MediaCommentPage.fromJson(Map<String, dynamic> json) : super.fromJson(json, MediaCommentInfo.fromJsonList);
 }
+
+class GeoStatistic {
+  final int count;
+  final double maxLat;
+  final double maxLon;
+  final double minLat;
+  final double minLon;
+
+  GeoStatistic.fromJson(Map<String, dynamic> json) :
+        count = json['count'],
+        maxLat = json['maxLat'],
+        maxLon = json['maxLon'],
+        minLat = json['minLat'],
+        minLon = json['minLon'];
+
+  double get centerLat => (maxLat + minLat) / 2.0;
+  double get centerLon => (maxLon + minLon) / 2.0;
+
+  static List<GeoStatistic> fromJsonList(List<dynamic> json) {
+    return json.map((e) => GeoStatistic.fromJson(e)).toList();
+  }
+}
+

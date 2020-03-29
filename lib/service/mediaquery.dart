@@ -21,7 +21,7 @@ class _MediaQueryApi {
     return _httpClient.get(baseServerUrl + uri, headers: headers);
   }
 
-  Future<MediaInfoPage> listMedia({String category, String keywords, LatLngBounds bounds, PagingParameter paging, String accessToken}) async {
+  Future<MediaInfoPage> listMedia({String category, String keywords, LatLngBounds bounds, @required PagingParameter paging, @required String accessToken}) async {
     final categoryParameter = category != null ? '&category=$category' : '';
     final keywordsParameter = keywords != null ? '&keywords=$keywords' : '';
     final boundsParameter = bounds != null ? '&minLongitude=${bounds.southwest.longitude}&maxLongitude=${bounds.northeast.longitude}&minLatitude=${bounds.southwest.latitude}&maxLatitude=${bounds.northeast.latitude}' : '';
@@ -34,7 +34,19 @@ class _MediaQueryApi {
     throw response.reasonPhrase;
   }
 
-  Future<List<String>> suggestTags({String term, int maxHitCount, String accessToken}) async {
+  Future<List<GeoStatistic>> mapMediaCount({String category, String keywords, @required LatLngBounds bounds, @required String accessToken}) async {
+    final categoryParameter = category != null ? '&category=$category' : '';
+    final keywordsParameter = keywords != null ? '&keywords=$keywords' : '';
+    final boundsParameter = 'minLongitude=${bounds.southwest.longitude}&maxLongitude=${bounds.northeast.longitude}&minLatitude=${bounds.southwest.latitude}&maxLatitude=${bounds.northeast.latitude}';
+    final url = '/media/mapCount?$boundsParameter$categoryParameter$keywordsParameter';
+    final response = await _getJson(url, accessToken);
+    if (response.statusCode == 200) {
+      return GeoStatistic.fromJsonList(jsonDecode(response.body));
+    }
+    throw response.reasonPhrase;
+  }
+
+  Future<List<String>> suggestTags({@required String term, @required int maxHitCount, @required String accessToken}) async {
     final url = '/media/suggestTags?term=$term&maxHitCount=$maxHitCount';
     final response = await _getJson(url, accessToken);
     if (response.statusCode == 200) {
@@ -43,7 +55,7 @@ class _MediaQueryApi {
     throw response.reasonPhrase;
   }
 
-  Future<MediaDetail> viewDetail({String mediaUri, String accessToken}) async {
+  Future<MediaDetail> viewDetail({@required String mediaUri, @required String accessToken}) async {
     final url = '/media/view/$mediaUri';
     final response = await _getJson(url, accessToken);
     if (response.statusCode == 200) {
@@ -52,7 +64,7 @@ class _MediaQueryApi {
     throw response.reasonPhrase;
   }
 
-  Future<MediaCommentPage> listComments({String mediaUri, PagingParameter paging, String accessToken}) async {
+  Future<MediaCommentPage> listComments({@required String mediaUri, @required PagingParameter paging, @required String accessToken}) async {
     final timestampParameter = paging.timestamp != null ? '&pagingTimestamp=${paging.timestamp}' : '';
     final url = '/media/comments/$mediaUri?pageNumber=${paging.pageNumber}&pageSize=${paging.pageSize}$timestampParameter';
     final response = await _getJson(url, accessToken);
@@ -84,6 +96,19 @@ class MediaQueryService {
     try {
       return await _api.listMedia(category: category, keywords: keywords, bounds: bounds,
           paging: paging, accessToken: accessToken);
+    } catch (e) {
+      print(e);
+      throw e;
+    }
+  }
+
+  Future<List<GeoStatistic>> mapMediaCount(String category, String keywords, LatLngBounds bounds) async {
+    if (keywords.isEmpty) {
+      keywords = null;
+    }
+    final accessToken = await _authService.accessToken;
+    try {
+      return await _api.mapMediaCount(category: category, keywords: keywords, bounds: bounds, accessToken: accessToken);
     } catch (e) {
       print(e);
       throw e;
@@ -130,4 +155,5 @@ class MediaQueryService {
       throw e;
     }
   }
+
 }
