@@ -260,7 +260,7 @@ class LoginPage extends StatelessWidget {
             decoration: BoxDecoration(
                 image: DecorationImage(
                     alignment: AlignmentDirectional.bottomCenter,
-                    fit: BoxFit.fitWidth,
+                    fit: BoxFit.fill,
                     image: AssetImage(backgroundImagePath))),
             child: ListView(
                 //mainAxisAlignment: MainAxisAlignment.spaceAround,

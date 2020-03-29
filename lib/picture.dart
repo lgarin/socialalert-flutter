@@ -227,7 +227,9 @@ class PictureInfoPanel extends StatelessWidget {
           mapType: MapType.normal,
           myLocationEnabled: false,
           myLocationButtonEnabled: false,
+          compassEnabled: false,
           markers: snapshot.requireData,
-          initialCameraPosition: CameraPosition(zoom: 15.0, target: position));
+          initialCameraPosition: CameraPosition(zoom: 15.0, target: position)
+    );
   }
 }

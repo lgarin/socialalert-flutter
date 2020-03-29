@@ -282,7 +282,7 @@ class _UploadApi {
     return uploader.enqueueBinary(url: baseServerUrl + '/file/upload/picture',
         method: UploadMethod.POST,
         file: item,
-        headers: {'Authorization': accessToken, 'Content-Type': 'image/jpeg'},
+        headers: {'Authorization': accessToken, 'Content-type': 'image/jpeg'},
         showNotification: true,
         tag: title
     );

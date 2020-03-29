@@ -9,7 +9,7 @@ import 'package:social_alert_app/service/mediamodel.dart';
 
 class _MediaQueryApi {
 
-  static const jsonMediaType = 'application/json';
+  static const jsonMediaType = 'application/json; charset=UTF-8';
 
   final _httpClient = Client();
 
@@ -69,6 +69,7 @@ class _MediaQueryApi {
     final url = '/media/comments/$mediaUri?pageNumber=${paging.pageNumber}&pageSize=${paging.pageSize}$timestampParameter';
     final response = await _getJson(url, accessToken);
     if (response.statusCode == 200) {
+      print(response.body);
       return MediaCommentPage.fromJson(jsonDecode(response.body));
     }
     throw response.reasonPhrase;

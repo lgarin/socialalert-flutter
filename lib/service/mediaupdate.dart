@@ -7,16 +7,18 @@ import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/configuration.dart';
 import 'package:social_alert_app/service/mediamodel.dart';
 
-class _MediaQueryApi {
+class _MediaUpdateApi {
 
-  static const jsonMediaType = 'application/json';
+  static const jsonMediaType = 'application/json; charset=UTF-8';
+  static const textMediaType = 'text/plain; charset=UTF-8';
 
   final _httpClient = Client();
 
   Future<Response> _postJson(String uri, String accessToken, String body) {
     final headers = {
       'Accept': jsonMediaType,
-      'Authorization': accessToken
+      'Authorization': accessToken,
+      'Content-type': textMediaType,
     };
     return _httpClient.post(baseServerUrl + uri, headers: headers, body: body);
   }
@@ -60,7 +62,7 @@ class _MediaQueryApi {
 }
 
 class MediaUpdateService {
-  final _api = _MediaQueryApi();
+  final _api = _MediaUpdateApi();
   final AuthService _authService;
 
   static MediaUpdateService current(BuildContext context) =>

@@ -38,7 +38,7 @@ class LoginResponse {
 }
 
 class _AuthenticationApi {
-  static const jsonMediaType = 'application/json';
+  static const jsonMediaType = 'application/json; charset=UTF-8';
   static const jsonHeaders = {
     'Content-type': jsonMediaType,
     'Accept': jsonMediaType,
