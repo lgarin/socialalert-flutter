@@ -584,7 +584,7 @@ class NetworkPreviewImage extends StatelessWidget {
     final url = MediaQueryService.toPreviewUrl(imageUri);
     return Hero(
         tag: imageUri,
-        child: Image.network(url, cacheWidth: previewHeight, cacheHeight: previewHeight,
+        child: Image.network(url, cacheWidth: previewWidth, cacheHeight: previewHeight,
             fit: orientation == Orientation.portrait ? BoxFit.fitWidth : BoxFit.fitHeight,
             headers: snapshot.data, loadingBuilder: _loadingBuilder)
     );
