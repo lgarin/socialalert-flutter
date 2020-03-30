@@ -118,6 +118,7 @@ class _PasswordWidget extends StatelessWidget {
 }
 
 class _LoginButton extends StatelessWidget {
+  static const color = Color.fromARGB(255, 231, 40, 102);
   static const label = 'Login';
 
   _LoginButton({
@@ -131,7 +132,6 @@ class _LoginButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     return SizedBox(width: double.infinity,
         height: 40,
         child:
@@ -139,7 +139,7 @@ class _LoginButton extends StatelessWidget {
           child: Text(
               label, style: Theme.of(context).textTheme.button),
           onPressed: () => onLogin(model),
-          color: Theme.of(context).buttonColor,
+          color: color,
           shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.all(
                   Radius.circular(20))),
@@ -212,6 +212,8 @@ class _LoginFormState extends State<_LoginForm> {
 
 class _LoginWidget extends StatelessWidget {
 
+  static const spacing = 10.0;
+
   _LoginWidget({
     Key key,
     @required this.formKey,
@@ -233,9 +235,9 @@ class _LoginWidget extends StatelessWidget {
         child: Column(
           children: <Widget>[
             _UsernameWidget(model: model),
-            SizedBox(height: 10),
+            SizedBox(height: spacing),
             _PasswordWidget(model: model),
-            SizedBox(height: 10),
+            SizedBox(height: spacing),
             _LoginButton(model: model, onLogin: onLogin)
           ],
         ));
@@ -256,22 +258,30 @@ class LoginPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
         backgroundColor: Theme.of(context).backgroundColor,
-        body: DecoratedBox(
-            decoration: BoxDecoration(
-                image: DecorationImage(
-                    alignment: AlignmentDirectional.bottomCenter,
-                    fit: BoxFit.fill,
-                    image: AssetImage(backgroundImagePath))),
-            child: ListView(
-                //mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: <Widget>[
-                  SizedBox(height: 40),
-                  _LoginHeader(),
-                  Container(
-                    margin: EdgeInsets.all(20),
-                    padding: EdgeInsets.all(20),
-                    child: _LoginForm(),
-                  ),
-                ])));
+        body: _buildBody());
+  }
+
+  DecoratedBox _buildBody() {
+    return DecoratedBox(
+          decoration: BoxDecoration(
+              image: DecorationImage(
+                  alignment: AlignmentDirectional.bottomCenter,
+                  fit: BoxFit.fill,
+                  image: AssetImage(backgroundImagePath))),
+          child: _buildContent());
+  }
+
+  ListView _buildContent() {
+    return ListView(
+            children: <Widget>[
+              Container(
+                margin: EdgeInsets.all(40),
+                child: _LoginHeader()
+              ),
+              Container(
+                margin: EdgeInsets.all(40),
+                child: _LoginForm(),
+              ),
+            ]);
   }
 }
