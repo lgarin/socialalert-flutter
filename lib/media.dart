@@ -580,12 +580,12 @@ class NetworkPreviewImage extends StatelessWidget {
     if (snapshot.connectionState != ConnectionState.done) {
       return _buildProgressIndicator(context, null);
     }
-    final orientation = MediaQuery.of(context).orientation;
+    final portrait = MediaQuery.of(context).orientation == Orientation.portrait;
     final url = MediaQueryService.toPreviewUrl(imageUri);
     return Hero(
         tag: imageUri,
         child: Image.network(url, cacheWidth: previewWidth, cacheHeight: previewHeight,
-            fit: orientation == Orientation.portrait ? BoxFit.fitWidth : BoxFit.fitHeight,
+            fit: portrait ? BoxFit.fitWidth : BoxFit.fitHeight,
             headers: snapshot.data, loadingBuilder: _loadingBuilder)
     );
   }

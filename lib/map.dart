@@ -117,6 +117,7 @@ class _MapDisplayState extends State<MapDisplay> {
   static const thumbnailTileWidth = 160.0;
   static const thumbnailTileHeight = 90.0;
   static const maxThumbnailCount = 100;
+  static const thumbnailInset = 2.0;
 
   static const minZoomLevel = 10.0;
   static const maxZoomLevel = 20.0;
@@ -146,13 +147,17 @@ class _MapDisplayState extends State<MapDisplay> {
   }
 
   Widget _buildContent() {
-    return Column(
-      crossAxisAlignment:CrossAxisAlignment.start,
-      children: <Widget>[
-        Expanded(child: _buildMarkersAndMap()),
-        _buildThumbnailList(),
-      ],
-    );
+    final landscape = MediaQuery.of(context).orientation == Orientation.landscape;
+    final children = <Widget>[
+      Expanded(child: _buildMarkersAndMap()),
+      _buildThumbnailList(landscape),
+    ];
+
+    if (landscape) {
+      return Row(children: children);
+    } else {
+      return Column(children: children);
+    }
   }
 
   Widget _buildMarkersAndMap() {
@@ -178,14 +183,15 @@ class _MapDisplayState extends State<MapDisplay> {
     );
   }
 
-  Widget _buildThumbnailList() {
+  Widget _buildThumbnailList(bool landscape) {
     if (_mediaList.isEmpty) {
-      return SizedBox(height: 0);
+      return SizedBox(height: 0, width: 0);
     }
     return Container(
-        height: thumbnailTileHeight,
+        height: !landscape ? thumbnailTileHeight : null,
+        width: landscape ? thumbnailTileWidth : null,
         child: ListView.builder(
-          scrollDirection: Axis.horizontal,
+          scrollDirection: landscape ? Axis.vertical : Axis.horizontal,
           controller: _listController,
           itemCount: _mediaList.length,
           itemBuilder: _toThumbnail,
@@ -195,9 +201,10 @@ class _MapDisplayState extends State<MapDisplay> {
 
   Widget _toThumbnail(BuildContext context, int index) {
     final media = _mediaList[index];
+    final landscape = MediaQuery.of(context).orientation == Orientation.landscape;
 
-    return Container(width: thumbnailTileWidth,
-        padding: EdgeInsets.symmetric(horizontal: 2.0, vertical: 4.0),
+    return Container(width: thumbnailTileWidth, height: thumbnailTileHeight,
+        padding: EdgeInsets.symmetric(horizontal: thumbnailInset * (landscape ? 2 : 1), vertical: thumbnailInset * (landscape ? 1 : 2)),
         color: Colors.grey.shade800,
         child: MediaThumbnailTile(media: media, onTapCallback: _onThumbnailTap, onDoubleTapCallback: _onThumbnailSelection,));
   }

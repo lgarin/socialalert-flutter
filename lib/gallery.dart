@@ -30,9 +30,9 @@ class _GalleryDisplayState extends BasePagingState<GalleryDisplay, MediaInfo> {
       return Center(child: _buildNoContent(context));
     }
 
-    final orientation = MediaQuery.of(context).orientation;
+    final portrait = MediaQuery.of(context).orientation == Orientation.portrait;
     return GridView.count(
-        crossAxisCount: (orientation == Orientation.portrait) ? 2 : 3,
+        crossAxisCount: portrait ? 2 : 3,
         childAspectRatio: 16.0 / 9.0,
         mainAxisSpacing: _GalleryDisplayState.spacing,
         crossAxisSpacing: _GalleryDisplayState.spacing,
