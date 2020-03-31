@@ -9,8 +9,8 @@ import 'package:social_alert_app/service/mediamodel.dart';
 
 class _MediaUpdateApi {
 
-  static const jsonMediaType = 'application/json; charset=UTF-8';
-  static const textMediaType = 'text/plain; charset=UTF-8';
+  static const jsonMediaType = 'application/json; charset=utf-8';
+  static const textMediaType = 'text/plain; charset=utf-8';
 
   final _httpClient = Client();
 
@@ -18,8 +18,10 @@ class _MediaUpdateApi {
     final headers = {
       'Accept': jsonMediaType,
       'Authorization': accessToken,
-      'Content-type': textMediaType,
     };
+    if (body != null) {
+      headers['Content-type'] = textMediaType;
+    }
     return _httpClient.post(baseServerUrl + uri, headers: headers, body: body);
   }
 
