@@ -71,8 +71,8 @@ class _MenuBar extends StatelessWidget {
               },
             ),
             ListTile(
-              enabled: currentPage != AppRoute.Uploads,
-              selected: currentPage == AppRoute.Uploads,
+              enabled: currentPage != AppRoute.UploadManager,
+              selected: currentPage == AppRoute.UploadManager,
               leading: Consumer<MediaUploadList>(
                 builder: _buildUploadBadge,
                 child: Icon(Icons.cloud_upload),
@@ -80,7 +80,7 @@ class _MenuBar extends StatelessWidget {
               title: Text('My Uploads'),
               onTap: () {
                 Navigator.pop(context);
-                Navigator.pushReplacementNamed(context, AppRoute.Uploads);
+                Navigator.pushReplacementNamed(context, AppRoute.UploadManager);
               },
             ),
             ListTile(

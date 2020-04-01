@@ -150,7 +150,7 @@ packages:
       name: google_api_availability
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.0.3"
+    version: "2.0.3+hotfix.1"
   google_maps_flutter:
     dependency: "direct main"
     description:

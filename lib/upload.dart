@@ -3,12 +3,14 @@ import 'package:provider/provider.dart';
 import 'package:social_alert_app/base.dart';
 import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/main.dart';
+import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/mediaupload.dart';
 import 'package:timeago_flutter/timeago_flutter.dart';
 
-class UploadsPage extends StatefulWidget {
+class UploadManagerPage extends StatefulWidget {
+
   @override
-  _UploadsPageState createState() => _UploadsPageState();
+  _UploadManagerPageState createState() => _UploadManagerPageState();
 }
 
 enum _UploadErrorAction {
@@ -23,11 +25,22 @@ class _UploadErrorItem {
   _UploadErrorItem(this.action, this.task);
 }
 
-class _UploadsPageState extends BasePageState<UploadsPage> {
+class _UploadManagerPageState extends BasePageState<UploadManagerPage> {
 
   static const iconSize = 50.0;
 
-  _UploadsPageState() : super(AppRoute.Uploads);
+  _UploadManagerPageState() : super(AppRoute.UploadManager);
+
+  bool get _isAnonymousUser {
+    final userProfile = Provider.of<UserProfile>(context, listen: false);
+    if (userProfile == null) {
+      return true;
+    }
+    return userProfile.anonymous;
+  }
+
+  @override
+  Widget buildDrawer() => _isAnonymousUser ? null : super.buildDrawer();
 
   @override
   Widget buildBody(BuildContext context) {

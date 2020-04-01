@@ -2,18 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:form_field_validator/form_field_validator.dart';
 import 'package:provider/provider.dart';
 import 'package:social_alert_app/helper.dart';
+import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/credential.dart';
 
-import 'main.dart';
-
-class LoginModel {
+class _LoginModel {
   final username = TextEditingController();
   final password = TextEditingController();
 
-  LoginModel();
+  _LoginModel();
 
-  LoginModel.fromCredential(Credential credential) {
+  _LoginModel.fromCredential(Credential credential) {
     username.text = credential.username ?? '';
     password.text = credential.password ?? '';
   }
@@ -34,9 +33,11 @@ class LoginModel {
   String toString() {
     return '$runtimeType(${username.text}, ${password.text})';
   }
+
+  Credential toCredential() => Credential(username.text, password.text);
 }
 
-typedef LoginCallBack = void Function(LoginModel);
+typedef _LoginCallBack = void Function(_LoginModel);
 
 class _LoginHeader extends StatelessWidget {
   static const logoPath = "images/logo_login.png";
@@ -66,7 +67,7 @@ class _UsernameWidget extends StatelessWidget {
     @required this.model,
   }) : super(key: key);
 
-  final LoginModel model;
+  final _LoginModel model;
 
   @override
   Widget build(BuildContext context) {
@@ -96,7 +97,7 @@ class _PasswordWidget extends StatelessWidget {
     @required this.model,
   }) : super(key: key);
 
-  final LoginModel model;
+  final _LoginModel model;
 
   @override
   Widget build(BuildContext context) {
@@ -127,8 +128,8 @@ class _LoginButton extends StatelessWidget {
     @required this.onLogin
   }) : super(key: key);
 
-  final LoginCallBack onLogin;
-  final LoginModel model;
+  final _LoginCallBack onLogin;
+  final _LoginModel model;
 
   @override
   Widget build(BuildContext context) {
@@ -136,13 +137,11 @@ class _LoginButton extends StatelessWidget {
         height: 40,
         child:
         RaisedButton(
-          child: Text(
-              label, style: Theme.of(context).textTheme.button),
+          child: Text(label, style: Theme.of(context).textTheme.button),
           onPressed: () => onLogin(model),
           color: color,
           shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(
-                  Radius.circular(20))),
+              borderRadius: BorderRadius.all(Radius.circular(20))),
         )
     );
   }
@@ -151,67 +150,86 @@ class _LoginButton extends StatelessWidget {
 class _LoginFormState extends State<_LoginForm> {
   final _formKey = GlobalKey<FormState>();
   Credential _credential;
+  UserProfile _currentUser;
 
-  void _onLogin(LoginModel model) {
+  void _onLogin(_LoginModel model) {
     final form = _formKey.currentState;
-    if (form.validate()) {
+    if (form != null && form.validate()) {
       setState(() {
-        _credential = Credential(model.username.text, model.password.text);
+        _credential = model.toCredential();
       });
     }
   }
 
-  Future<LoginModel> _prepareModel(BuildContext context) async {
+  Future<UserProfile> _findCurrentUser(BuildContext context) async {
+    final currentUser = await AuthService.current(context).currentUser();
+    _currentUser = currentUser;
+    return currentUser;
+  }
+
+  Future<_LoginModel> _prepareModel(BuildContext context) async {
     final credential = await AuthService.current(context).initialCredential;
     if (credential.isDefined()) {
       _credential = credential;
     }
-    return LoginModel.fromCredential(credential);
+    return _LoginModel.fromCredential(credential);
   }
 
-  Future<bool> _handleLoginPhases() {
-    if (_credential != null) {
-      return _authenticateUser();
+  Future<UserProfile> _handleLoginPhases() {
+    if (_currentUser != null) {
+      _showNextPage(_currentUser);
+      return Future.value(_currentUser);
+    } else if (_credential != null) {
+      return _authenticateUser(_credential);
     } else {
-      return Future.value(false);
+      return Future.value(null);
     }
   }
 
-  Future<bool> _authenticateUser() async {
+  void _showNextPage(UserProfile userProfile) {
+    if (userProfile.anonymous) {
+      Future(() => Navigator.pushReplacementNamed(context, AppRoute.UploadManager, arguments: userProfile));
+    } else {
+      Future(() => Navigator.pushReplacementNamed(context, AppRoute.Home, arguments: userProfile));
+    }
+  }
+
+  Future<UserProfile> _authenticateUser(Credential credential) async {
     try {
-      final profile = await AuthService.current(context).authenticate(_credential);
-      await Navigator.pushReplacementNamed(context, AppRoute.Home, arguments: profile);
-      return true;
+      final userProfile = await AuthService.current(context).authenticate(credential);
+      _showNextPage(userProfile);
+      return userProfile;
     } catch (e) {
-      await showSimpleDialog(context, "Login failed", e.toString());
-      return false;
+      showSimpleDialog(context, "Login failed", e.toString());
+      return null;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureProvider<LoginModel>(
-        create: _prepareModel,
-        lazy: true,
-        child: FutureBuilder<bool>(
-          initialData: false,
-          future: _handleLoginPhases(),
-          builder: _buildWidget)
+    return FutureProvider<UserProfile>(
+        create: _findCurrentUser,
+        lazy: false,
+        child: FutureProvider<_LoginModel>(
+          create: _prepareModel,
+          child: FutureBuilder<UserProfile>(
+              future: _handleLoginPhases(),
+              builder: _buildWidget)
+        )
     );
   }
 
-  Widget _buildWidget(BuildContext context, AsyncSnapshot<bool> snapshot) {
+  Widget _buildWidget(BuildContext context, AsyncSnapshot<UserProfile> snapshot) {
     if (snapshot.connectionState != ConnectionState.done) {
       return LoadingCircle();
-    } else if (snapshot.data) {
-      return null;
+    } else if (snapshot.hasData) {
+      return SizedBox(height: 0, width: 0);
     }
     return _LoginWidget(formKey: _formKey, onLogin: _onLogin);
   }
 }
 
 class _LoginWidget extends StatelessWidget {
-
   static const spacing = 10.0;
 
   _LoginWidget({
@@ -221,11 +239,11 @@ class _LoginWidget extends StatelessWidget {
   }) : super(key: key);
 
   final GlobalKey<FormState> formKey;
-  final LoginCallBack onLogin;
+  final _LoginCallBack onLogin;
 
   @override
   Widget build(BuildContext context) {
-    final model = Provider.of<LoginModel>(context);
+    final model = Provider.of<_LoginModel>(context);
     if (model == null) {
       return LoadingCircle();
     }
@@ -253,6 +271,7 @@ class _LoginForm extends StatefulWidget {
 
 class LoginPage extends StatelessWidget {
   static const backgroundImagePath = "images/login_bg.jpg";
+  static const margin = 40.0;
 
   @override
   Widget build(BuildContext context) {
@@ -275,11 +294,11 @@ class LoginPage extends StatelessWidget {
     return ListView(
             children: <Widget>[
               Container(
-                margin: EdgeInsets.all(40),
+                margin: EdgeInsets.all(margin),
                 child: _LoginHeader()
               ),
               Container(
-                margin: EdgeInsets.all(40),
+                margin: EdgeInsets.all(margin),
                 child: _LoginForm(),
               ),
             ]);

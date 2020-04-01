@@ -62,8 +62,8 @@ class SocialAlertApp extends StatelessWidget {
       case AppRoute.Home: return MaterialPageRoute(
           builder: (context) => HomePage()
       );
-      case AppRoute.Uploads: return MaterialPageRoute(
-          builder: (context) => UploadsPage()
+      case AppRoute.UploadManager: return MaterialPageRoute(
+          builder: (context) => UploadManagerPage()
       );
       case AppRoute.Annotate: return MaterialPageRoute(
           builder: (context) => AnnotatePage(settings.arguments)
@@ -86,7 +86,7 @@ class AppRoute {
   static const Login = 'login';
   static const Home = 'home';
   static const Annotate = 'annotate';
-  static const Uploads = 'uploads';
+  static const UploadManager = 'uploadManager';
   static const Network = 'network';
   static const LocalPictureInfo = 'pictureInfo';
   static const RemotePictureDetail ='pictureDetail';
