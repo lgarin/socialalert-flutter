@@ -147,7 +147,7 @@ class AuthService {
   static AuthService current(BuildContext context) =>
       Provider.of<AuthService>(context, listen: false);
 
-  final _profileController = StreamController<UserProfile>.broadcast();
+  final _profileController = StreamController<UserProfile>();
 
   Stream<UserProfile> get profileStream => _profileController.stream;
 

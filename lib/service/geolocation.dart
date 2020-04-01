@@ -21,7 +21,7 @@ class GeoLocation extends GeoPosition {
   GeoLocation.fromPlacemark(Placemark placemark) :
         country = placemark.isoCountryCode,
         locality = placemark.locality,
-        address = placemark.name,
+        address = [placemark.subLocality, placemark.thoroughfare, placemark.subThoroughfare].where((e) => e.isNotEmpty).join(' '),
         super(latitude: placemark.position.latitude, longitude: placemark.position.longitude);
 
   String format() {
@@ -76,14 +76,5 @@ class GeoLocationService {
     final location = GeoLocation.fromPlacemark(placemark);
     _locationController.add(location);
     return location;
-  }
-
-  Future<GeoLocation> tryReadLocation(GeoPosition position) async {
-    try {
-      return await readLocation(latitude: position.latitude, longitude: position.longitude);
-    } catch (e) {
-      print(e.toString());
-      return null;
-    }
   }
 }

@@ -4,13 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:form_field_validator/form_field_validator.dart';
 import 'package:provider/provider.dart';
+import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/picture.dart';
+import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/configuration.dart';
-import 'package:social_alert_app/service/geolocation.dart';
 import 'package:social_alert_app/service/mediaquery.dart';
 import 'package:social_alert_app/service/mediaupload.dart';
-import 'helper.dart';
 
 class _CaptureModel {
   final DateTime timestamp;
@@ -61,10 +61,7 @@ class _AnnotatePageState extends State<AnnotatePage> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureProvider<GeoLocation>(
-        create: _readLocation,
-        lazy: false,
-        child: Scaffold(
+    return Scaffold(
           backgroundColor: backgroundColor,
           appBar: _buildAppBar(context),
           body: LocalPicturePreview(
@@ -74,8 +71,7 @@ class _AnnotatePageState extends State<AnnotatePage> {
               fullScreenSwitch: _switchFullImage,
               child: _MetadataForm(model: _model, formKey: _formKey, onPublish: _onPublish),
               childHeight: 440)
-        )
-    );
+        );
   }
 
   AppBar _buildAppBar(BuildContext context) {
@@ -117,15 +113,17 @@ class _AnnotatePageState extends State<AnnotatePage> {
   void _onPublish() async {
     final form = _formKey.currentState;
     if (form != null && form.validate()) {
-      GeoLocation location = Provider.of(context, listen: false);
       _upload.annotate(
         title: _model.titleInput,
         category: _model.selectedCategory,
         tags: List.from(_model.tags),
-        location: location
       );
       try {
-        await MediaUploadService.current(context).manageTask(_upload);
+        final userProfile = Provider.of<UserProfile>(context, listen: false);
+        await MediaUploadService.current(context).saveTask(_upload);
+        if (!userProfile.anonymous) {
+          MediaUploadService.current(context).restartTask(_upload);
+        }
         Navigator.pop(context);
       } catch (e) {
         showSimpleDialog(context, "Upload failed", e.toString());
@@ -137,14 +135,6 @@ class _AnnotatePageState extends State<AnnotatePage> {
       });
     }
   }
-
-  Future<GeoLocation> _readLocation(BuildContext context) async {
-    final location = await GeoLocationService.current(context).tryReadLocation(_upload.position);
-    if (location == null) {
-      return GeoLocation(longitude: _upload.longitude, latitude: _upload.latitude);
-    }
-    return location;
-  }
 }
 
 class _PublishIconButton extends StatelessWidget {
@@ -154,10 +144,10 @@ class _PublishIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    GeoLocation location = Provider.of(context);
+    final userProfile = Provider.of<UserProfile>(context, listen: false);
     return IconButton(
-        icon: Icon(Icons.cloud_upload),
-        onPressed: location != null ? onPublish : null
+        icon: Icon(userProfile.anonymous ? Icons.save_alt : Icons.cloud_upload),
+        onPressed: onPublish
     );
   }
 }
@@ -354,8 +344,6 @@ class _CategoryWidgetState extends State<_CategoryWidget> {
 }
 
 class _PublishButton extends StatelessWidget {
-  static const label = 'Publish';
-
   _PublishButton({
     Key key,
     @required this.onPublish
@@ -365,14 +353,14 @@ class _PublishButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    GeoLocation location = Provider.of(context);
+    final userProfile = Provider.of<UserProfile>(context, listen: false);
     return SizedBox(width: double.infinity,
         height: 40,
         child:
         RaisedButton(
-          child: Text(
-              label, style: Theme.of(context).textTheme.button),
-          onPressed: location != null ? onPublish : null,
+          child: Text(userProfile.anonymous ? 'Save' : 'Publish',
+              style: Theme.of(context).textTheme.button),
+          onPressed: onPublish,
           color: Theme.of(context).buttonColor,
           shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.all(

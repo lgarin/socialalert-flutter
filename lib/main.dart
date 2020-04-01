@@ -23,10 +23,10 @@ class SocialAlertApp extends StatelessWidget {
     return MultiProvider(
         providers: [
           Provider<GeoLocationService>(create: (_) => GeoLocationService(), dispose: (_, service) => service.dispose()),
-          StreamProvider<GeoLocation>(create: (context) => GeoLocationService.current(context).locationStream),
+          StreamProvider<GeoLocation>(create: (context) => GeoLocationService.current(context).locationStream, lazy: false),
           Provider<AuthService>(create: (_) => AuthService(), dispose: (_, service) => service.dispose()),
-          StreamProvider<UserProfile>(create: (context) => AuthService.current(context).profileStream),
-          Provider<MediaUploadService>(create: (context) => MediaUploadService(AuthService.current(context)), dispose: (_, service) => service.dispose()),
+          StreamProvider<UserProfile>(create: (context) => AuthService.current(context).profileStream, lazy: false),
+          Provider<MediaUploadService>(create: (context) => MediaUploadService(AuthService.current(context), GeoLocationService.current(context)), dispose: (_, service) => service.dispose()),
           Provider<MediaQueryService>(create: (context) => MediaQueryService(AuthService.current(context))),
           Provider<MediaUpdateService>(create: (context) => MediaUpdateService(AuthService.current(context))),
         ],

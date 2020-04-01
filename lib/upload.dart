@@ -118,13 +118,13 @@ class _UploadManagerPageState extends BasePageState<UploadManagerPage> {
       return CircularProgressIndicator(
         value: task.uploadProgress,
       );
-    } else if (task.status == MediaUploadStatus.CLAIMING) {
+    } else if (task.status == MediaUploadStatus.LOCATING || task.status == MediaUploadStatus.CLAIMING) {
       return CircularProgressIndicator();
     } else if (task.status == MediaUploadStatus.CREATED) {
       return Icon(Icons.navigate_next, size: iconSize);
-    } else if (task.status == MediaUploadStatus.ANNOTATED || task.status == MediaUploadStatus.UPLOADED) {
-      return Icon(Icons.refresh, size: iconSize);
-    } else if (task.status == MediaUploadStatus.UPLOAD_ERROR || task.status == MediaUploadStatus.CLAIM_ERROR) {
+    } else if (task.status == MediaUploadStatus.ANNOTATED || task.status == MediaUploadStatus.LOCATED || task.status == MediaUploadStatus.UPLOADED) {
+      return SizedBox(width: 0, height: 0);
+    } else if (task.status == MediaUploadStatus.UPLOAD_ERROR || task.status == MediaUploadStatus.LOCATE_ERROR || task.status == MediaUploadStatus.CLAIM_ERROR) {
       return PopupMenuButton(
         child: Icon(Icons.error, size: iconSize),
         itemBuilder: (context) => _buildUploadErrorMenu(context, task),
@@ -152,7 +152,7 @@ class _UploadManagerPageState extends BasePageState<UploadManagerPage> {
     if (item.action == _UploadErrorAction.DELETE) {
       showConfirmDialog(context, 'Delete Snype', 'Do you really want to delete this upload?', () => _onConfirmUploadDeletion(item.task));
     } else if (item.action == _UploadErrorAction.RETRY) {
-      MediaUploadService.current(context).manageTask(item.task);
+      MediaUploadService.current(context).restartTask(item.task);
     }
   }
 

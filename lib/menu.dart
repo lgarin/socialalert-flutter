@@ -155,7 +155,7 @@ class _Header extends StatelessWidget {
   }
 
   Widget _buildLocation(BuildContext context, GeoLocation location) {
-    if (location == null) {
+    if (location == null || location.locality == null) {
       return Row();
     }
     return Row(

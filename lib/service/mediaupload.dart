@@ -16,6 +16,9 @@ import 'package:social_alert_app/service/geolocation.dart';
 enum MediaUploadStatus {
   CREATED,
   ANNOTATED,
+  LOCATING,
+  LOCATE_ERROR,
+  LOCATED,
   UPLOADING,
   UPLOAD_ERROR,
   UPLOADED,
@@ -144,20 +147,39 @@ class MediaUploadTask with ChangeNotifier {
     'lastUpdate': _lastUpdate.toIso8601String(),
   };
 
-  void annotate({@required String title, String description, String category, List<String> tags, GeoLocation location}) {
+  void annotate({@required String title, String description, String category, List<String> tags}) {
     assert(status == MediaUploadStatus.CREATED);
     _title = title;
     _description = description;
     _category = category;
     _tags = tags;
-    _country = location?.country;
-    _locality = location?.locality;
-    _address = location?.address;
+
     _changeStatus(MediaUploadStatus.ANNOTATED);
   }
 
+  void _markLocating() {
+    assert(status == MediaUploadStatus.ANNOTATED || status == MediaUploadStatus.LOCATING ||
+        status == MediaUploadStatus.LOCATE_ERROR);
+    _changeStatus(MediaUploadStatus.LOCATING);
+  }
+
+  void _locate(GeoLocation location) {
+    assert(status == MediaUploadStatus.LOCATING);
+    _country = location?.country;
+    _locality = location?.locality;
+    _address = location?.address;
+
+    _changeStatus(MediaUploadStatus.LOCATED);
+  }
+
+  void _markLocateError(Object error) {
+    assert(status == MediaUploadStatus.LOCATING);
+    print(error);
+    _changeStatus(MediaUploadStatus.LOCATE_ERROR);
+  }
+
   void _markUploading(String uploadTaskId) {
-    assert(status == MediaUploadStatus.ANNOTATED || status == MediaUploadStatus.UPLOADING || status == MediaUploadStatus.UPLOAD_ERROR);
+    assert(status == MediaUploadStatus.LOCATED || status == MediaUploadStatus.UPLOADING || status == MediaUploadStatus.UPLOAD_ERROR);
     _uploadTaskId = uploadTaskId;
     _uploadProgress = null;
     _changeStatus(MediaUploadStatus.UPLOADING);
@@ -169,8 +191,9 @@ class MediaUploadTask with ChangeNotifier {
     _changeStatus(MediaUploadStatus.UPLOADED);
   }
 
-  void _markUploadError() {
+  void _markUploadError(Object error) {
     assert(status == MediaUploadStatus.UPLOADING);
+    print(error);
     _changeStatus(MediaUploadStatus.UPLOAD_ERROR);
   }
 
@@ -179,8 +202,9 @@ class MediaUploadTask with ChangeNotifier {
     _changeStatus(MediaUploadStatus.CLAIMING);
   }
 
-  void _markClaimError() {
+  void _markClaimError(Object error) {
     assert(status == MediaUploadStatus.CLAIMING);
+    print(error);
     _changeStatus(MediaUploadStatus.CLAIM_ERROR);
   }
 
@@ -203,7 +227,9 @@ class MediaUploadTask with ChangeNotifier {
   void _reset() {
     _uploadProgress = null;
     _uploadTaskId = null;
-    if (status == MediaUploadStatus.UPLOADING) {
+    if (status == MediaUploadStatus.LOCATING) {
+      _status = MediaUploadStatus.LOCATE_ERROR;
+    } else if (status == MediaUploadStatus.UPLOADING) {
       _status = MediaUploadStatus.UPLOAD_ERROR;
     } else if (status == MediaUploadStatus.CLAIMING) {
       _status = MediaUploadStatus.CLAIM_ERROR;
@@ -240,8 +266,9 @@ class _UploadTaskResult {
   final String taskId;
   final String mediaUri;
   final MediaUploadStatus status;
+  final Object error;
 
-  _UploadTaskResult({this.taskId, this.mediaUri, this.status});
+  _UploadTaskResult({@required this.taskId, this.mediaUri, this.status, this.error});
 }
 
 class _UploadTaskStep {
@@ -310,7 +337,7 @@ class _UploadApi {
       final mediaUri = response.headers['Location'].substring(baseLocationUrl.length);
       return _UploadTaskResult(taskId: response.taskId, mediaUri: mediaUri, status: MediaUploadStatus.UPLOADED);
     } else if (response.status == UploadTaskStatus.failed || response.status == UploadTaskStatus.complete) {
-      return _UploadTaskResult(taskId: response.taskId, status: MediaUploadStatus.UPLOAD_ERROR);
+      return _UploadTaskResult(taskId: response.taskId, status: MediaUploadStatus.UPLOAD_ERROR, error: response.response);
     } else {
       return _UploadTaskResult(taskId: response.taskId);
     }
@@ -368,13 +395,14 @@ class MediaUploadService {
   final _uploadTaskStore = _UploadTaskStore();
   final _uploadApi = _UploadApi();
   final AuthService _authService;
+  final GeoLocationService _locationService;
   StreamSubscription<MediaUploadTask> _uploadSubscription;
   StreamSubscription<MediaUploadTask> _progressSubscription;
-  StreamController<MediaUploadTask> _uploadStreamController = StreamController.broadcast();
-  StreamController<MediaUploadTask> _progressStreamController = StreamController.broadcast();
+  final _uploadStreamController = StreamController<MediaUploadTask>.broadcast();
+  final _progressStreamController = StreamController<MediaUploadTask>.broadcast();
   MediaUploadList _uploads;
 
-  MediaUploadService(this._authService) {
+  MediaUploadService(this._authService, this._locationService) {
     _uploadSubscription = _uploadResultStream.listen(_uploadStreamController.add, onError: _uploadStreamController.addError, onDone: _uploadStreamController.close);
     _progressSubscription = _uploadProgressStream.listen(_progressStreamController.add, onError: _progressStreamController.addError, onDone: _progressStreamController.close);
   }
@@ -406,12 +434,12 @@ class MediaUploadService {
     }
 
     for (final upload in uploads) {
-      await _restartTask(upload);
+      restartTask(upload);
     }
     return uploads;
   }
 
-  Future<void> manageTask(MediaUploadTask task) async {
+  Future<void> saveTask(MediaUploadTask task) async {
     final uploads = await currentUploads();
 
     if (task.status == MediaUploadStatus.CREATED) {
@@ -419,12 +447,12 @@ class MediaUploadService {
     }
 
     await _uploadTaskStore.store(uploads);
-
-    await _restartTask(task);
   }
 
-  Future<void> _restartTask(MediaUploadTask task) async {
-    if (task.status == MediaUploadStatus.ANNOTATED || task.status == MediaUploadStatus.UPLOAD_ERROR) {
+  void restartTask(MediaUploadTask task) {
+    if (task.status == MediaUploadStatus.ANNOTATED || task.status == MediaUploadStatus.LOCATE_ERROR) {
+      _startLocating(task);
+    } else if (task.status == MediaUploadStatus.LOCATED || task.status == MediaUploadStatus.UPLOAD_ERROR) {
       _startUploading(task);
     } else if (task.status == MediaUploadStatus.UPLOADED || task.status == MediaUploadStatus.CLAIM_ERROR) {
       _startClaiming(task);
@@ -441,14 +469,27 @@ class MediaUploadService {
     await task._delete();
   }
 
+  void _startLocating(MediaUploadTask task) {
+    _locationService.readLocation(latitude: task.latitude, longitude: task.longitude)
+        .then((location) => task._locate(location), onError: (e) => task._markLocateError(e))
+        .whenComplete(() => _completeLocate(task));
+    task._markLocating();
+  }
+
+  Future<void> _completeLocate(MediaUploadTask task) async {
+    final uploads = await currentUploads();
+    await _uploadTaskStore.store(uploads);
+    _uploadStreamController.add(task);
+    _startUploading(task);
+  }
+
   Future<void> _startUploading(MediaUploadTask task) async {
     try {
       final accessToken = await _authService.accessToken;
       final taskId = await _uploadApi.enqueueImage(title: task.title, file: task.file, accessToken: accessToken);
       task._markUploading(taskId);
     } catch (e) {
-      print(e.toString());
-      task._markUploadError();
+      task._markUploadError(e);
     }
   }
 
@@ -457,12 +498,11 @@ class MediaUploadService {
       final accessToken = await _authService.accessToken;
       final param = _ClaimParameter(task._title, task._category, task._description, task.location, task.tags);
       _uploadApi.claimMedia(mediaUri: task.mediaUri, param: param, accessToken: accessToken)
-          .then((_) => task._markClaimed(), onError: (_) => task._markClaimError())
+          .then((_) => task._markClaimed(), onError: (e) => task._markClaimError(e))
           .whenComplete(() => _completeClaim(task));
       task._markClaiming();
     } catch (e) {
-      print(e.toString());
-      task._markClaimError();
+      task._markClaimError(e);
     }
   }
 
@@ -478,7 +518,7 @@ class MediaUploadService {
     if (result.status == MediaUploadStatus.UPLOADED) {
       upload._markUploaded(result.mediaUri);
     } else if (result.status == MediaUploadStatus.UPLOAD_ERROR) {
-      upload._markUploadError();
+      upload._markUploadError(result.error);
     }
     await _uploadTaskStore.store(uploads);
 

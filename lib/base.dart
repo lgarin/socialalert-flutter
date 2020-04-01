@@ -49,7 +49,7 @@ abstract class BasePageState<T extends StatefulWidget> extends State<T> {
     } else if (task.status == MediaUploadStatus.UPLOAD_ERROR || task.status == MediaUploadStatus.CLAIM_ERROR) {
       _scaffoldKey.currentState.showSnackBar(SnackBar(
         content: Text('Upload of "${task.title}" has failed', style: TextStyle(color: Colors.red)),
-        action: SnackBarAction(label: 'Retry', onPressed: () => MediaUploadService.current(context).manageTask(task)),
+        action: SnackBarAction(label: 'Retry', onPressed: () => MediaUploadService.current(context).restartTask(task)),
       ));
     }
   }
@@ -103,7 +103,7 @@ abstract class BasePageState<T extends StatefulWidget> extends State<T> {
     final image = await ImagePicker.pickImage(source: ImageSource.camera);
     if (image != null) {
       final task = MediaUploadTask(file: image, type: MediaUploadType.PICTURE, position: await position);
-      await MediaUploadService.current(context).manageTask(task);
+      await MediaUploadService.current(context).saveTask(task);
       await Navigator.of(context).pushNamed(AppRoute.Annotate, arguments: task);
     }
   }
