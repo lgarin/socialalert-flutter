@@ -29,6 +29,10 @@ class _LoginModel {
     return password.text != '';
   }
 
+  bool isDefined() {
+    return hasUsernameInput() && hasPasswordInput();
+  }
+
   @override
   String toString() {
     return '$runtimeType(${username.text}, ${password.text})';
@@ -149,38 +153,29 @@ class _LoginButton extends StatelessWidget {
 
 class _LoginFormState extends State<_LoginForm> {
   final _formKey = GlobalKey<FormState>();
-  Credential _credential;
-  UserProfile _currentUser;
 
   void _onLogin(_LoginModel model) {
     final form = _formKey.currentState;
     if (form != null && form.validate()) {
-      setState(() {
-        _credential = model.toCredential();
-      });
+      setState(() {});
     }
   }
 
   Future<UserProfile> _findCurrentUser(BuildContext context) async {
-    final currentUser = await AuthService.current(context).currentUser();
-    _currentUser = currentUser;
-    return currentUser;
+    return await AuthService.current(context).currentUser();
   }
 
   Future<_LoginModel> _prepareModel(BuildContext context) async {
     final credential = await AuthService.current(context).initialCredential;
-    if (credential.isDefined()) {
-      _credential = credential;
-    }
     return _LoginModel.fromCredential(credential);
   }
 
-  Future<UserProfile> _handleLoginPhases() {
-    if (_currentUser != null) {
-      _showNextPage(_currentUser);
-      return Future.value(_currentUser);
-    } else if (_credential != null) {
-      return _authenticateUser(_credential);
+  Future<UserProfile> _handleLoginPhases(UserProfile user, _LoginModel login) {
+    if (user != null) {
+      _showNextPage(user);
+      return Future.value(user);
+    } else if (login != null && login.isDefined()) {
+      return _authenticateUser(login.toCredential());
     } else {
       return Future.value(null);
     }
@@ -212,9 +207,13 @@ class _LoginFormState extends State<_LoginForm> {
         lazy: false,
         child: FutureProvider<_LoginModel>(
           create: _prepareModel,
-          child: FutureBuilder<UserProfile>(
-              future: _handleLoginPhases(),
-              builder: _buildWidget)
+          lazy: false,
+          child: Consumer2<UserProfile, _LoginModel>(
+            builder: (context, user, login, _) => FutureBuilder<UserProfile>(
+              future: _handleLoginPhases(user, login),
+              builder: _buildWidget
+            )
+          )
         )
     );
   }

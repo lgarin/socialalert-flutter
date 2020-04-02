@@ -17,10 +17,6 @@ class Credential {
     'username': username,
     'password': password,
   };
-
-  bool isDefined() {
-    return username != null && username.isNotEmpty && password != null && password.isNotEmpty;
-  }
 }
 
 class CredentialStore {
