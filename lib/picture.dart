@@ -84,9 +84,19 @@ class _ExifData {
 
   _ExifData({this.mediaHeight, this.mediaWidth, this.cameraMaker, this.cameraModel});
 
-  String get format => numberFormat.format(mediaHeight * mediaWidth / oneMega) + 'MP - $mediaWidth x $mediaHeight';
+  String get format  {
+    if (mediaHeight == null || mediaWidth == null) {
+      return null;
+    }
+    return numberFormat.format(mediaHeight * mediaWidth / oneMega) + 'MP - $mediaWidth x $mediaHeight';
+  }
 
-  String get camera => cameraMaker + " " + cameraModel;
+  String get camera {
+    if (cameraMaker == null || cameraModel == null) {
+      return null;
+    }
+    return cameraMaker + " " + cameraModel;
+  }
 }
 
 class _LocalPictureInfoPageState extends State<LocalPictureInfoPage> {
@@ -102,8 +112,8 @@ class _LocalPictureInfoPageState extends State<LocalPictureInfoPage> {
   Future<_ExifData> _buildExifData(BuildContext context) async {
     Map<String, dynamic> tags = await readExif(FileReader(widget.upload.file));
     return _ExifData(
-      mediaHeight: tags['ImageHeight'] as int,
-      mediaWidth: tags['ImageWidth'] as int,
+      mediaHeight: tags['ImageHeight'] ?? tags['ExifImageHeight'] ?? tags['PixelYDimension'] as int,
+      mediaWidth: tags['ImageWidth'] ?? tags['ExifImageWidth'] ?? tags['PixelXDimension'] as int,
       cameraMaker: tags['Make'] as String,
       cameraModel: tags['Model'] as String,
     );

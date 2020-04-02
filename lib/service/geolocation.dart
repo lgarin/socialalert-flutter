@@ -36,6 +36,16 @@ class GeoLocation extends GeoPosition {
     }
   }
 
+  String formatShort() {
+    if (locality != null && country != null) {
+      return '$locality ($country)';
+    } else if (latitude != null && longitude != null) {
+      return '$latitude, $longitude';
+    } else {
+      return '';
+    }
+  }
+
   Map<String, dynamic> toJson() => {
     'latitude': latitude,
     'longitude': longitude,

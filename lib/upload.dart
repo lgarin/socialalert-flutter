@@ -105,7 +105,7 @@ class _UploadManagerPageState extends BasePageState<UploadManagerPage> {
           date: task.timestamp,
           builder: (_, value) => Text(value)
         ),
-        Text(task.location.format())
+        Text(task.location.formatShort())
       ],
     );
   }
