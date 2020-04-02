@@ -332,7 +332,7 @@ class _UploadApi {
   }
 
   _UploadTaskResult _mapResponse(UploadTaskResponse response) {
-    if (response.status == UploadTaskStatus.complete && response.statusCode == 200) {
+    if (response.status == UploadTaskStatus.complete && response.statusCode == 200) { // FIXME why 200? server should return 201
       final baseLocationUrl = baseServerUrl + '/file/download/';
       final mediaUri = response.headers['Location'].substring(baseLocationUrl.length);
       return _UploadTaskResult(taskId: response.taskId, mediaUri: mediaUri, status: MediaUploadStatus.UPLOADED);

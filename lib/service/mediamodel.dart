@@ -1,5 +1,3 @@
-
-
 import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 import 'package:social_alert_app/service/configuration.dart';
