@@ -49,6 +49,13 @@ class _AuthenticationApi {
     return _httpClient.post(baseServerUrl + uri, headers: headers, body: body);
   }
 
+  Future<Response> _post(String uri, String accessToken) {
+    final headers = {
+      'Authorization': accessToken,
+    };
+    return _httpClient.post(baseServerUrl + uri, headers: headers);
+  }
+
   Future<Response> _getJson(String uri, String accessToken) {
     final headers = {
       'Accept': jsonMediaType,
@@ -83,6 +90,14 @@ class _AuthenticationApi {
       return UserProfile.fromJson(jsonDecode(response.body));
     } else if (response.statusCode == 401) {
       return null;
+    }
+    throw response.reasonPhrase;
+  }
+
+  Future<void> logout(String accessToken) async {
+    final response = await _post('/user/logout', accessToken);
+    if (response.statusCode == 204) {
+      return;
     }
     throw response.reasonPhrase;
   }
@@ -153,6 +168,7 @@ class AuthService {
 
   void dispose() {
     _profileController.close();
+    logout();
   }
 
   Future<Credential> get initialCredential {
@@ -184,8 +200,6 @@ class AuthService {
     return profile;
   }
 
-  bool get offline => _token == null;
-
   Future<String> get accessToken async {
     if (_token == null) {
       return null;
@@ -197,4 +211,21 @@ class AuthService {
     return _token.accessToken;
   }
 
+  Future<void> logout() async {
+    try {
+      await _authApi.logout(await accessToken);
+    } catch (e) {
+      print(e.toString());
+      // ignore
+    }
+    _token = null;
+    if (!_profileController.isClosed) {
+      _profileController.add(null);
+    }
+  }
+
+  Future<void> signOut() async {
+    await logout();
+    await _credentialStore.clear();
+  }
 }

@@ -43,4 +43,12 @@ class CredentialStore {
       print(e.toString());
     }
   }
+
+  Future<void> clear() async {
+    try {
+      await _storage.delete(key: key);
+    } catch (e) {
+      print(e.toString());
+    }
+  }
 }

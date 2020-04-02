@@ -97,6 +97,14 @@ class _MenuBar extends StatelessWidget {
                 Navigator.pop(context);
               },
             ),
+            ListTile(
+              leading: Icon(Icons.power_settings_new),
+              title: Text('Sign Out'),
+              onTap: () {
+                Navigator.pop(context);
+                AuthService.current(context).signOut().then((_) => Navigator.pushNamedAndRemoveUntil(context, AppRoute.Login, (_) => true));
+              },
+            )
           ]
         )
       )
