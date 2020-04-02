@@ -125,7 +125,7 @@ class UserProfile {
       birthdate = login.birthdate != null ? DateTime.parse(login.birthdate) : null,
       biography = login.biography;
 
-  UserProfile.anonymous() : userId = null, username = null, email = null, country = null, imageUri = null, birthdate = null, biography = null;
+  UserProfile.offline() : userId = null, username = null, email = null, country = null, imageUri = null, birthdate = null, biography = null;
 
   UserProfile.fromJson(Map<String, dynamic> json) :
         userId = json['id'],
@@ -136,7 +136,7 @@ class UserProfile {
         birthdate = json['birthdate'] != null ? DateTime.parse(json['birthdate']) : null,
         imageUri = json['imageUri'];
 
-  bool get anonymous => userId == null;
+  bool get offline => userId == null;
 }
 
 class AuthService {
@@ -176,7 +176,7 @@ class AuthService {
       profile = await _authApi.currentUser(await accessToken);
     } catch (e) {
       // no server connection
-      profile = UserProfile.anonymous();
+      profile = UserProfile.offline();
     }
     if (profile != null) {
       _profileController.add(profile);

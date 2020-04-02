@@ -31,16 +31,13 @@ class _UploadManagerPageState extends BasePageState<UploadManagerPage> {
 
   _UploadManagerPageState() : super(AppRoute.UploadManager);
 
-  bool get _isAnonymousUser {
+  bool get _isOfflineUser {
     final userProfile = Provider.of<UserProfile>(context, listen: false);
-    if (userProfile == null) {
-      return true;
-    }
-    return userProfile.anonymous;
+    return userProfile?.offline ?? true;
   }
 
   @override
-  Widget buildDrawer() => _isAnonymousUser ? null : super.buildDrawer();
+  Widget buildDrawer() => _isOfflineUser ? null : super.buildDrawer();
 
   @override
   Widget buildBody(BuildContext context) {

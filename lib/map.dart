@@ -119,7 +119,7 @@ class _MapDisplayState extends State<MapDisplay> {
   static const maxThumbnailCount = 100;
   static const thumbnailInset = 2.0;
 
-  static const minZoomLevel = 10.0;
+  static const minZoomLevel = 5.0;
   static const maxZoomLevel = 20.0;
   static const defaultZoomLevel = 15.0;
 
