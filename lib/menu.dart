@@ -97,6 +97,7 @@ class _MenuBar extends StatelessWidget {
                 Navigator.pop(context);
               },
             ),
+            Divider(),
             ListTile(
               leading: Icon(Icons.power_settings_new),
               title: Text('Sign Out'),

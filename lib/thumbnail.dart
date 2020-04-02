@@ -48,9 +48,9 @@ class MediaThumbnailTile extends StatelessWidget {
                 SizedBox(width: 4,),
                 Text(media.likeCount.toString(), style: TextStyle(fontSize: 12, color: Colors.black)),
                 Spacer(),
-                Icon(Icons.thumb_down, size: 14, color: Colors.black),
+                Icon(Icons.mode_comment, size: 14, color: Colors.black),
                 SizedBox(width: 4,),
-                Text(media.dislikeCount.toString(), style: TextStyle(fontSize: 12, color: Colors.black)),
+                Text(media.commentCount.toString(), style: TextStyle(fontSize: 12, color: Colors.black)),
               ],
             )
           ],
