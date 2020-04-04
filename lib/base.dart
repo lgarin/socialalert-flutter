@@ -99,7 +99,7 @@ abstract class BasePageState<T extends StatefulWidget> extends State<T> {
   }
 
   void _takePicture(BuildContext context) async {
-    final position = GeoLocationService.current(context).readPosition();
+    final position = GeoLocationService.current(context).readPosition(50.0);
     final image = await ImagePicker.pickImage(source: ImageSource.camera);
     if (image != null) {
       final task = MediaUploadTask(file: image, type: MediaUploadType.PICTURE, position: await position);

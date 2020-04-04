@@ -168,7 +168,6 @@ class AuthService {
 
   void dispose() {
     _profileController.close();
-    logout();
   }
 
   Future<Credential> get initialCredential {
@@ -215,13 +214,11 @@ class AuthService {
     try {
       await _authApi.logout(await accessToken);
     } catch (e) {
-      print(e.toString());
       // ignore
+      print(e.toString());
     }
     _token = null;
-    if (!_profileController.isClosed) {
-      _profileController.add(null);
-    }
+    _profileController.add(null);
   }
 
   Future<void> signOut() async {

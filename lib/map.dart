@@ -287,7 +287,7 @@ class _MapDisplayState extends State<MapDisplay> {
       return _buildContent();
     }
     return FutureBuilder<GeoPosition>(
-        future: GeoLocationService.current(context).readPosition(),
+        future: GeoLocationService.current(context).readPosition(100.0),
         builder: _buildInitialContent);
   }
 

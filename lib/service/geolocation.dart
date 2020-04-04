@@ -69,12 +69,23 @@ class GeoLocationService {
     _locationController.close();
   }
 
-  Future<GeoPosition> readPosition() async {
+  Future<bool> _isCurrentPositionNear(Position position, double maxDistanceInMeter) async {
+    final current = await _geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    final distanceInMeter = await _geolocator.distanceBetween(position.latitude, position.longitude, current.latitude, current.longitude);
+    return distanceInMeter < maxDistanceInMeter;
+  }
+
+  Future<GeoPosition> readPosition(double precisionInMeter) async {
     final position = await _geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
     if (position == null) {
       return null;
     }
-    return GeoPosition(longitude: position.longitude, latitude: position.latitude);
+    do {
+      await Future.delayed(Duration(milliseconds: 500));
+    } while (await _isCurrentPositionNear(position, precisionInMeter).then((value) => !value));
+
+    final precisePosition = await _geolocator.getLastKnownPosition(desiredAccuracy: LocationAccuracy.high);
+    return GeoPosition(longitude: precisePosition.longitude, latitude: precisePosition.latitude);
   }
 
   Future<GeoLocation> readLocation({@required double latitude, @required double longitude}) async {
