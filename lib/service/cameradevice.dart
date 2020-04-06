@@ -20,7 +20,7 @@ class CameraDeviceService {
   Future<DeviceInfo> get device async {
     AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
     if (androidInfo != null) {
-      return DeviceInfo(maker: androidInfo.brand ?? androidInfo.manufacturer, model: androidInfo.model ?? androidInfo.product);
+      return DeviceInfo(maker: androidInfo.manufacturer ?? androidInfo.brand, model: androidInfo.model ?? androidInfo.product);
     }
     IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
     if (iosInfo != null) {

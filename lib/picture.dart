@@ -152,7 +152,7 @@ class _LocalPictureInfoPageState extends State<LocalPictureInfoPage> {
     return PictureInfoPanel(timestamp: widget.upload.timestamp,
       location: widget.upload.hasPosition ? widget.upload.location : null,
       format: exifData?.format,
-      camera: exifData?.camera,
+      camera: widget.upload.camera ?? exifData?.camera,
     );
   }
 }

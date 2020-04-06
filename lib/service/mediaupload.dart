@@ -98,6 +98,13 @@ class MediaUploadTask with ChangeNotifier {
 
   GeoPosition get position => GeoPosition(latitude: _latitude, longitude: _longitude);
 
+  String get camera {
+    if (cameraMaker != null && cameraModel != null) {
+      return '$cameraMaker $cameraModel';
+    }
+    return null;
+  }
+
   GeoLocation get location =>
       GeoLocation(longitude: _longitude,
           latitude: _latitude,
@@ -524,7 +531,10 @@ class MediaUploadService {
 
   Future<MediaUploadTask> _mapUploadResult(_UploadTaskResult result) async {
     final uploads = await currentUploads();
-    final upload = uploads.firstWhere((item) => item.backgroundTaskId == result.taskId);
+    final upload = uploads.firstWhere((item) => item.backgroundTaskId == result.taskId, orElse: null);
+    if (upload == null) {
+      return null;
+    }
     if (result.status == MediaUploadStatus.UPLOADED) {
       upload._markUploaded(result.mediaUri);
     } else if (result.status == MediaUploadStatus.UPLOAD_ERROR) {
@@ -540,20 +550,23 @@ class MediaUploadService {
   }
 
   Stream<MediaUploadTask> get _uploadResultStream {
-    return _uploadApi.resultStream.asyncMap(_mapUploadResult);
+    return _uploadApi.resultStream.asyncMap(_mapUploadResult).skipWhile((element) => element == null);
   }
 
   Stream<MediaUploadTask> get uploadResultStream => _uploadStreamController.stream;
 
   Future<MediaUploadTask> _mapUploadProgress(_UploadTaskStep step) async {
     final uploads = await currentUploads();
-    final upload = uploads.firstWhere((item) => item.backgroundTaskId == step.taskId);
+    final upload = uploads.firstWhere((item) => item.backgroundTaskId == step.taskId, orElse: null);
+    if (upload == null) {
+      return null;
+    }
     upload._setUploadProgress(step.progress);
     return upload;
   }
 
   Stream<MediaUploadTask> get _uploadProgressStream {
-    return _uploadApi.progressStream.asyncMap(_mapUploadProgress);
+    return _uploadApi.progressStream.asyncMap(_mapUploadProgress).skipWhile((element) => element == null);
   }
 
   Stream<MediaUploadTask> get uploadProgressStream => _progressStreamController.stream;
