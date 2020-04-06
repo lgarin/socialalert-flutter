@@ -81,7 +81,7 @@ class GeoLocationService {
       return null;
     }
     do {
-      await Future.delayed(Duration(milliseconds: 500));
+      await Future.delayed(Duration(milliseconds: 300));
     } while (await _isCurrentPositionNear(position, precisionInMeter).then((value) => !value));
 
     final precisePosition = await _geolocator.getLastKnownPosition(desiredAccuracy: LocationAccuracy.high);

@@ -7,6 +7,7 @@ import 'package:social_alert_app/media.dart';
 import 'package:social_alert_app/network.dart';
 import 'package:social_alert_app/picture.dart';
 import 'package:social_alert_app/service/authentication.dart';
+import 'package:social_alert_app/service/cameradevice.dart';
 import 'package:social_alert_app/service/geolocation.dart';
 import 'package:social_alert_app/service/mediamodel.dart';
 import 'package:social_alert_app/service/mediaquery.dart';
@@ -22,6 +23,7 @@ class SocialAlertApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
         providers: [
+          Provider<CameraDeviceService>(create: (_) => CameraDeviceService()),
           Provider<GeoLocationService>(create: (_) => GeoLocationService(), dispose: (_, service) => service.dispose()),
           StreamProvider<GeoLocation>(create: (context) => GeoLocationService.current(context).locationStream, lazy: false),
           Provider<AuthService>(create: (_) => AuthService(), dispose: (_, service) => service.dispose()),

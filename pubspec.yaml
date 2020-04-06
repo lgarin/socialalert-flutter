@@ -27,6 +27,7 @@ dependencies:
   flutter_typeahead:
   badges:
   fluster:
+  device_info:
 
 dev_dependencies:
   flutter_test:

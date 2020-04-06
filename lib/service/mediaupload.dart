@@ -10,6 +10,7 @@ import 'package:path/path.dart';
 import 'package:flutter_uploader/flutter_uploader.dart';
 import 'package:provider/provider.dart';
 import 'package:social_alert_app/service/authentication.dart';
+import 'package:social_alert_app/service/cameradevice.dart';
 import 'package:social_alert_app/service/configuration.dart';
 import 'package:social_alert_app/service/geolocation.dart';
 
@@ -34,6 +35,8 @@ enum MediaUploadType {
 class MediaUploadTask with ChangeNotifier {
   final DateTime timestamp;
   final MediaUploadType type;
+  final String cameraMaker;
+  final String cameraModel;
   final File file;
   final double _latitude;
   final double _longitude;
@@ -50,8 +53,8 @@ class MediaUploadTask with ChangeNotifier {
   DateTime _lastUpdate;
   int _uploadProgress;
 
-  MediaUploadTask({@required this.file, @required this.type, GeoPosition position}) :
-        timestamp = DateTime.now(), _latitude = position?.latitude, _longitude = position?.longitude {
+  MediaUploadTask({@required this.file, @required this.type, GeoPosition position, DeviceInfo device}) :
+        timestamp = DateTime.now(), cameraMaker = device?.maker, cameraModel = device?.model, _latitude = position?.latitude, _longitude = position?.longitude {
     _changeStatus(MediaUploadStatus.CREATED);
   }
 
@@ -113,6 +116,8 @@ class MediaUploadTask with ChangeNotifier {
   MediaUploadTask.fromJson(Map<String, dynamic> json) :
         timestamp = DateTime.parse(json['timestamp']),
         type = MediaUploadType.values[json['type']],
+        cameraModel = json['cameraModel'],
+        cameraMaker = json['cameraMaker'],
         file = File(json['path']),
         _latitude = json['latitude'],
         _longitude = json['longitude'],
@@ -131,6 +136,8 @@ class MediaUploadTask with ChangeNotifier {
   Map<String, dynamic> toJson() => {
     'timestamp': timestamp.toIso8601String(),
     'type': type.index,
+    'cameraMaker': cameraMaker,
+    'cameraModel': cameraModel,
     'path': file.path,
     'latitude': _latitude,
     'longitude': _longitude,
@@ -284,8 +291,10 @@ class _ClaimParameter {
   final String description;
   final GeoLocation location;
   final List<String> tags;
+  final String cameraMaker;
+  final String cameraModel;
 
-  _ClaimParameter(this.title, this.category, this.description, this.location, this.tags);
+  _ClaimParameter({@required this.title, this.category, this.description, this.location, @required this.tags, this.cameraMaker, this.cameraModel});
 
   Map<String, dynamic> toJson() => {
     'title': title,
@@ -496,7 +505,8 @@ class MediaUploadService {
   Future<void> _startClaiming(MediaUploadTask task) async {
     try {
       final accessToken = await _authService.accessToken;
-      final param = _ClaimParameter(task._title, task._category, task._description, task.location, task.tags);
+      final param = _ClaimParameter(title: task._title, category: task._category, description: task._description,
+          location: task.location, tags: task.tags, cameraModel: task.cameraModel, cameraMaker: task.cameraMaker);
       _uploadApi.claimMedia(mediaUri: task.mediaUri, param: param, accessToken: accessToken)
           .then((_) => task._markClaimed(), onError: (e) => task._markClaimError(e))
           .whenComplete(() => _completeClaim(task));

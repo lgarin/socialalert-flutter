@@ -7,6 +7,7 @@ import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/menu.dart';
+import 'package:social_alert_app/service/cameradevice.dart';
 import 'package:social_alert_app/service/geolocation.dart';
 import 'package:social_alert_app/service/mediamodel.dart';
 import 'package:social_alert_app/service/mediaupload.dart';
@@ -100,9 +101,10 @@ abstract class BasePageState<T extends StatefulWidget> extends State<T> {
 
   void _takePicture(BuildContext context) async {
     final position = GeoLocationService.current(context).readPosition(50.0);
+    final device = CameraDeviceService.current(context).device;
     final image = await ImagePicker.pickImage(source: ImageSource.camera);
     if (image != null) {
-      final task = MediaUploadTask(file: image, type: MediaUploadType.PICTURE, position: await position);
+      final task = MediaUploadTask(file: image, type: MediaUploadType.PICTURE, position: await position, device: await device);
       await MediaUploadService.current(context).saveTask(task);
       await Navigator.of(context).pushNamed(AppRoute.Annotate, arguments: task);
     }
