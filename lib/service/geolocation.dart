@@ -80,9 +80,11 @@ class GeoLocationService {
     if (position == null) {
       return null;
     }
+
+    var counter = 0;
     do {
-      await Future.delayed(Duration(milliseconds: 300));
-    } while (await _isCurrentPositionNear(position, precisionInMeter).then((value) => !value));
+      await Future.delayed(Duration(milliseconds: 500));
+    } while (await _isCurrentPositionNear(position, precisionInMeter).then((value) => !value) && ++counter < 4);
 
     final precisePosition = await _geolocator.getLastKnownPosition(desiredAccuracy: LocationAccuracy.high);
     return GeoPosition(longitude: precisePosition.longitude, latitude: precisePosition.latitude);

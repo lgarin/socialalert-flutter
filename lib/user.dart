@@ -1,27 +1,31 @@
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:social_alert_app/service/configuration.dart';
 
 class UserAvatar extends StatelessWidget {
   final String imageUri;
   final bool online;
   final double radius;
 
-  UserAvatar({this.imageUri, this.online, this.radius}) : super(key: ValueKey(imageUri));
+  UserAvatar({this.imageUri, this.online, this.radius}) : super(key: ValueKey('$imageUri/$online'));
 
   @override
   Widget build(BuildContext context) {
+    final format = radius < 60.0 ? 'small' : 'large';
+    final url = imageUri != null ? '$baseServerUrl/file/avatar/$format/$imageUri' : null;
     return Container(
       width: radius,
       height: radius,
       decoration: BoxDecoration(
-        color: Theme.of(context).accentColor,
+        color: Colors.white,
         image: DecorationImage(
-          image: imageUri != null ? NetworkImage(imageUri) : AssetImage('images/unknown_user.png'),
-          fit: BoxFit.cover,
+          image: url != null ? NetworkImage(url) : AssetImage('images/unknown_user.png'),
+          fit: BoxFit.fill,
         ),
         borderRadius: BorderRadius.all(Radius.circular(radius / 2)),
-        border: Border.all(color: online ? Colors.white : Colors.grey, width: 4.0),
+        //boxShadow: [BoxShadow(color: online ? Theme.of(context).accentColor : Colors.grey, spreadRadius: 1.0, blurRadius: 1.0)],
+        border: online != null ? Border.all(color: online ? Theme.of(context).accentColor : Colors.grey, width: 1.5) : null,
       ),
     );
   }

@@ -176,6 +176,6 @@ class _Header extends StatelessWidget {
   }
 
   Widget _buildAvatar(BuildContext context, UserProfile profile) {
-    return UserAvatar(radius: 100.0, imageUri: profile.imageUri, online: true);
+    return UserAvatar(radius: 100.0, imageUri: profile.imageUri, online: null);
   }
 }
