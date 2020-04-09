@@ -41,7 +41,7 @@ abstract class BasePageState<T extends StatefulWidget> extends State<T> {
     if (task.title == null) {
       _scaffoldKey.currentState.showSnackBar(SnackBar(
           content: Text('Title for media is missing', style: TextStyle(color: Colors.orange)),
-          action: SnackBarAction(label: 'Edit', onPressed: () => Navigator.pushNamed(context, AppRoute.Annotate, arguments: task))
+          action: SnackBarAction(label: 'Edit', onPressed: () => Navigator.pushNamed(context, AppRoute.AnnotatePicture, arguments: task))
       ));
     } else if (task.status == MediaUploadStatus.UPLOADED) {
       _scaffoldKey.currentState.showSnackBar(SnackBar(
@@ -88,10 +88,16 @@ abstract class BasePageState<T extends StatefulWidget> extends State<T> {
     );
   }
 
-  Widget buildDrawer() => UserMenu(currentPage: pageName);
+  Widget buildDrawer() {
+    if (Navigator.canPop(context)) {
+      return null;
+    }
+    return UserMenu(currentPage: pageName);
+  }
 
   FloatingActionButton buildCaptureButton(BuildContext context) {
     return FloatingActionButton(
+      key: ValueKey('captureButton'),
       onPressed: () => _takePicture(context),
       tooltip: 'Take picture',
       backgroundColor: Theme.of(context).primaryColor,
@@ -106,7 +112,7 @@ abstract class BasePageState<T extends StatefulWidget> extends State<T> {
     if (image != null) {
       final task = MediaUploadTask(file: image, type: MediaUploadType.PICTURE, position: await position, device: await device);
       await MediaUploadService.current(context).saveTask(task);
-      await Navigator.of(context).pushNamed(AppRoute.Annotate, arguments: task);
+      await Navigator.of(context).pushNamed(AppRoute.AnnotatePicture, arguments: task);
     }
   }
 

@@ -59,8 +59,6 @@ class _RemotePictureDetailPageState extends BasePageState<RemotePictureDetailPag
     _tabSelectionModel.addListener(() => _scrollController.jumpTo(_scrollController.position.maxScrollExtent));
   }
 
-  Widget buildDrawer() => null;
-
   AppBar buildAppBar() {
     return AppBar(
       title: Text(widget.mediaTitle, overflow: TextOverflow.ellipsis),

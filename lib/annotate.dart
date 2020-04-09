@@ -29,14 +29,14 @@ class _CaptureModel {
   bool hasTitleInput() => titleInput != '';
 }
 
-class AnnotatePage extends StatefulWidget {
+class AnnotatePicturePage extends StatefulWidget {
 
   final MediaUploadTask _upload;
 
-  AnnotatePage(this._upload);
+  AnnotatePicturePage(this._upload);
 
   @override
-  _AnnotatePageState createState() => _AnnotatePageState(_upload);
+  _AnnotatePicturePageState createState() => _AnnotatePicturePageState(_upload);
 }
 
 enum _PopupAction {
@@ -44,14 +44,14 @@ enum _PopupAction {
   INFO
 }
 
-class _AnnotatePageState extends State<AnnotatePage> {
+class _AnnotatePicturePageState extends State<AnnotatePicturePage> {
   static const backgroundColor = Color.fromARGB(255, 240, 240, 240);
   final _formKey = GlobalKey<FormState>();
   final MediaUploadTask _upload;
   final _CaptureModel _model;
   bool _fullImage = false;
 
-  _AnnotatePageState(this._upload) : _model = _CaptureModel(_upload.file);
+  _AnnotatePicturePageState(this._upload) : _model = _CaptureModel(_upload.file);
 
   void _switchFullImage() {
     setState(() {

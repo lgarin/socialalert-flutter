@@ -43,73 +43,25 @@ class _MenuBar extends StatelessWidget {
         textColor: Colors.white,
         child: ListView(
           children: <Widget>[
-            ListTile(
-              enabled: currentPage != AppRoute.Home,
-              selected: currentPage == AppRoute.Home,
-              leading: Icon(Icons.home),
-              title: Text('Home'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.pushReplacementNamed(context, AppRoute.Home);
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.person),
-              title: Text('My Profile'),
-              onTap: () {
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              enabled: currentPage != AppRoute.Network,
-              selected: currentPage == AppRoute.Network,
-              leading: Icon(Icons.people),
-              title: Text('My Network'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.pushReplacementNamed(context, AppRoute.Network);
-              },
-            ),
-            ListTile(
-              enabled: currentPage != AppRoute.UploadManager,
-              selected: currentPage == AppRoute.UploadManager,
-              leading: Consumer<MediaUploadList>(
-                builder: _buildUploadBadge,
-                child: Icon(Icons.cloud_upload),
-              ),
-              title: Text('My Uploads'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.pushReplacementNamed(context, AppRoute.UploadManager);
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.show_chart),
-              title: Text('My Statistics'),
-              onTap: () {
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.settings),
-              title: Text('My Settings'),
-              onTap: () {
-                Navigator.pop(context);
-              },
-            ),
+            _MenuItem(currentPage: currentPage, targetPage: AppRoute.Home, title: 'Home', icon: Icon(Icons.home)),
+            _MenuItem(currentPage: currentPage, targetPage: AppRoute.ProfileEditor, title: 'My Profile', icon: Icon(Icons.person)),
+            _MenuItem(currentPage: currentPage, targetPage: AppRoute.Network, title: 'My Network', icon: Icon(Icons.people)),
+            _MenuItem(currentPage: currentPage, targetPage: AppRoute.UploadManager, title: 'My Uploads', icon: _buildUploadIcon()),
+            _MenuItem(currentPage: currentPage, targetPage: null, title: 'My Statistics', icon: Icon(Icons.show_chart)),
+            _MenuItem(currentPage: currentPage, targetPage: null, title: 'My Settings', icon: Icon(Icons.settings)),
             Divider(),
-            ListTile(
-              leading: Icon(Icons.power_settings_new),
-              title: Text('Sign Out'),
-              onTap: () {
-                Navigator.pop(context);
-                AuthService.current(context).signOut().then((_) => Navigator.pushNamedAndRemoveUntil(context, AppRoute.Login, (_) => true));
-              },
-            )
+            _MenuItem(currentPage: currentPage, targetPage: AppRoute.Login, title: 'Sign Out', icon: Icon(Icons.power_settings_new)),
           ]
         )
       )
     );
+  }
+
+  Consumer<MediaUploadList> _buildUploadIcon() {
+    return Consumer<MediaUploadList>(
+            builder: _buildUploadBadge,
+            child: Icon(Icons.cloud_upload),
+          );
   }
 
   Widget _buildUploadBadge(BuildContext context, MediaUploadList uploads, Widget child) {
@@ -121,6 +73,39 @@ class _MenuBar extends StatelessWidget {
       );
     }
     return child;
+  }
+}
+
+class _MenuItem extends StatelessWidget {
+  _MenuItem({
+    this.currentPage,
+    this.targetPage,
+    this.title,
+    this.icon
+  }) : super(key: ValueKey(targetPage));
+
+  final String currentPage;
+  final String targetPage;
+  final String title;
+  final Widget icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      enabled: currentPage != targetPage,
+      selected: currentPage == targetPage,
+      leading: icon,
+      title: Text(title),
+      onTap: () {
+        if (targetPage == AppRoute.Login) {
+          AuthService.current(context).signOut().then((_) => Navigator.pushReplacementNamed(context, AppRoute.Login));
+        } else if (targetPage != null) {
+          Navigator.popAndPushNamed(context, targetPage);
+        } else {
+          Navigator.pop(context);
+        }
+      },
+    );
   }
 }
 

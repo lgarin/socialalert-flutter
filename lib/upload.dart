@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:social_alert_app/base.dart';
 import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/main.dart';
-import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/mediaupload.dart';
 import 'package:timeago_flutter/timeago_flutter.dart';
 
@@ -30,14 +29,6 @@ class _UploadManagerPageState extends BasePageState<UploadManagerPage> {
   static const iconSize = 50.0;
 
   _UploadManagerPageState() : super(AppRoute.UploadManager);
-
-  bool get _isOfflineUser {
-    final userProfile = Provider.of<UserProfile>(context, listen: false);
-    return userProfile?.offline ?? true;
-  }
-
-  @override
-  Widget buildDrawer() => _isOfflineUser ? null : super.buildDrawer();
 
   @override
   Widget buildBody(BuildContext context) {
@@ -159,7 +150,7 @@ class _UploadManagerPageState extends BasePageState<UploadManagerPage> {
 
   void _onItemSelected(MediaUploadTask task) {
     if (task.status == MediaUploadStatus.CREATED) {
-      Navigator.of(context).pushNamed(AppRoute.Annotate, arguments: task);
+      Navigator.of(context).pushNamed(AppRoute.AnnotatePicture, arguments: task);
     } else if (task.status == MediaUploadStatus.CLAIMED) {
       MediaUploadService.current(context).deleteTask(task);
     } else {
