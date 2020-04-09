@@ -13,6 +13,7 @@ import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/cameradevice.dart';
 import 'package:social_alert_app/service/configuration.dart';
 import 'package:social_alert_app/service/geolocation.dart';
+import 'package:social_alert_app/service/httphelper.dart';
 
 enum MediaUploadStatus {
   CREATED,
@@ -350,6 +351,9 @@ class _UploadApi {
   _UploadTaskResult _mapResponse(UploadTaskResponse response) {
     if (response.status == UploadTaskStatus.complete && response.statusCode == 200) { // FIXME why 200? server should return 201
       final baseLocationUrl = baseServerUrl + '/file/download/';
+      if (response.headers['Location'] == null) {
+        return _UploadTaskResult(taskId: response.taskId);
+      }
       final mediaUri = response.headers['Location'].substring(baseLocationUrl.length);
       return _UploadTaskResult(taskId: response.taskId, mediaUri: mediaUri, status: MediaUploadStatus.UPLOADED);
     } else if (response.status == UploadTaskStatus.failed || response.status == UploadTaskStatus.complete) {
@@ -361,7 +365,7 @@ class _UploadApi {
   }
 
   Stream<_UploadTaskResult> get resultStream {
-    return uploader.result.map(_mapResponse);
+    return uploader.result.transform(buildUploadExceptionTransformer()).map(_mapResponse);
   }
 
   _UploadTaskStep _mapProgress(UploadTaskProgress event) {
@@ -531,7 +535,7 @@ class MediaUploadService {
 
   Future<MediaUploadTask> _mapUploadResult(_UploadTaskResult result) async {
     final uploads = await currentUploads();
-    final upload = uploads.firstWhere((item) => item.backgroundTaskId == result.taskId, orElse: null);
+    final upload = uploads.firstWhere((item) => item.backgroundTaskId == result.taskId, orElse: () => null);
     if (upload == null) {
       return null;
     }
@@ -557,7 +561,7 @@ class MediaUploadService {
 
   Future<MediaUploadTask> _mapUploadProgress(_UploadTaskStep step) async {
     final uploads = await currentUploads();
-    final upload = uploads.firstWhere((item) => item.backgroundTaskId == step.taskId, orElse: null);
+    final upload = uploads.firstWhere((item) => item.backgroundTaskId == step.taskId, orElse: () => null);
     if (upload == null) {
       return null;
     }

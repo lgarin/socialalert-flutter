@@ -2,10 +2,8 @@ import 'package:badges/badges.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:social_alert_app/user.dart';
-import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/service/authentication.dart';
-import 'package:social_alert_app/service/geolocation.dart';
 import 'package:social_alert_app/service/mediaupload.dart';
 
 class UserMenu extends StatelessWidget {
@@ -19,7 +17,7 @@ class UserMenu extends StatelessWidget {
         child: Drawer(
           child: Column(
             children: <Widget>[
-              _Header(),
+              UserHeader(tapCallback: () => Navigator.popAndPushNamed(context, AppRoute.ProfileEditor)),
               Expanded(
                   child: _MenuBar(currentPage: currentPage)
               )
@@ -109,58 +107,3 @@ class _MenuItem extends StatelessWidget {
   }
 }
 
-class _Header extends StatelessWidget {
-  Widget build(BuildContext context) {
-    final profile = Provider.of<UserProfile>(context);
-    final location = Provider.of<GeoLocation>(context);
-    return Container(
-        height: 240,
-        color: Theme.of(context).primaryColorDark.withOpacity(0.9),
-        child: profile != null ? _buildBody(context, profile, location) : LoadingCircle()
-      );
-  }
-
-  Column _buildBody(BuildContext context, UserProfile profile, GeoLocation location) {
-    return Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: <Widget>[
-            SizedBox(height: 50),
-            _buildAvatar(context, profile),
-            SizedBox(height: 10),
-            _buildUsername(context, profile),
-            _buildEmail(context, profile),
-            SizedBox(height: 5),
-            _buildLocation(context, location)
-          ]);
-  }
-
-  Text _buildUsername(BuildContext context, UserProfile profile) {
-    return Text(
-      profile.username,
-      style: Theme.of(context).textTheme.subtitle2
-    );
-  }
-
-  Text _buildEmail(BuildContext context, UserProfile profile) {
-    return Text(
-        profile.email,
-        style: TextStyle(color: Colors.white, fontSize: 12)
-    );
-  }
-
-  Widget _buildLocation(BuildContext context, GeoLocation location) {
-    if (location == null || location.locality == null) {
-      return Row();
-    }
-    return Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          Icon(Icons.place, color: Colors.white, size: 14),
-          Text(location.format(), style: TextStyle(color: Colors.white, fontSize: 12)),
-        ]);
-  }
-
-  Widget _buildAvatar(BuildContext context, UserProfile profile) {
-    return UserAvatar(radius: 100.0, imageUri: profile.imageUri, online: null);
-  }
-}

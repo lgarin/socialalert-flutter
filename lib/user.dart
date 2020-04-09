@@ -1,16 +1,25 @@
 
+import 'dart:async';
+import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 import 'package:social_alert_app/base.dart';
+import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/main.dart';
+import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/configuration.dart';
+import 'package:social_alert_app/service/geolocation.dart';
+import 'package:social_alert_app/service/profileupdate.dart';
 
 class UserAvatar extends StatelessWidget {
   final String imageUri;
   final bool online;
   final double radius;
+  final String uploadTaskId;
 
-  UserAvatar({this.imageUri, this.online, this.radius}) : super(key: ValueKey('$imageUri/$online'));
+  UserAvatar({this.imageUri, this.online, this.radius, this.uploadTaskId}) : super(key: ValueKey('$imageUri/$online'));
 
   @override
   Widget build(BuildContext context) {
@@ -19,16 +28,27 @@ class UserAvatar extends StatelessWidget {
     return Container(
       width: radius,
       height: radius,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        image: DecorationImage(
-          image: url != null ? NetworkImage(url) : AssetImage('images/unknown_user.png'),
-          fit: BoxFit.fill,
-        ),
-        borderRadius: BorderRadius.all(Radius.circular(radius / 2)),
-        //boxShadow: [BoxShadow(color: online ? Theme.of(context).accentColor : Colors.grey, spreadRadius: 1.0, blurRadius: 1.0)],
-        border: online != null ? Border.all(color: online ? Theme.of(context).accentColor : Colors.grey, width: 2) : null,
+      decoration: _buildDecoration(url, context),
+      child: uploadTaskId != null ? _buildUploadProgress() : SizedBox(height: 0, width: 0),
+    );
+  }
+
+  Widget _buildUploadProgress() {
+    return Consumer<AvatarUploadProgress>(
+      builder: (context, upload, _) => upload != null && uploadTaskId == upload.taskId ? CircularProgressIndicator(value: upload.value) : SizedBox(height: 0, width: 0),
+    );
+  }
+
+  BoxDecoration _buildDecoration(String url, BuildContext context) {
+    return BoxDecoration(
+      color: Colors.white,
+      image: DecorationImage(
+        image: url != null ? NetworkImage(url) : AssetImage('images/unknown_user.png'),
+        fit: BoxFit.fill,
       ),
+      borderRadius: BorderRadius.all(Radius.circular(radius / 2)),
+      //boxShadow: [BoxShadow(color: online ? Theme.of(context).accentColor : Colors.grey, spreadRadius: 1.0, blurRadius: 1.0)],
+      border: online != null ? Border.all(color: online ? Theme.of(context).accentColor : Colors.grey, width: 2) : null,
     );
   }
 }
@@ -39,8 +59,30 @@ class ProfileEditorPage extends StatefulWidget {
 }
 
 class _ProfileEditorPageState extends BasePageState<ProfileEditorPage> {
+
   _ProfileEditorPageState() : super(AppRoute.ProfileEditor);
 
+  StreamSubscription<AvatarUploadProgress> uploadProgressSubscription;
+  String _uploadTaskId;
+
+  @override
+  void initState() {
+    super.initState();
+    uploadProgressSubscription = ProfileUpdateService.current(context).uploadProgressStream.listen((event) {
+      if (event.taskId == _uploadTaskId && event.terminal) {
+        _uploadTaskId = null;
+        if (event.error != null) {
+          showSimpleDialog(context, 'Avatar upload failed', event.error);
+        }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    uploadProgressSubscription.cancel();
+    super.dispose();
+  }
 
   void _onSave() {
 
@@ -57,6 +99,94 @@ class _ProfileEditorPageState extends BasePageState<ProfileEditorPage> {
 
   @override
   Widget buildBody(BuildContext context) {
-    return SizedBox(height: 0, width: 0,);
+    return ListView(
+      children: <Widget>[
+        UserHeader(tapCallback: _choosePicture, uploadTaskId: _uploadTaskId,)
+      ],
+    );
+  }
+
+  void _choosePicture() async {
+    final image = await ImagePicker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      _beginUpload(image);
+    }
+  }
+
+  Future _beginUpload(File image) async {
+    try {
+      final taskId = await ProfileUpdateService.current(context).beginAvatarUpload('Avatar', image);
+      setState(() {
+        _uploadTaskId = taskId;
+      });
+    } catch (e) {
+      showSimpleDialog(context, 'Avatar upload failed', e.toString());
+    }
+  }
+}
+
+class UserHeader extends StatelessWidget {
+  final GestureTapCallback tapCallback;
+  final String uploadTaskId;
+
+  const UserHeader({this.tapCallback, this.uploadTaskId});
+
+  Widget build(BuildContext context) {
+    final profile = Provider.of<UserProfile>(context);
+    final location = Provider.of<GeoLocation>(context);
+    return Container(
+        height: 230,
+        color: Theme.of(context).primaryColorDark.withOpacity(0.9),
+        child: profile != null ? _buildBody(context, profile, location) : LoadingCircle()
+    );
+  }
+
+  Widget _buildBody(BuildContext context, UserProfile profile, GeoLocation location) {
+    return GestureDetector(
+      onTap: tapCallback,
+      child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: <Widget>[
+            SizedBox(height: 50),
+            _buildAvatar(context, profile),
+            SizedBox(height: 10),
+            _buildUsername(context, profile),
+            _buildEmail(context, profile),
+            SizedBox(height: 5),
+            _buildLocation(context, location)
+          ]),
+    );
+  }
+
+  Text _buildUsername(BuildContext context, UserProfile profile) {
+    return Text(
+        profile.username,
+        style: Theme.of(context).textTheme.subtitle2
+    );
+  }
+
+  Text _buildEmail(BuildContext context, UserProfile profile) {
+    return Text(
+        profile.email,
+        style: TextStyle(color: Colors.white, fontSize: 12)
+    );
+  }
+
+  Widget _buildLocation(BuildContext context, GeoLocation location) {
+    if (location == null || location.locality == null) {
+      return Row();
+    }
+    return Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Icon(Icons.place, color: Colors.white, size: 14),
+          Text(location.format(), style: TextStyle(color: Colors.white, fontSize: 12)),
+        ]);
+  }
+
+  Widget _buildAvatar(BuildContext context, UserProfile profile) {
+    return Hero(tag: profile.userId,
+        child: UserAvatar(radius: 100.0, imageUri: profile.imageUri, online: null, uploadTaskId: uploadTaskId)
+    );
   }
 }
