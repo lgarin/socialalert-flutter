@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:provider/provider.dart';
+import 'package:social_alert_app/service/serviceprodiver.dart';
 
 class GeoPosition {
   final double latitude;
@@ -55,16 +55,19 @@ class GeoLocation extends GeoPosition {
   };
 }
 
-class GeoLocationService {
-  static GeoLocationService current(BuildContext context) =>
-      Provider.of<GeoLocationService>(context, listen: false);
+class GeoLocationService extends Service {
 
   final Geolocator _geolocator = Geolocator();
 
   final _locationController = StreamController<GeoLocation>();
 
+  static GeoLocationService current(BuildContext context) => ServiceProvider.of(context);
+
+  GeoLocationService(BuildContext context) : super(context);
+
   Stream<GeoLocation> get locationStream => _locationController.stream;
 
+  @override
   void dispose() {
     _locationController.close();
   }

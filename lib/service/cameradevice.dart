@@ -2,7 +2,7 @@
 import 'package:device_info/device_info.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
-import 'package:provider/provider.dart';
+import 'package:social_alert_app/service/serviceprodiver.dart';
 
 class DeviceInfo {
   final String maker;
@@ -11,11 +11,12 @@ class DeviceInfo {
   DeviceInfo({@required this.maker, @required this.model});
 }
 
-class CameraDeviceService {
+class CameraDeviceService extends Service {
   final deviceInfo = DeviceInfoPlugin();
 
-  static CameraDeviceService current(BuildContext context) =>
-      Provider.of<CameraDeviceService>(context, listen: false);
+  static CameraDeviceService current(BuildContext context) => ServiceProvider.of(context);
+
+  CameraDeviceService(BuildContext context) : super(context);
 
   Future<DeviceInfo> get device async {
     AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
@@ -28,4 +29,11 @@ class CameraDeviceService {
     }
     return null;
   }
+
+  @override
+  void dispose() {
+
+  }
+
+
 }

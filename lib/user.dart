@@ -24,7 +24,7 @@ class UserAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final format = radius < 60.0 ? 'small' : 'large';
-    final url = imageUri != null ? '$baseServerUrl/file/avatar/$format/$imageUri' : null;
+    final url = imageUri != null ? '$baseServerUrl/file/avatar/$format/$imageUri' : null; // TODO use static method
     return Container(
       width: radius,
       height: radius,
@@ -53,6 +53,53 @@ class UserAvatar extends StatelessWidget {
   }
 }
 
+class _ProfileTabSelectionModel with ChangeNotifier {
+  static const informationIndex = 0;
+  static const credentialsIndex = 1;
+  static const privacyIndex = 2;
+
+  int _currentDisplayIndex = informationIndex;
+
+  int get currentDisplayIndex => _currentDisplayIndex;
+  bool get informationSelected => _currentDisplayIndex == informationIndex;
+  bool get credentialsSelected => _currentDisplayIndex == credentialsIndex;
+  bool get privacySelected => _currentDisplayIndex == privacyIndex;
+
+  void tabSelected(int index) {
+    _currentDisplayIndex = index;
+    notifyListeners();
+  }
+
+  Widget _buildTab() {
+    switch (currentDisplayIndex) {
+      case informationIndex: return _InformationForm();
+      default: return SizedBox(height: 0, width: 0);
+    }
+  }
+
+  Widget buildForm() {
+    return ChangeNotifierProvider.value(value: this,
+        child: Consumer<_ProfileTabSelectionModel>(
+            builder: (context, value, _) => _buildTab()
+        )
+    );
+  }
+}
+
+class _InformationForm extends StatefulWidget {
+  @override
+  _InformationFormState createState() => _InformationFormState();
+}
+
+class _InformationFormState extends State<_InformationForm> {
+  //final _formKey = GlobalKey<FormState>();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(height: 0, width: 0);
+  }
+}
+
 class ProfileEditorPage extends StatefulWidget {
   @override
   _ProfileEditorPageState createState() => _ProfileEditorPageState();
@@ -64,6 +111,7 @@ class _ProfileEditorPageState extends BasePageState<ProfileEditorPage> {
 
   StreamSubscription<AvatarUploadProgress> uploadProgressSubscription;
   String _uploadTaskId;
+  final _tabSelectionModel = _ProfileTabSelectionModel();
 
   @override
   void initState() {
@@ -100,6 +148,13 @@ class _ProfileEditorPageState extends BasePageState<ProfileEditorPage> {
     );
   }
 
+  Widget buildNavBar(BuildContext context) {
+    return ChangeNotifierProvider.value(
+      value: _tabSelectionModel,
+      child: _ProfileBottomNavigationBar(),
+    );
+  }
+
   @override
   Widget buildBody(BuildContext context) {
     return ListView(
@@ -125,6 +180,31 @@ class _ProfileEditorPageState extends BasePageState<ProfileEditorPage> {
     } catch (e) {
       showSimpleDialog(context, 'Avatar upload failed', e.toString());
     }
+  }
+}
+
+class _ProfileBottomNavigationBar extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final tabSelectionModel = Provider.of<_ProfileTabSelectionModel>(context);
+    return BottomNavigationBar(
+        currentIndex: tabSelectionModel.currentDisplayIndex,
+        onTap: tabSelectionModel.tabSelected,
+        items: <BottomNavigationBarItem>[
+          new BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            title: Text('Personal info'),
+          ),
+          new BottomNavigationBarItem(
+            icon: Icon(Icons.https),
+            title: Text('Credentials'),
+          ),
+          new BottomNavigationBarItem(
+            icon: Icon(Icons.security),
+            title: Text('Privacy'),
+          )
+        ]
+    );
   }
 }
 

@@ -1,29 +1,16 @@
 import 'dart:convert';
 
 import 'package:flutter/widgets.dart';
-import 'package:http/http.dart';
-import 'package:provider/provider.dart';
 import 'package:social_alert_app/service/authentication.dart';
-import 'package:social_alert_app/service/configuration.dart';
+import 'package:social_alert_app/service/httpservice.dart';
 import 'package:social_alert_app/service/mediamodel.dart';
+import 'package:social_alert_app/service/serviceprodiver.dart';
 
 class _MediaUpdateApi {
 
-  static const jsonMediaType = 'application/json; charset=utf-8';
-  static const textMediaType = 'text/plain; charset=utf-8';
+  final JsonHttpService httpService;
 
-  final _httpClient = Client();
-
-  Future<Response> _postJson(String uri, String accessToken, String body) {
-    final headers = {
-      'Accept': jsonMediaType,
-      'Authorization': accessToken,
-    };
-    if (body != null) {
-      headers['Content-type'] = textMediaType;
-    }
-    return _httpClient.post(baseServerUrl + uri, headers: headers, body: body);
-  }
+  _MediaUpdateApi(this.httpService);
 
   String _toApprovalUri(ApprovalModifier modifier) {
     if (modifier == ApprovalModifier.LIKE) {
@@ -36,8 +23,8 @@ class _MediaUpdateApi {
   }
 
   Future<MediaDetail> changeMediaApproval({String mediaUri, ApprovalModifier modifier, String accessToken}) async {
-    final url = '/media/approval/${_toApprovalUri(modifier)}/$mediaUri';
-    final response = await _postJson(url, accessToken, null);
+    final uri = '/media/approval/${_toApprovalUri(modifier)}/$mediaUri';
+    final response = await httpService.post(uri: uri, accessToken: accessToken);
     if (response.statusCode == 200) {
       return MediaDetail.fromJson(jsonDecode(response.body));
     }
@@ -45,8 +32,8 @@ class _MediaUpdateApi {
   }
 
   Future<MediaCommentInfo> postComment({String mediaUri, String comment, String accessToken}) async {
-    final url = '/media/comment/$mediaUri';
-    final response = await _postJson(url, accessToken, comment);
+    final uri = '/media/comment/$mediaUri';
+    final response = await httpService.postText(uri: uri, accessToken: accessToken, body: comment);
     if (response.statusCode == 200) {
       return MediaCommentInfo.fromJson(jsonDecode(response.body));
     }
@@ -54,8 +41,8 @@ class _MediaUpdateApi {
   }
 
   Future<MediaCommentInfo> changeCommentApproval({String commentId, ApprovalModifier modifier, String accessToken}) async {
-    final url = '/media/comment/approval/${_toApprovalUri(modifier)}/$commentId';
-    final response = await _postJson(url, accessToken, null);
+    final uri = '/media/comment/approval/${_toApprovalUri(modifier)}/$commentId';
+    final response = await httpService.post(uri: uri, accessToken: accessToken);
     if (response.statusCode == 200) {
       return MediaCommentInfo.fromJson(jsonDecode(response.body));
     }
@@ -63,19 +50,19 @@ class _MediaUpdateApi {
   }
 }
 
-class MediaUpdateService {
-  final _api = _MediaUpdateApi();
-  final AuthService _authService;
+class MediaUpdateService extends Service {
 
-  static MediaUpdateService current(BuildContext context) =>
-      Provider.of<MediaUpdateService>(context, listen: false);
+  MediaUpdateService(BuildContext context) : super(context);
 
-  MediaUpdateService(this._authService);
+  static MediaUpdateService current(BuildContext context) => ServiceProvider.of(context);
+
+  AuthService get _authService => lookup();
+  _MediaUpdateApi get _updateApi => _MediaUpdateApi(lookup());
 
   Future<MediaDetail> changeMediaApproval(String mediaUri, ApprovalModifier modifier) async {
     final accessToken = await _authService.accessToken;
     try {
-      return await _api.changeMediaApproval(mediaUri: mediaUri, modifier: modifier, accessToken: accessToken);
+      return await _updateApi.changeMediaApproval(mediaUri: mediaUri, modifier: modifier, accessToken: accessToken);
     } catch (e) {
       print(e);
       throw e;
@@ -85,7 +72,7 @@ class MediaUpdateService {
   Future<MediaCommentInfo> postComment(String mediaUri, String comment) async {
     final accessToken = await _authService.accessToken;
     try {
-      return await _api.postComment(mediaUri: mediaUri, comment: comment, accessToken: accessToken);
+      return await _updateApi.postComment(mediaUri: mediaUri, comment: comment, accessToken: accessToken);
     } catch (e) {
       print(e);
       throw e;
@@ -95,10 +82,17 @@ class MediaUpdateService {
   Future<MediaCommentInfo> changeCommentApproval(String commentId, ApprovalModifier modifier) async {
     final accessToken = await _authService.accessToken;
     try {
-      return await _api.changeCommentApproval(commentId: commentId, modifier: modifier, accessToken: accessToken);
+      return await _updateApi.changeCommentApproval(commentId: commentId, modifier: modifier, accessToken: accessToken);
     } catch (e) {
       print(e);
       throw e;
     }
   }
+
+  @override
+  void dispose() {
+
+  }
+
+
 }

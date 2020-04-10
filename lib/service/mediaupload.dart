@@ -5,15 +5,14 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:http/http.dart';
-import 'package:path/path.dart';
 import 'package:flutter_uploader/flutter_uploader.dart';
 import 'package:provider/provider.dart';
 import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/cameradevice.dart';
 import 'package:social_alert_app/service/configuration.dart';
 import 'package:social_alert_app/service/geolocation.dart';
-import 'package:social_alert_app/service/httphelper.dart';
+import 'package:social_alert_app/service/httpservice.dart';
+import 'package:social_alert_app/service/serviceprodiver.dart';
 
 enum MediaUploadStatus {
   CREATED,
@@ -313,39 +312,21 @@ class _ClaimParameter {
   };
 }
 
-class _UploadApi {
+class _MediaUploadApi {
 
-  static const jsonMediaType = 'application/json';
+  final JsonHttpService httpService;
 
-  final _httpClient = Client();
-  final uploader = FlutterUploader();
-
-  Future<String> enqueueImage({@required String title, @required File file, @required String accessToken}) {
-    final item = FileItem(savedDir: dirname(file.path),
-        filename: basename(file.path));
-    return uploader.enqueueBinary(url: baseServerUrl + '/file/upload/picture',
-        method: UploadMethod.POST,
-        file: item,
-        headers: {'Authorization': accessToken, 'Content-type': 'image/jpeg'},
-        showNotification: true,
-        tag: title
-    );
-  }
-
-  Future<Response> _postJson(String uri, String body, String accessToken) {
-    final headers = {
-      'Content-type': jsonMediaType,
-      'Accept': jsonMediaType,
-      'Authorization': accessToken
-    };
-    return _httpClient.post(baseServerUrl + uri, headers: headers, body: body);
-  }
+  _MediaUploadApi(this.httpService);
 
   Future<void> claimMedia({@required String mediaUri, @required _ClaimParameter param, @required String accessToken}) async {
-    final response = await _postJson('/media/claim/$mediaUri', json.encode(param.toJson()), accessToken);
+    final response = await httpService.postJson(uri: '/media/claim/$mediaUri', body: param, accessToken: accessToken);
     if (response.statusCode != 200) {
       throw response.reasonPhrase;
     }
+  }
+
+  Future<String> enqueueImage({@required String title, @required File file, @required String accessToken}) {
+    return httpService.queueImageUpload(uri: '/file/upload/picture', file: file, title: title, accessToken: accessToken, showNotification: true);
   }
 
   _UploadTaskResult _mapResponse(UploadTaskResponse response) {
@@ -365,7 +346,7 @@ class _UploadApi {
   }
 
   Stream<_UploadTaskResult> get resultStream {
-    return uploader.result.transform(buildUploadExceptionTransformer()).map(_mapResponse);
+    return httpService.uploadResultStream.map(_mapResponse);
   }
 
   _UploadTaskStep _mapProgress(UploadTaskProgress event) {
@@ -373,11 +354,7 @@ class _UploadApi {
   }
 
   Stream<_UploadTaskStep> get progressStream {
-    return uploader.progress.where((event) => event.status == UploadTaskStatus.running).map(_mapProgress);
-  }
-
-  void dispose() {
-    uploader.dispose();
+    return httpService.uploadProgressStream.where((event) => event.status == UploadTaskStatus.running).map(_mapProgress);
   }
 }
 
@@ -408,31 +385,35 @@ class MediaUploadList with IterableMixin<MediaUploadTask>, ChangeNotifier {
   }
 }
 
-class MediaUploadService {
+class MediaUploadService extends Service {
+
+  final _uploadTaskStore = _UploadTaskStore();
+
+  final _uploadStreamController = StreamController<MediaUploadTask>.broadcast();
+  final _progressStreamController = StreamController<MediaUploadTask>.broadcast();
+
+  StreamSubscription<MediaUploadTask> _uploadSubscription;
+  StreamSubscription<MediaUploadTask> _progressSubscription;
+
+  MediaUploadList _uploads;
+
   static MediaUploadService current(BuildContext context) =>
       Provider.of<MediaUploadService>(context, listen: false);
 
-  final _uploadTaskStore = _UploadTaskStore();
-  final _uploadApi = _UploadApi();
-  final AuthService _authService;
-  final GeoLocationService _locationService;
-  StreamSubscription<MediaUploadTask> _uploadSubscription;
-  StreamSubscription<MediaUploadTask> _progressSubscription;
-  final _uploadStreamController = StreamController<MediaUploadTask>.broadcast();
-  final _progressStreamController = StreamController<MediaUploadTask>.broadcast();
-  MediaUploadList _uploads;
-
-  MediaUploadService(this._authService, this._locationService) {
+  MediaUploadService(BuildContext context) : super(context) {
     _uploadSubscription = _uploadResultStream.listen(_uploadStreamController.add, onError: _uploadStreamController.addError, onDone: _uploadStreamController.close);
     _progressSubscription = _uploadProgressStream.listen(_progressStreamController.add, onError: _progressStreamController.addError, onDone: _progressStreamController.close);
   }
+
+  AuthService get _authService => lookup();
+  GeoLocationService get _locationService => lookup();
+  _MediaUploadApi get _uploadApi => _MediaUploadApi(lookup());
 
   void dispose() {
     _uploadStreamController.close();
     _progressStreamController.close();
     _progressSubscription.cancel();
     _uploadSubscription.cancel();
-    _uploadApi.dispose();
   }
 
   Future<MediaUploadList> currentUploads() async {

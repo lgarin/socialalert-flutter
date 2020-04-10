@@ -524,12 +524,8 @@ class _MediaTabSelectionModel with ChangeNotifier {
 
   int _currentDisplayIndex = infoIndex;
 
-  final bucket = PageStorageBucket();
-
   int get currentDisplayIndex => _currentDisplayIndex;
-
   bool get feedSelected => _currentDisplayIndex == feedIndex;
-
   bool get infoSelected => _currentDisplayIndex == infoIndex;
 
   void tabSelected(int index) {
@@ -537,21 +533,18 @@ class _MediaTabSelectionModel with ChangeNotifier {
     notifyListeners();
   }
 
-  final List<Widget> _pages = [
-    _MediaDetailPanel(
-      key: PageStorageKey('Detail'),
-    ),
-    _MediaFeedPanel(
-      key: PageStorageKey('Feed'),
-    ),
-  ];
+  Widget _buildTab() {
+    switch (currentDisplayIndex) {
+      case infoIndex: return _MediaDetailPanel();
+      case feedIndex: return _MediaFeedPanel();
+      default: return null;
+    }
+  }
 
   Widget buildBottomPanel() {
     return ChangeNotifierProvider.value(value: this,
       child: Consumer<_MediaTabSelectionModel>(
-        builder: (context, value, _) => PageStorage(
-          child: _pages[_currentDisplayIndex],
-          bucket: bucket)
+        builder: (context, value, _) => _buildTab()
       )
     );
   }

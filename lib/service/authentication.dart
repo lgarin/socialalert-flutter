@@ -1,11 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/widgets.dart';
-import 'package:http/http.dart';
-import 'package:provider/provider.dart';
 import 'package:social_alert_app/service/credential.dart';
-
-import 'configuration.dart';
+import 'package:social_alert_app/service/httpservice.dart';
+import 'package:social_alert_app/service/serviceprodiver.dart';
 
 class LoginResponse {
   final String accessToken;
@@ -20,7 +18,7 @@ class LoginResponse {
   final String birthdate;
   final String imageUri;
 
-  LoginResponse._internal(Map<String, dynamic> json) :
+  LoginResponse.fromJson(Map<String, dynamic> json) :
     accessToken = json['accessToken'],
     refreshToken =  json['refreshToken'],
     userId = json['id'],
@@ -31,43 +29,18 @@ class LoginResponse {
     biography = json['biography'],
     birthdate = json['birthdate'],
     imageUri = json['imageUri'];
-
-  factory LoginResponse(String json) {
-    return LoginResponse._internal(jsonDecode(json));
-  }
 }
 
 class _AuthenticationApi {
-  static const jsonMediaType = 'application/json; charset=UTF-8';
-  final _httpClient = Client();
 
-  Future<Response> _postJson(String uri, String body) {
-    final headers = {
-      'Content-type': jsonMediaType,
-      'Accept': jsonMediaType,
-    };
-    return _httpClient.post(baseServerUrl + uri, headers: headers, body: body);
-  }
+  final JsonHttpService httpService;
 
-  Future<Response> _post(String uri, String accessToken) {
-    final headers = {
-      'Authorization': accessToken,
-    };
-    return _httpClient.post(baseServerUrl + uri, headers: headers);
-  }
-
-  Future<Response> _getJson(String uri, String accessToken) {
-    final headers = {
-      'Accept': jsonMediaType,
-      'Authorization': accessToken,
-    };
-    return _httpClient.get(baseServerUrl + uri, headers: headers);
-  }
+  _AuthenticationApi(this.httpService);
 
   Future<LoginResponse> loginUser(Credential credential) async {
-    final response = await _postJson('/user/login', jsonEncode(credential));
+    final response = await httpService.postJson(uri: '/user/login', body: credential);
     if (response.statusCode == 200) {
-      return LoginResponse(response.body);
+      return LoginResponse.fromJson(jsonDecode(response.body));
     } else if (response.statusCode == 401) {
       throw 'Bad credential';
     }
@@ -75,9 +48,9 @@ class _AuthenticationApi {
   }
 
   Future<LoginResponse> renewLogin(String refreshToken) async {
-    final response = await _postJson('/user/renewLogin', refreshToken);
+    final response = await httpService.postJson(uri: '/user/renewLogin', body: refreshToken);
     if (response.statusCode == 200) {
-      return LoginResponse(response.body);
+      return LoginResponse.fromJson(jsonDecode(response.body));
     } else if (response.statusCode == 401) {
       throw 'Session timeout';
     }
@@ -85,7 +58,7 @@ class _AuthenticationApi {
   }
 
   Future<UserProfile> currentUser(String accessToken) async {
-    final response = await _getJson('/user/current', accessToken ?? '');
+    final response = await httpService.getJson(uri: '/user/current', accessToken: accessToken ?? '');
     if (response.statusCode == 200) {
       return UserProfile.fromJson(jsonDecode(response.body));
     } else if (response.statusCode == 401) {
@@ -95,7 +68,7 @@ class _AuthenticationApi {
   }
 
   Future<void> logout(String accessToken) async {
-    final response = await _post('/user/logout', accessToken);
+    final response = await httpService.post(uri: '/user/logout', accessToken: accessToken);
     if (response.statusCode == 204) {
       return;
     }
@@ -154,21 +127,23 @@ class UserProfile {
   bool get offline => userId == null;
 }
 
-class AuthService {
+class AuthService extends Service {
+
   final _credentialStore = CredentialStore();
-  final _authApi = _AuthenticationApi();
+  final _profileController = StreamController<UserProfile>();
   _AuthToken _token;
 
-  static AuthService current(BuildContext context) =>
-      Provider.of<AuthService>(context, listen: false);
+  AuthService(BuildContext context) : super(context);
 
-  final _profileController = StreamController<UserProfile>();
+  static AuthService current(BuildContext context) => ServiceProvider.of(context);
 
   Stream<UserProfile> get profileStream => _profileController.stream;
 
   void dispose() {
     _profileController.close();
   }
+
+  _AuthenticationApi get _authApi => _AuthenticationApi(lookup());
 
   Future<Credential> get initialCredential {
     return _credentialStore.load();

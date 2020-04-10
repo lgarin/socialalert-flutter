@@ -9,11 +9,13 @@ import 'package:social_alert_app/picture.dart';
 import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/cameradevice.dart';
 import 'package:social_alert_app/service/geolocation.dart';
+import 'package:social_alert_app/service/httpservice.dart';
 import 'package:social_alert_app/service/mediamodel.dart';
 import 'package:social_alert_app/service/mediaquery.dart';
 import 'package:social_alert_app/service/mediaupdate.dart';
 import 'package:social_alert_app/service/mediaupload.dart';
 import 'package:social_alert_app/service/profileupdate.dart';
+import 'package:social_alert_app/service/serviceprodiver.dart';
 import 'package:social_alert_app/upload.dart';
 import 'package:social_alert_app/user.dart';
 
@@ -25,16 +27,17 @@ class SocialAlertApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
         providers: [
-          Provider<CameraDeviceService>(create: (_) => CameraDeviceService()),
-          Provider<GeoLocationService>(create: (_) => GeoLocationService(), dispose: (_, service) => service.dispose()),
+          ServiceProvider<JsonHttpService>(create: (context) => JsonHttpService(context)),
+          ServiceProvider<CameraDeviceService>(create: (context) => CameraDeviceService(context)),
+          ServiceProvider<GeoLocationService>(create: (context) => GeoLocationService(context)),
           StreamProvider<GeoLocation>(create: (context) => GeoLocationService.current(context).locationStream, lazy: false),
-          Provider<AuthService>(create: (_) => AuthService(), dispose: (_, service) => service.dispose()),
-          Provider<ProfileUpdateService>(create: (context) => ProfileUpdateService(AuthService.current(context)), dispose: (_, service) => service.dispose()),
+          ServiceProvider<AuthService>(create: (context) => AuthService(context)),
+          ServiceProvider<ProfileUpdateService>(create: (context) => ProfileUpdateService(context)),
           StreamProvider<UserProfile>(create: (context) => ProfileUpdateService.current(context).profileStream, lazy: false),
           StreamProvider<AvatarUploadProgress>(create: (context) => ProfileUpdateService.current(context).uploadProgressStream, lazy: false),
-          Provider<MediaUploadService>(create: (context) => MediaUploadService(AuthService.current(context), GeoLocationService.current(context)), dispose: (_, service) => service.dispose()),
-          Provider<MediaQueryService>(create: (context) => MediaQueryService(AuthService.current(context))),
-          Provider<MediaUpdateService>(create: (context) => MediaUpdateService(AuthService.current(context))),
+          ServiceProvider<MediaUploadService>(create: (context) => MediaUploadService(context)),
+          ServiceProvider<MediaQueryService>(create: (context) => MediaQueryService(context)),
+          ServiceProvider<MediaUpdateService>(create: (context) => MediaUpdateService(context)),
         ],
         child: _buildApp()
     );
