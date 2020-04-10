@@ -5,6 +5,27 @@ import 'package:social_alert_app/service/credential.dart';
 import 'package:social_alert_app/service/httpservice.dart';
 import 'package:social_alert_app/service/serviceprodiver.dart';
 
+class UserStatistic {
+  final int hitCount;
+  final int likeCount;
+  final int dislikeCount;
+  final int followerCount;
+  final int pictureCount;
+  final int videoCount;
+  final int commentCount;
+
+  UserStatistic.fromJson(Map<String, dynamic> json) :
+        hitCount = json['hitCount'],
+        likeCount = json['likeCount'],
+        dislikeCount = json['dislikeCount'],
+        followerCount = json['followerCount'],
+        pictureCount = json['pictureCount'],
+        videoCount = json['videoCount'],
+        commentCount = json['commentCount'];
+
+  int get mediaCount => pictureCount + videoCount;
+}
+
 class LoginResponse {
   final String accessToken;
   final String refreshToken;
@@ -17,6 +38,7 @@ class LoginResponse {
   final String biography;
   final String birthdate;
   final String imageUri;
+  final UserStatistic statistic;
 
   LoginResponse.fromJson(Map<String, dynamic> json) :
     accessToken = json['accessToken'],
@@ -28,7 +50,8 @@ class LoginResponse {
     country = json['country'],
     biography = json['biography'],
     birthdate = json['birthdate'],
-    imageUri = json['imageUri'];
+    imageUri = json['imageUri'],
+    statistic = UserStatistic.fromJson(json['statistic']);
 }
 
 class _AuthenticationApi {
@@ -104,6 +127,7 @@ class UserProfile {
   final String imageUri;
   final DateTime birthdate;
   final String biography;
+  final UserStatistic statistic;
 
   UserProfile(LoginResponse login) :
       userId = login.userId,
@@ -112,9 +136,10 @@ class UserProfile {
       imageUri = login.imageUri,
       country = login.country,
       birthdate = login.birthdate != null ? DateTime.parse(login.birthdate) : null,
-      biography = login.biography;
+      biography = login.biography,
+      statistic = login.statistic;
 
-  UserProfile.offline() : userId = null, username = null, email = null, country = null, imageUri = null, birthdate = null, biography = null;
+  UserProfile.offline() : userId = null, username = null, email = null, country = null, imageUri = null, birthdate = null, biography = null, statistic = null;
 
   UserProfile.fromJson(Map<String, dynamic> json) :
         userId = json['id'],
@@ -123,7 +148,8 @@ class UserProfile {
         country = json['country'],
         biography = json['biography'],
         birthdate = json['birthdate'] != null ? DateTime.parse(json['birthdate']) : null,
-        imageUri = json['imageUri'];
+        imageUri = json['imageUri'],
+        statistic = UserStatistic.fromJson(json['statistic']);
 
   bool get offline => userId == null;
 }

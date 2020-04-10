@@ -17,6 +17,7 @@ class UserMenu extends StatelessWidget {
         child: Drawer(
           child: Column(
             children: <Widget>[
+              Container(height: 10.0, color: Theme.of(context).primaryColorDark.withOpacity(0.9),),
               UserHeader(tapCallback: () => Navigator.popAndPushNamed(context, AppRoute.ProfileEditor)),
               Expanded(
                   child: _MenuBar(currentPage: currentPage)

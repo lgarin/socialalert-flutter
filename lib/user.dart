@@ -8,7 +8,6 @@ import 'package:social_alert_app/base.dart';
 import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/service/authentication.dart';
-import 'package:social_alert_app/service/geolocation.dart';
 import 'package:social_alert_app/service/mediaquery.dart';
 import 'package:social_alert_app/service/profileupdate.dart';
 
@@ -212,31 +211,88 @@ class UserHeader extends StatelessWidget {
   final GestureTapCallback tapCallback;
   final String uploadTaskId;
 
-  const UserHeader({this.tapCallback, this.uploadTaskId});
+  UserHeader({this.tapCallback, this.uploadTaskId});
 
   Widget build(BuildContext context) {
     final profile = Provider.of<UserProfile>(context);
-    final location = Provider.of<GeoLocation>(context);
     return Container(
-        height: 230,
+        height: 220,
         color: Theme.of(context).primaryColorDark.withOpacity(0.9),
-        child: profile != null ? _buildBody(context, profile, location) : LoadingCircle()
+        child: profile != null ? _buildBody(context, profile) : LoadingCircle()
     );
   }
 
-  Widget _buildBody(BuildContext context, UserProfile profile, GeoLocation location) {
+  Widget _buildBody(BuildContext context, UserProfile profile) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        _buildProfileColumn(context, profile),
+        SizedBox(width: 20),
+        _buildStatisticColumn(context, profile),
+      ],
+    );
+  }
+
+  GestureDetector _buildProfileColumn(BuildContext context, UserProfile profile) {
     return GestureDetector(
       onTap: tapCallback,
       child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.start,
           children: <Widget>[
-            SizedBox(height: 50),
+            SizedBox(height: 30),
             _buildAvatar(context, profile),
             SizedBox(height: 10),
             _buildUsername(context, profile),
-            _buildEmail(context, profile),
-            SizedBox(height: 5),
-            _buildLocation(context, location)
+            _buildEmail(context, profile)
+          ]),
+    );
+  }
+
+  GestureDetector _buildStatisticColumn(BuildContext context, UserProfile profile) {
+    return GestureDetector(
+      onTap: null,
+      child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: <Widget>[
+            SizedBox(height: 40),
+            Row(children: <Widget>[
+              Icon(Icons.people, size: 14, color: Colors.white),
+              SizedBox(width: 4),
+              Text(profile.statistic.followerCount.toString(), style: TextStyle(fontSize: 12, color: Colors.white)),
+            ]),
+            SizedBox(height: 4),
+            Row(children: <Widget>[
+              Icon(Icons.thumb_up, size: 14, color: Colors.white),
+              SizedBox(width: 4,),
+              Text(profile.statistic.likeCount.toString(), style: TextStyle(fontSize: 12, color: Colors.white)),
+            ]),
+            SizedBox(height: 4),
+            Row(children: <Widget>[
+              Icon(Icons.thumb_down, size: 14, color: Colors.white),
+              SizedBox(width: 4,),
+              Text(profile.statistic.dislikeCount.toString(), style: TextStyle(fontSize: 12, color: Colors.white)),
+            ]),
+            SizedBox(height: 4),
+            Row(children: <Widget>[
+              Icon(Icons.remove_red_eye, size: 14, color: Colors.white),
+              SizedBox(width: 4),
+              Text(profile.statistic.hitCount.toString(), style: TextStyle(fontSize: 12, color: Colors.white)),
+            ]),
+            SizedBox(height: 4),
+            Row(children: <Widget>[
+              Icon(Icons.panorama, size: 14, color: Colors.white),
+              SizedBox(width: 4),
+              Text(profile.statistic.mediaCount.toString(), style: TextStyle(fontSize: 12, color: Colors.white)),
+            ]),
+            SizedBox(height: 4),
+            Row(children: <Widget>[
+              Icon(Icons.mode_comment, size: 14, color: Colors.white),
+              SizedBox(width: 4),
+              Text(profile.statistic.commentCount.toString(), style: TextStyle(fontSize: 12, color: Colors.white)),
+            ])
           ]),
     );
   }
@@ -255,21 +311,9 @@ class UserHeader extends StatelessWidget {
     );
   }
 
-  Widget _buildLocation(BuildContext context, GeoLocation location) {
-    if (location == null || location.locality == null) {
-      return Row();
-    }
-    return Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          Icon(Icons.place, color: Colors.white, size: 14),
-          Text(location.format(), style: TextStyle(color: Colors.white, fontSize: 12)),
-        ]);
-  }
-
   Widget _buildAvatar(BuildContext context, UserProfile profile) {
     return Hero(tag: profile.userId,
-        child: UserAvatar(radius: 100.0, imageUri: profile.imageUri, online: null, uploadTaskId: uploadTaskId)
+        child: UserAvatar(radius: 120.0, imageUri: profile.imageUri, online: null, uploadTaskId: uploadTaskId)
     );
   }
 }

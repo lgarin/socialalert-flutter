@@ -51,17 +51,38 @@ const Map<String, ApprovalModifier> _approvalModifierMap = {
   'DISLIKE': ApprovalModifier.DISLIKE,
 };
 
+class CreatorStatistic {
+  final int hitCount;
+  final int likeCount;
+  final int followerCount;
+  final int pictureCount;
+  final int videoCount;
+  final int commentCount;
+
+  CreatorStatistic.fromJson(Map<String, dynamic> json) :
+        hitCount = json['hitCount'],
+        likeCount = json['likeCount'],
+        followerCount = json['followerCount'],
+        pictureCount = json['pictureCount'],
+        videoCount = json['videoCount'],
+        commentCount = json['commentCount'];
+
+  int get mediaCount => pictureCount + videoCount;
+}
+
 class CreatorInfo {
   final String id;
   final String username;
   final bool online;
   final String imageUri;
+  final CreatorStatistic statistic;
 
   CreatorInfo.fromJson(Map<String, dynamic> json) :
         id = json['id'],
         username = json['username'],
         online = json['online'],
-        imageUri = json['imageUri'];
+        imageUri = json['imageUri'],
+        statistic = CreatorStatistic.fromJson(json['statistic']);
 }
 
 class MediaDetail extends MediaInfo {

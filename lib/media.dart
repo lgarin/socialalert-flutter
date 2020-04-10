@@ -76,6 +76,11 @@ class _RemotePictureDetailPageState extends BasePageState<RemotePictureDetailPag
   Widget buildBody(BuildContext context) {
     return FutureProvider(
         create: _buildMediaModel,
+        catchError: (context, error) {
+          // TODO what is going on here?
+          print(error);
+          return null;
+        },
         child: Consumer<_MediaInfoModel>(
           builder: _buildContent,
           child: NetworkPreviewImage(imageUri: widget.mediaUri)
@@ -145,14 +150,32 @@ class _RemotePictureDetailPageState extends BasePageState<RemotePictureDetailPag
   }
 
   Widget _buildCreatorBanner(BuildContext context, MediaDetail media) {
-    return Row(
-      children: <Widget>[
-        UserAvatar(imageUri: media.creator.imageUri, online: media.creator.online, radius: 50.0),
-        SizedBox(width: 2 * spacing),
-        Text(media.creator.username, style: Theme.of(context).textTheme.headline6),
-        Spacer(),
-        Timeago(date: media.timestamp, builder: (_, value) => Text(value, style: TextStyle(fontStyle: FontStyle.italic),)),
-      ],
+    return ListTile(
+      contentPadding: EdgeInsets.symmetric(horizontal: 5.0),
+      dense: true,
+      isThreeLine: true,
+      leading: UserAvatar(imageUri: media.creator.imageUri, online: media.creator.online, radius: 50.0),
+      trailing: Timeago(date: media.timestamp, builder: (_, value) => Text(value, style: TextStyle(fontStyle: FontStyle.italic))),
+      title: Text(media.creator.username, style: Theme.of(context).textTheme.headline6),
+      subtitle: Row(
+        children: <Widget>[
+          Icon(Icons.people, size: 14, color: Colors.black),
+          SizedBox(width: 4,),
+          Text(media.creator.statistic.followerCount.toString(), style: TextStyle(fontSize: 12, color: Colors.black)),
+          Spacer(),
+          Icon(Icons.thumb_up, size: 14, color: Colors.black),
+          SizedBox(width: 4,),
+          Text(media.creator.statistic.likeCount.toString(), style: TextStyle(fontSize: 12, color: Colors.black)),
+          Spacer(),
+          Icon(Icons.panorama, size: 14, color: Colors.black),
+          SizedBox(width: 4,),
+          Text(media.creator.statistic.mediaCount.toString(), style: TextStyle(fontSize: 12, color: Colors.black)),
+          Spacer(),
+          Icon(Icons.mode_comment, size: 14, color: Colors.black),
+          SizedBox(width: 4,),
+          Text(media.creator.statistic.commentCount.toString(), style: TextStyle(fontSize: 12, color: Colors.black)),
+        ],
+      ),
     );
   }
 }
@@ -564,7 +587,12 @@ class NetworkPreviewImage extends StatelessWidget {
   }
 
   Future<Map<String, String>> _buildRequestHeader(BuildContext context) {
-    return MediaQueryService.current(context).buildImagePreviewHeader();
+    try {
+      return MediaQueryService.current(context).buildImagePreviewHeader();
+    } catch (e) {
+      showSimpleDialog(context, 'Cannot download image', e.toString());
+      return null;
+    }
   }
 
   Widget _buildImage(BuildContext context, AsyncSnapshot<Map<String, String>> snapshot) {
