@@ -19,7 +19,7 @@ class UserAvatar extends StatelessWidget {
   final double radius;
   final String uploadTaskId;
 
-  UserAvatar({this.imageUri, this.online, this.radius, this.uploadTaskId}) : super(key: ValueKey('$imageUri/$online'));
+  UserAvatar({this.imageUri, this.online, this.radius, this.uploadTaskId}) : super(key: ValueKey('$imageUri/$online/$uploadTaskId'));
 
   @override
   Widget build(BuildContext context) {
@@ -70,10 +70,12 @@ class _ProfileEditorPageState extends BasePageState<ProfileEditorPage> {
     super.initState();
     uploadProgressSubscription = ProfileUpdateService.current(context).uploadProgressStream.listen((event) {
       if (event.taskId == _uploadTaskId && event.terminal) {
-        _uploadTaskId = null;
         if (event.error != null) {
           showSimpleDialog(context, 'Avatar upload failed', event.error);
         }
+        setState(() {
+          _uploadTaskId = null;
+        });
       }
     });
   }
@@ -92,6 +94,7 @@ class _ProfileEditorPageState extends BasePageState<ProfileEditorPage> {
   AppBar buildAppBar() {
     return AppBar(title: Text('Edit profile'),
         actions: <Widget>[
+          IconButton(onPressed: _choosePicture, icon: Icon(Icons.account_circle)),
           IconButton(onPressed: _onSave, icon: Icon(Icons.done))
         ]
     );

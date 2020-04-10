@@ -48,6 +48,7 @@ class _ProfileUpdateApi {
 
   UserProfile _mapResponse(UploadTaskResponse response) {
     if (response.status == UploadTaskStatus.complete && response.statusCode == 200) {
+      _progressStreamController.add(AvatarUploadProgress(taskId: response.taskId, progress: 100, status: UploadTaskStatus.complete));
       return UserProfile.fromJson(json.decode(response.response));
     } else if (response.status == UploadTaskStatus.failed || response.status == UploadTaskStatus.complete) {
       _progressStreamController.add(AvatarUploadProgress(taskId: response.taskId, progress: 0, status: UploadTaskStatus.failed, error: response.response));
