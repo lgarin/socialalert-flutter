@@ -1,8 +1,6 @@
-
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_uploader/flutter_uploader.dart';
 import 'package:http/http.dart';
@@ -40,7 +38,8 @@ class JsonHttpService extends Service {
   }
 
   Future<Response> postJson({@required String uri, @required Object body, String accessToken}) {
-    return _client.post(baseServerUrl + uri, headers: _buildHeader(contentType: jsonMediaType, accessToken: accessToken), body: jsonEncode(body));
+    // TODO remove workaround for renewLogin which should use postText instead
+    return _client.post(baseServerUrl + uri, headers: _buildHeader(contentType: jsonMediaType, accessToken: accessToken), body: body is String ? body : jsonEncode(body));
   }
 
   Future<String> queueImageUpload({@required String uri, @required File file, @required String title, bool showNotification = false, String accessToken}) {

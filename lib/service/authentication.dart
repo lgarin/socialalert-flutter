@@ -48,6 +48,7 @@ class _AuthenticationApi {
   }
 
   Future<LoginResponse> renewLogin(String refreshToken) async {
+    // TODO use postText
     final response = await httpService.postJson(uri: '/user/renewLogin', body: refreshToken);
     if (response.statusCode == 200) {
       return LoginResponse.fromJson(jsonDecode(response.body));

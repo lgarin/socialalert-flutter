@@ -73,6 +73,12 @@ class MediaQueryService extends Service {
 
   static String toPreviewUrl(String mediaUri) => baseServerUrl + '/file/preview/' + mediaUri;
 
+  static String toSmallAvatarUrl(String imageUri) => baseServerUrl + '/file/avatar/small/' + imageUri;
+
+  static String toLargeAvatarUrl(String imageUri) => baseServerUrl + '/file/avatar/large/' + imageUri;
+
+  static String toAvatarUrl(String imageUri, bool small) => small ? toSmallAvatarUrl(imageUri) : toLargeAvatarUrl(imageUri);
+
   static MediaQueryService current(BuildContext context) => ServiceProvider.of(context);
 
   MediaQueryService(BuildContext context) : super(context);

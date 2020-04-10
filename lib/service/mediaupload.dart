@@ -330,14 +330,14 @@ class _MediaUploadApi {
   }
 
   _UploadTaskResult _mapResponse(UploadTaskResponse response) {
-    if (response.status == UploadTaskStatus.complete && response.statusCode == 200) { // FIXME why 200? server should return 201
+    if (response.status == UploadTaskStatus.complete) {
       final baseLocationUrl = baseServerUrl + '/file/download/';
       if (response.headers['Location'] == null) {
         return _UploadTaskResult(taskId: response.taskId);
       }
       final mediaUri = response.headers['Location'].substring(baseLocationUrl.length);
       return _UploadTaskResult(taskId: response.taskId, mediaUri: mediaUri, status: MediaUploadStatus.UPLOADED);
-    } else if (response.status == UploadTaskStatus.failed || response.status == UploadTaskStatus.complete) {
+    } else if (response.status == UploadTaskStatus.failed) {
       return _UploadTaskResult(taskId: response.taskId, status: MediaUploadStatus.UPLOAD_ERROR, error: response.response);
     } else {
       return _UploadTaskResult(taskId: response.taskId);

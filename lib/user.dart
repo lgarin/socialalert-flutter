@@ -1,4 +1,3 @@
-
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
@@ -9,11 +8,13 @@ import 'package:social_alert_app/base.dart';
 import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/service/authentication.dart';
-import 'package:social_alert_app/service/configuration.dart';
 import 'package:social_alert_app/service/geolocation.dart';
+import 'package:social_alert_app/service/mediaquery.dart';
 import 'package:social_alert_app/service/profileupdate.dart';
 
 class UserAvatar extends StatelessWidget {
+  static const LARGE_RADIUS = 60.0;
+
   final String imageUri;
   final bool online;
   final double radius;
@@ -23,8 +24,7 @@ class UserAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final format = radius < 60.0 ? 'small' : 'large';
-    final url = imageUri != null ? '$baseServerUrl/file/avatar/$format/$imageUri' : null; // TODO use static method
+    final url = imageUri != null ? MediaQueryService.toAvatarUrl(imageUri, radius < LARGE_RADIUS) : null;
     return Container(
       width: radius,
       height: radius,
