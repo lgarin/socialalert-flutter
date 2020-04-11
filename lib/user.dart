@@ -68,21 +68,6 @@ class _ProfileTabSelectionModel with ChangeNotifier {
     _currentDisplayIndex = index;
     notifyListeners();
   }
-
-  Widget _buildTab() {
-    switch (currentDisplayIndex) {
-      case informationIndex: return _InformationForm();
-      default: return SizedBox(height: 0, width: 0);
-    }
-  }
-
-  Widget buildForm() {
-    return ChangeNotifierProvider.value(value: this,
-        child: Consumer<_ProfileTabSelectionModel>(
-            builder: (context, value, _) => _buildTab()
-        )
-    );
-  }
 }
 
 class _InformationForm extends StatefulWidget {
@@ -147,6 +132,7 @@ class _ProfileEditorPageState extends BasePageState<ProfileEditorPage> {
     );
   }
 
+  @override
   Widget buildNavBar(BuildContext context) {
     return ChangeNotifierProvider.value(
       value: _tabSelectionModel,
@@ -158,8 +144,16 @@ class _ProfileEditorPageState extends BasePageState<ProfileEditorPage> {
   Widget buildBody(BuildContext context) {
     return ListView(
       children: <Widget>[
-        UserHeader(tapCallback: _choosePicture, uploadTaskId: _uploadTaskId,)
+        UserHeader(tapCallback: _choosePicture, uploadTaskId: _uploadTaskId),
+        _buildBottomPanel(context),
       ],
+    );
+  }
+
+  Widget _buildBottomPanel(BuildContext context) {
+    return ChangeNotifierProvider.value(
+      value: _tabSelectionModel,
+      child: _ProfileTabPanel(),
     );
   }
 
@@ -195,15 +189,27 @@ class _ProfileBottomNavigationBar extends StatelessWidget {
             title: Text('Personal info'),
           ),
           new BottomNavigationBarItem(
-            icon: Icon(Icons.https),
-            title: Text('Credentials'),
+            icon: Icon(Icons.panorama),
+            title: Text('My Snypes'),
           ),
           new BottomNavigationBarItem(
-            icon: Icon(Icons.security),
-            title: Text('Privacy'),
+            icon: Icon(Icons.create),
+            title: Text('My Scribes'),
           )
         ]
     );
+  }
+}
+
+class _ProfileTabPanel extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final tabSelectionModel = Provider.of<_ProfileTabSelectionModel>(context);
+    if (tabSelectionModel.informationSelected) {
+      return _InformationForm();
+    } else {
+      return SizedBox(height: 0, width: 0);
+    }
   }
 }
 

@@ -21,7 +21,7 @@ class FeedDisplay extends StatelessWidget {
             .of(context)
             .textTheme
             .headline6),
-        Text('Be the first to post some comments here.')
+        Text('Add people to your network first.')
       ],
     );
   }

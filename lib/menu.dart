@@ -47,7 +47,7 @@ class _MenuBar extends StatelessWidget {
             _MenuItem(currentPage: currentPage, targetPage: AppRoute.Network, title: 'My Network', icon: Icon(Icons.people)),
             _MenuItem(currentPage: currentPage, targetPage: AppRoute.UploadManager, title: 'My Uploads', icon: _buildUploadIcon()),
             _MenuItem(currentPage: currentPage, targetPage: null, title: 'My Statistics', icon: Icon(Icons.show_chart)),
-            _MenuItem(currentPage: currentPage, targetPage: null, title: 'My Settings', icon: Icon(Icons.settings)),
+            _MenuItem(currentPage: currentPage, targetPage: AppRoute.SettingsEditor, title: 'My Settings', icon: Icon(Icons.settings)),
             Divider(),
             _MenuItem(currentPage: currentPage, targetPage: AppRoute.Login, title: 'Sign Out', icon: Icon(Icons.power_settings_new)),
           ]

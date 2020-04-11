@@ -26,12 +26,20 @@ class UserStatistic {
   int get mediaCount => pictureCount + videoCount;
 }
 
-class LoginResponse {
+class LoginTokenResponse {
   final String accessToken;
   final String refreshToken;
+  final int expiration;
+
+  LoginTokenResponse.fromJson(Map<String, dynamic> json) :
+        accessToken = json['accessToken'],
+        refreshToken =  json['refreshToken'],
+        expiration = json['expiration'];
+}
+
+class LoginResponse extends LoginTokenResponse {
   final String userId;
   final String username;
-  final int expiration;
 
   final String email;
   final String country;
@@ -41,17 +49,15 @@ class LoginResponse {
   final UserStatistic statistic;
 
   LoginResponse.fromJson(Map<String, dynamic> json) :
-    accessToken = json['accessToken'],
-    refreshToken =  json['refreshToken'],
     userId = json['id'],
     username = json['username'],
-    expiration = json['expiration'],
     email = json['email'],
     country = json['country'],
     biography = json['biography'],
     birthdate = json['birthdate'],
     imageUri = json['imageUri'],
-    statistic = UserStatistic.fromJson(json['statistic']);
+    statistic = json['statistic'] != null ? UserStatistic.fromJson(json['statistic']) : null,
+    super.fromJson(json);
 }
 
 class _AuthenticationApi {
@@ -70,11 +76,11 @@ class _AuthenticationApi {
     throw response.reasonPhrase;
   }
 
-  Future<LoginResponse> renewLogin(String refreshToken) async {
+  Future<LoginTokenResponse> renewLogin(String refreshToken) async {
     // TODO use postText
     final response = await httpService.postJson(uri: '/user/renewLogin', body: refreshToken);
     if (response.statusCode == 200) {
-      return LoginResponse.fromJson(jsonDecode(response.body));
+      return LoginTokenResponse.fromJson(jsonDecode(response.body));
     } else if (response.statusCode == 401) {
       throw 'Session timeout';
     }
@@ -108,7 +114,7 @@ class _AuthToken {
   final refreshToken;
   final _expiration;
 
-  _AuthToken(LoginResponse login)
+  _AuthToken(LoginTokenResponse login)
       : accessToken = login.accessToken,
         refreshToken = login.refreshToken,
         _expiration = login.expiration;

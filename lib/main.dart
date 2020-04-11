@@ -16,6 +16,7 @@ import 'package:social_alert_app/service/mediaupdate.dart';
 import 'package:social_alert_app/service/mediaupload.dart';
 import 'package:social_alert_app/service/profileupdate.dart';
 import 'package:social_alert_app/service/serviceprodiver.dart';
+import 'package:social_alert_app/settings.dart';
 import 'package:social_alert_app/upload.dart';
 import 'package:social_alert_app/user.dart';
 
@@ -89,6 +90,9 @@ class SocialAlertApp extends StatelessWidget {
       case AppRoute.ProfileEditor: return MaterialPageRoute(
         builder: (context) => ProfileEditorPage()
       );
+      case AppRoute.SettingsEditor: return MaterialPageRoute(
+        builder: (context) => SettingsEditorPage()
+      );
       default: return null;
     }
   }
@@ -103,4 +107,5 @@ class AppRoute {
   static const LocalPictureInfo = 'pictureInfo';
   static const RemotePictureDetail ='pictureDetail';
   static const ProfileEditor = 'profileEditor';
+  static const SettingsEditor = 'settingsEditor';
 }

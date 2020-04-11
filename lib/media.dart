@@ -113,10 +113,15 @@ class _RemotePictureDetailPageState extends BasePageState<RemotePictureDetailPag
         SizedBox(height: spacing),
         WillPopScope(child: picture, onWillPop: () => _onCloseDetailPage(model)),
         _buildMediaTagList(context, model.detail),
-        ChangeNotifierProvider.value(value: model,
-            child: _tabSelectionModel.buildBottomPanel()
-        )
+        _buildBottomPanel(context),
       ],
+    );
+  }
+
+  Widget _buildBottomPanel(BuildContext context) {
+    return ChangeNotifierProvider.value(
+        value: _tabSelectionModel,
+        child: _MediaTabWidget()
     );
   }
 
@@ -171,7 +176,7 @@ class _RemotePictureDetailPageState extends BasePageState<RemotePictureDetailPag
           SizedBox(width: 4,),
           Text(media.creator.statistic.mediaCount.toString(), style: TextStyle(fontSize: 12, color: Colors.black)),
           Spacer(),
-          Icon(Icons.mode_comment, size: 14, color: Colors.black),
+          Icon(Icons.create, size: 14, color: Colors.black),
           SizedBox(width: 4,),
           Text(media.creator.statistic.commentCount.toString(), style: TextStyle(fontSize: 12, color: Colors.black)),
         ],
@@ -271,8 +276,8 @@ class _MediaFeedPanelState extends State<_MediaFeedPanel> {
 
   FlatButton _buildSubmitButton(BuildContext context) {
     return FlatButton.icon(
-        label: Text(_editingComment ? 'Post' : 'Add comment'),
-        icon: Icon(_editingComment ? Icons.send : Icons.add_comment),
+        label: Text(_editingComment ? 'Post scribe' : 'Add scribe'),
+        icon: Icon(_editingComment ? Icons.send : Icons.create),
         color: buttonColor,
         onPressed: _editingComment ? _onPostComment : _startEditingComment
     );
@@ -304,10 +309,10 @@ class _MediaFeedPanelState extends State<_MediaFeedPanel> {
         maxLines: null,
         keyboardType: TextInputType.multiline,
         decoration: InputDecoration(
-            labelText: 'Comment',
+            labelText: 'Scribe',
             icon: Icon(Icons.insert_comment)),
         validator: MultiValidator([
-          NonEmptyValidator(errorText: "Comment required"),
+          NonEmptyValidator(errorText: "Scribe required"),
           MaxLengthValidator(maxCommentLength, errorText: "Maximum length reached")
         ])
       ),
@@ -330,7 +335,7 @@ class _MediaFeedPanelState extends State<_MediaFeedPanel> {
     return RaisedButton.icon(
         onPressed: null,
         disabledTextColor: Colors.black,
-        icon: Icon(Icons.mode_comment),
+        icon: Icon(Icons.create),
         label: Text(media.commentCount.toString()));
   }
 
@@ -459,7 +464,7 @@ class _MediaCommentListState extends BasePagingState<_MediaCommentList, MediaCom
             .of(context)
             .textTheme
             .headline6),
-        Text('Be the first to post a comment here.')
+        Text('Be the first to post a scribe here.')
       ],
     );
   }
@@ -541,6 +546,20 @@ class _MediaBottomNavigationBar extends StatelessWidget {
   }
 }
 
+class _MediaTabWidget extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final tabSelectionModel = Provider.of<_MediaTabSelectionModel>(context);
+    if (tabSelectionModel.infoSelected) {
+      return _MediaDetailPanel();
+    } else if (tabSelectionModel.feedSelected) {
+      return _MediaFeedPanel();
+    } else {
+      return null;
+    }
+  }
+}
+
 class _MediaTabSelectionModel with ChangeNotifier {
   static const infoIndex = 0;
   static const feedIndex = 1;
@@ -554,22 +573,6 @@ class _MediaTabSelectionModel with ChangeNotifier {
   void tabSelected(int index) {
     _currentDisplayIndex = index;
     notifyListeners();
-  }
-
-  Widget _buildTab() {
-    switch (currentDisplayIndex) {
-      case infoIndex: return _MediaDetailPanel();
-      case feedIndex: return _MediaFeedPanel();
-      default: return null;
-    }
-  }
-
-  Widget buildBottomPanel() {
-    return ChangeNotifierProvider.value(value: this,
-      child: Consumer<_MediaTabSelectionModel>(
-        builder: (context, value, _) => _buildTab()
-      )
-    );
   }
 }
 
