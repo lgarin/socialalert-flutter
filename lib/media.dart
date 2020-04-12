@@ -113,7 +113,7 @@ class _RemotePictureDetailPageState extends BasePageState<RemotePictureDetailPag
         SizedBox(height: spacing),
         WillPopScope(child: picture, onWillPop: () => _onCloseDetailPage(model)),
         _buildMediaTagList(context, model.detail),
-        _buildBottomPanel(context),
+        ChangeNotifierProvider.value(value: model, child: _buildBottomPanel(context)),
       ],
     );
   }

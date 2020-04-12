@@ -38,8 +38,7 @@ class JsonHttpService extends Service {
   }
 
   Future<Response> postJson({@required String uri, @required Object body, String accessToken}) {
-    // TODO remove workaround for renewLogin which should use postText instead
-    return _client.post(baseServerUrl + uri, headers: _buildHeader(contentType: jsonMediaType, accessToken: accessToken), body: body is String ? body : jsonEncode(body));
+    return _client.post(baseServerUrl + uri, headers: _buildHeader(contentType: jsonMediaType, accessToken: accessToken), body: jsonEncode(body));
   }
 
   Future<String> queueImageUpload({@required String uri, @required File file, @required String title, bool showNotification = false, String accessToken}) {

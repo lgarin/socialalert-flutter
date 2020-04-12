@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:datetime_picker_formfield/datetime_picker_formfield.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:social_alert_app/base.dart';
 import 'package:social_alert_app/helper.dart';
@@ -70,17 +72,120 @@ class _ProfileTabSelectionModel with ChangeNotifier {
   }
 }
 
+enum Gender {
+  MALE,
+  FEMALE,
+  OTHER,
+}
+
+class _UserInformationModel extends ChangeNotifier {
+
+
+  Gender _gender;
+  DateTime _birthdate;
+
+  Gender get gender => _gender;
+  void setGender(Gender newGender) => _gender = newGender;
+
+  DateTime get birthdate => _birthdate;
+  void setBirthdate(DateTime newBirthdate) => _birthdate = newBirthdate;
+}
+
 class _InformationForm extends StatefulWidget {
   @override
   _InformationFormState createState() => _InformationFormState();
 }
 
 class _InformationFormState extends State<_InformationForm> {
-  //final _formKey = GlobalKey<FormState>();
+  final _formKey = GlobalKey<FormState>();
+  final _informationModel = _UserInformationModel();
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(height: 0, width: 0);
+    return Container(
+      child: ChangeNotifierProvider.value(
+        value: _informationModel,
+        child: _buildForm()
+      ),
+      padding: EdgeInsets.all(20.0),
+    );
+  }
+
+  Form _buildForm() {
+    return Form(
+        key: _formKey,
+        child: Column(
+          children: <Widget>[
+            _GenderWidget(),
+            SizedBox(height: 5),
+            _BirthdateWidget(),
+          ]
+        )
+      );
+  }
+}
+
+class _GenderWidget extends StatelessWidget {
+
+  @override
+  Widget build(BuildContext context) {
+  _UserInformationModel model = Provider.of(context);
+    return Container(
+      decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.all(Radius.circular(10))),
+      padding: EdgeInsets.all(10),
+      child: DropdownButtonFormField<Gender>(
+        onChanged: model.setGender,
+        value: model.gender,
+        icon: Row(children: <Widget>[Icon(Icons.expand_more), SizedBox(width: 10)]),
+        decoration: InputDecoration(
+            hintText: 'Select gender',
+            icon: Icon(Icons.wc)),
+        items: [
+          DropdownMenuItem<Gender>(value: Gender.FEMALE,
+              child: Text('Female \u{2640}')
+          ),
+          DropdownMenuItem<Gender>(value: Gender.MALE,
+            child: Text('Male \u{2642}')
+          ),
+          DropdownMenuItem<Gender>(value: Gender.OTHER,
+              child: Text('Other')
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BirthdateWidget extends StatelessWidget {
+
+  @override
+  Widget build(BuildContext context) {
+    _UserInformationModel model = Provider.of(context);
+    return Container(
+      decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.all(Radius.circular(10))),
+      padding: EdgeInsets.all(10),
+      child: DateTimeField(
+        format: DateFormat('d MMM yyyy'),
+        onSaved: model.setBirthdate,
+        onFieldSubmitted: model.setBirthdate,
+        initialValue: model.birthdate,
+        decoration: InputDecoration(
+            hintText: 'Select birthdate',
+            icon: Icon(Icons.cake)),
+        onShowPicker: (context, currentValue) {
+          return showDatePicker(
+              context: context,
+              initialDatePickerMode: DatePickerMode.year,
+              firstDate: DateTime(1900),
+              initialDate: currentValue ?? DateTime.now(),
+              lastDate: DateTime(2100));
+        },
+      ),
+    );
   }
 }
 
@@ -303,10 +408,17 @@ class UserHeader extends StatelessWidget {
     );
   }
 
-  Text _buildUsername(BuildContext context, UserProfile profile) {
-    return Text(
-        profile.username,
-        style: Theme.of(context).textTheme.subtitle2
+  Widget _buildUsername(BuildContext context, UserProfile profile) {
+    final username = Text(profile.username, style: Theme.of(context).textTheme.subtitle2);
+    if (profile.country == null) {
+      return username;
+    }
+    return Row(
+      children: <Widget>[
+        username,
+        SizedBox(width: 4),
+        Image.asset('images/flags/${profile.country.toLowerCase()}.png', width: 20, height: 15,)
+      ],
     );
   }
 

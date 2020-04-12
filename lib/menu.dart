@@ -91,7 +91,7 @@ class _MenuItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      enabled: currentPage != targetPage,
+      enabled: targetPage != null && currentPage != targetPage,
       selected: currentPage == targetPage,
       leading: icon,
       title: Text(title),

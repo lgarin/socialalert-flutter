@@ -28,6 +28,7 @@ dependencies:
   badges:
   fluster:
   device_info:
+  datetime_picker_formfield:
 
 dev_dependencies:
   flutter_test:
@@ -42,3 +43,4 @@ flutter:
 
   assets:
     - images/
+    - images/flags/
