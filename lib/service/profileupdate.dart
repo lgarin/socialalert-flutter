@@ -45,12 +45,30 @@ class _ProfileUpdateApi {
   }
 
   Stream<AvatarUploadProgress> get progressStream => httpService.uploadProgressStream.map(_mapProgress);
+
+  Future<Iterable<Country>> loadValidCountries() async {
+    final uri = '/user/countries';
+    final response = await httpService.getJson(uri: uri);
+    if (response.statusCode == 200) {
+      return Map<String,String>.from(jsonDecode(response.body)).entries.map((entry) => Country(entry.key, entry.value));
+    }
+    throw response.reasonPhrase;
+  }
+}
+
+class Country {
+  final String code;
+  final String name;
+
+  Country(this.code, this.name);
 }
 
 class ProfileUpdateService extends Service {
 
   final _progressStreamController = StreamController<AvatarUploadProgress>.broadcast();
   StreamSubscription _progressSubscription;
+
+  List<Country> _validCountries;
 
   ProfileUpdateService(BuildContext context) : super(context) {
     _progressSubscription = _updateApi.progressStream.listen(_progressStreamController.add, onError: _progressStreamController.addError, onDone: _progressStreamController.close);
@@ -97,4 +115,18 @@ class ProfileUpdateService extends Service {
   ]);
 
   Stream<AvatarUploadProgress> get uploadProgressStream => _progressStreamController.stream;
+
+  Future<List<Country>> readValidCountries() async {
+    if (_validCountries == null) {
+      try {
+        _validCountries = List<Country>.from(await _updateApi.loadValidCountries());
+        _validCountries.sort((c1, c2) => c1.name.compareTo(c2.name));
+      } catch (e) {
+        print(e);
+        throw e;
+      }
+    }
+
+    return _validCountries;
+  }
 }

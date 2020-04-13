@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:datetime_picker_formfield/datetime_picker_formfield.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:form_field_validator/form_field_validator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -79,16 +80,22 @@ enum Gender {
 }
 
 class _UserInformationModel extends ChangeNotifier {
-
-
   Gender _gender;
   DateTime _birthdate;
+  Country _country;
+  String _biography;
 
   Gender get gender => _gender;
   void setGender(Gender newGender) => _gender = newGender;
 
   DateTime get birthdate => _birthdate;
   void setBirthdate(DateTime newBirthdate) => _birthdate = newBirthdate;
+
+  Country get country => _country;
+  void setCountry(Country newCountry) => _country = newCountry;
+
+  String get biography => _biography;
+  void setBiography(String newBiography) => _biography = newBiography;
 }
 
 class _InformationForm extends StatefulWidget {
@@ -97,31 +104,59 @@ class _InformationForm extends StatefulWidget {
 }
 
 class _InformationFormState extends State<_InformationForm> {
+  static const backgroundColor = Color.fromARGB(255, 240, 240, 240);
+
   final _formKey = GlobalKey<FormState>();
   final _informationModel = _UserInformationModel();
+  var _dirty = false;
 
   @override
   Widget build(BuildContext context) {
     return Container(
+      color: backgroundColor,
       child: ChangeNotifierProvider.value(
         value: _informationModel,
-        child: _buildForm()
+        child: _buildForm(context)
       ),
       padding: EdgeInsets.all(20.0),
     );
   }
 
-  Form _buildForm() {
+  Future<bool> _allowPop() async {
+    if (!_dirty) {
+      return true;
+    }
+    bool saved = await showConfirmDialog(context, 'Unsaved changes', 'Do you want to save your changes?', _onSave);
+    return !saved;
+  }
+
+  Form _buildForm(BuildContext context) {
     return Form(
         key: _formKey,
+        onChanged: () => _dirty = true,
+        //onWillPop: _allowPop,
         child: Column(
           children: <Widget>[
             _GenderWidget(),
             SizedBox(height: 5),
             _BirthdateWidget(),
+            SizedBox(height: 5),
+            _CountryWidget(),
+            SizedBox(height: 5),
+            _BiographyWidget(),
+            SizedBox(height: 10),
+            _SaveButton(onSave: _onSave)
           ]
         )
       );
+  }
+
+  void _onSave() {
+    final form = _formKey.currentState;
+    if (form != null && form.validate()) {
+      form.save();
+      _dirty = false;
+    }
   }
 }
 
@@ -185,6 +220,102 @@ class _BirthdateWidget extends StatelessWidget {
               lastDate: DateTime(2100));
         },
       ),
+    );
+  }
+}
+
+class _CountryWidget extends StatelessWidget {
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+        decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.all(Radius.circular(10))),
+        padding: EdgeInsets.all(10),
+        child: FutureBuilder(
+          future: ProfileUpdateService.current(context).readValidCountries(),
+          builder: _buildInput,
+          initialData: <Country>[],
+        )
+    );
+  }
+
+  Widget _buildInput(BuildContext context, AsyncSnapshot<List<Country>> snapshot) {
+    _UserInformationModel model = Provider.of(context);
+    return DropdownButtonFormField<Country>(
+      onChanged: model.setCountry,
+      value: model.country,
+      icon: Row(children: <Widget>[Icon(Icons.expand_more), SizedBox(width: 10)]),
+      decoration: InputDecoration(
+          hintText: 'Select country',
+          icon: Icon(Icons.flag)),
+      items: _buildItemList(context, snapshot.data),
+      selectedItemBuilder: (context) => _buildItemList(context, snapshot.data),
+      isExpanded: true,
+    );
+  }
+
+  List<DropdownMenuItem<Country>> _buildItemList(BuildContext context, List<Country> countryList) {
+    return countryList.map(_buildItem).toList(growable: false);
+  }
+
+  DropdownMenuItem<Country> _buildItem(Country country) => DropdownMenuItem(
+      key: ValueKey(country.code),
+      value: country,
+      child: Row(children: <Widget>[
+          Expanded(child:Text(country.name, overflow: TextOverflow.ellipsis,)),
+          SizedBox(width: 5,),
+          Image.asset('images/flags/${country.code.toLowerCase()}.png', width: 25, height: 15, fit: BoxFit.contain,),
+      ])
+
+  );
+}
+
+class _BiographyWidget extends StatelessWidget {
+
+  @override
+  Widget build(BuildContext context) {
+    _UserInformationModel model = Provider.of(context);
+    return Container(
+      decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.all(Radius.circular(10))),
+      padding: EdgeInsets.all(10),
+      child: TextFormField(
+        initialValue: model.biography,
+        keyboardType: TextInputType.multiline,
+        onSaved: model.setBiography,
+        maxLines: 10,
+        minLines: 5,
+        decoration: InputDecoration(
+            hintText: 'Biography',
+            icon: Icon(Icons.assignment)),
+        validator: MaxLengthValidator(4000, errorText: "Maximum 4000 characters allowed"),
+      ),
+    );
+  }
+}
+
+class _SaveButton extends StatelessWidget {
+  _SaveButton({@required this.onSave});
+
+  final VoidCallback onSave;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(width: double.infinity,
+        height: 40,
+        child:
+        RaisedButton(
+          child: Text('Save',
+              style: Theme.of(context).textTheme.button),
+          onPressed: onSave,
+          color: Theme.of(context).buttonColor,
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(
+                  Radius.circular(20))),
+        )
     );
   }
 }
