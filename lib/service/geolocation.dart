@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:intl/intl.dart';
 import 'package:social_alert_app/service/serviceprodiver.dart';
 
 class GeoPosition {
@@ -8,6 +9,12 @@ class GeoPosition {
   final double longitude;
 
   GeoPosition({@required this.latitude, @required this.longitude});
+
+  @override
+  String toString() {
+    final formatter = NumberFormat('0.####');
+    return formatter.format(latitude) + '/' + formatter.format(longitude);
+  }
 }
 
 class GeoLocation extends GeoPosition {
@@ -57,8 +64,11 @@ class GeoLocation extends GeoPosition {
 
 class GeoLocationService extends Service {
 
+  static const gpsReadTime = Duration(milliseconds: 500);
+
   final Geolocator _geolocator = Geolocator();
 
+  final _positionController = StreamController<GeoPosition>.broadcast();
   final _locationController = StreamController<GeoLocation>();
 
   static GeoLocationService current(BuildContext context) => ServiceProvider.of(context);
@@ -67,30 +77,62 @@ class GeoLocationService extends Service {
 
   Stream<GeoLocation> get locationStream => _locationController.stream;
 
+  Stream<GeoPosition> get positionStream => _positionController.stream;
+
   @override
   void dispose() {
     _locationController.close();
+    _positionController.close();
   }
 
-  Future<bool> _isCurrentPositionNear(Position position, double maxDistanceInMeter) async {
-    final current = await _geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+  Future<GeoPosition> _readCurrentPosition() async {
+    try {
+      final current = await _geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.best).timeout(gpsReadTime);
+      if (current == null) {
+        return null;
+      }
+      final position = GeoPosition(latitude: current.latitude, longitude: current.longitude);
+      _positionController.add(position);
+      return position;
+    } catch (e) {
+      print(e.toString());
+      return null;
+    }
+  }
+
+  Future<bool> _isCurrentPositionNear(GeoPosition position, double maxDistanceInMeter) async {
+    final current = await _readCurrentPosition();
+    if (current == null) {
+      return false;
+    }
     final distanceInMeter = await _geolocator.distanceBetween(position.latitude, position.longitude, current.latitude, current.longitude);
     return distanceInMeter < maxDistanceInMeter;
   }
 
+  Future<GeoPosition> readLastKnownPosition() async {
+    try {
+      final position = await _geolocator.getLastKnownPosition(desiredAccuracy: LocationAccuracy.lowest);
+      if (position == null) {
+        return null;
+      }
+      return GeoPosition(longitude: position.longitude, latitude: position.latitude);
+    } catch (e) {
+      print(e.toString());
+      return null;
+    }
+  }
+
   Future<GeoPosition> readPosition(double precisionInMeter) async {
-    final position = await _geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    final position = await _readCurrentPosition();
     if (position == null) {
       return null;
     }
-
     var counter = 0;
     do {
-      await Future.delayed(Duration(milliseconds: 500));
+      await Future.delayed(gpsReadTime);
     } while (await _isCurrentPositionNear(position, precisionInMeter).then((value) => !value) && ++counter < 6);
 
-    final precisePosition = await _geolocator.getLastKnownPosition(desiredAccuracy: LocationAccuracy.high);
-    return GeoPosition(longitude: precisePosition.longitude, latitude: precisePosition.latitude);
+    return await readLastKnownPosition();
   }
 
   Future<GeoLocation> readLocation({@required double latitude, @required double longitude}) async {

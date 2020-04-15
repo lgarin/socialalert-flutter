@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:fluster/fluster.dart';
@@ -132,6 +133,24 @@ class _MapDisplayState extends State<MapDisplay> {
   List<MediaInfo> _mediaList = [];
   GoogleMapController _mapController;
   List<_Cluster> _clusterList = [];
+  StreamSubscription<GeoPosition> postionSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    postionSubscription = GeoLocationService.current(context).positionStream.listen((event) {
+      if (_mapController != null) {
+        _mapController.animateCamera(CameraUpdate.newLatLng(LatLng(event.latitude, event.longitude)));
+      }
+    });
+    GeoLocationService.current(context).readPosition(100.0);
+  }
+
+
+  @override
+  void dispose() {
+    postionSubscription.cancel();
+  }
 
   Widget _buildInitialContent(BuildContext context, AsyncSnapshot<GeoPosition> snapshot) {
     if (snapshot.connectionState != ConnectionState.done) {
@@ -140,8 +159,7 @@ class _MapDisplayState extends State<MapDisplay> {
       _lastPosition = CameraPosition(zoom: defaultZoomLevel, target: LatLng(snapshot.data.latitude, snapshot.data.longitude));
       return _buildContent();
     } else {
-      _lastPosition = CameraPosition(zoom: defaultZoomLevel, target: LatLng(0.0, 0.0));
-      showSimpleDialog(context, 'No GPS signal', 'Current position not available');
+      _lastPosition = CameraPosition(zoom: minZoomLevel, target: LatLng(46.8182, 8.2275));
       return _buildContent();
     }
   }
@@ -281,13 +299,21 @@ class _MapDisplayState extends State<MapDisplay> {
     _mapController = controller;
   }
 
+  Future<GeoPosition> _readLastKnownPosition() async {
+    final position = await GeoLocationService.current(context).readLastKnownPosition();
+    if (position == null) {
+      await showSimpleDialog(context, 'No GPS signal', 'Current position not available');
+    }
+    return position;
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_lastPosition != null) {
       return _buildContent();
     }
     return FutureBuilder<GeoPosition>(
-        future: GeoLocationService.current(context).readPosition(100.0),
+        future: _readLastKnownPosition(),
         builder: _buildInitialContent);
   }
 
