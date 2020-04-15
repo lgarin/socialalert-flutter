@@ -10,6 +10,14 @@ class NetworkPage extends StatefulWidget {
 class _NetworkPageState extends BasePageState<NetworkPage> {
   _NetworkPageState() : super(AppRoute.Network);
 
+
+  @override
+  AppBar buildAppBar() {
+    return AppBar(
+        title: Text('My Network')
+    );
+  }
+
   @override
   Widget buildBody(BuildContext context) {
     return Center(child: Column(

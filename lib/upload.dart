@@ -31,6 +31,17 @@ class _UploadManagerPageState extends BasePageState<UploadManagerPage> {
   _UploadManagerPageState() : super(AppRoute.UploadManager);
 
   @override
+  AppBar buildAppBar() {
+    if (Navigator.canPop(context)) {
+      return AppBar(title: Text('My Uploads'));
+    }
+    return super.buildAppBar();
+  }
+
+  @override
+  Widget buildDrawer() => null;
+
+  @override
   Widget buildBody(BuildContext context) {
     return Consumer<MediaUploadList>(
         builder: (context, uploads, _) => ChangeNotifierProvider.value(value: uploads,
