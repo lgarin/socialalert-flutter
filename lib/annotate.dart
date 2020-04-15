@@ -97,9 +97,12 @@ class _AnnotatePicturePageState extends State<AnnotatePicturePage> {
     ];
   }
 
-  void _onPopupMenuItemSelection(_PopupAction selectedItem) {
+  void _onPopupMenuItemSelection(_PopupAction selectedItem) async {
     if (selectedItem == _PopupAction.DELETE) {
-      showConfirmDialog(context, 'Delete Snype', 'Do you really want to delete this upload?', _onConfirmUploadDeletion);
+      final confirmed = await showConfirmDialog(context, 'Delete Snype', 'Do you really want to delete this upload?');
+      if (confirmed) {
+        _onConfirmUploadDeletion();
+      }
     } else if (selectedItem == _PopupAction.INFO) {
       Navigator.of(context).pushNamed(AppRoute.LocalPictureInfo, arguments: _upload);
     }

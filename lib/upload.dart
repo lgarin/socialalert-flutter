@@ -136,9 +136,12 @@ class _UploadManagerPageState extends BasePageState<UploadManagerPage> {
     ];
   }
 
-  void _onErrorItemSelection(_UploadErrorItem item) {
+  void _onErrorItemSelection(_UploadErrorItem item) async {
     if (item.action == _UploadErrorAction.DELETE) {
-      showConfirmDialog(context, 'Delete Snype', 'Do you really want to delete this upload?', () => _onConfirmUploadDeletion(item.task));
+      final confirmed = await showConfirmDialog(context, 'Delete Snype', 'Do you really want to delete this upload?');
+      if (confirmed) {
+        _onConfirmUploadDeletion(item.task);
+      }
     } else if (item.action == _UploadErrorAction.RETRY) {
       MediaUploadService.current(context).restartTask(item.task);
     }

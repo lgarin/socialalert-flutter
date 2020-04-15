@@ -11,6 +11,7 @@ import 'package:social_alert_app/base.dart';
 import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/service/authentication.dart';
+import 'package:social_alert_app/service/eventbus.dart';
 import 'package:social_alert_app/service/mediaquery.dart';
 import 'package:social_alert_app/service/profileupdate.dart';
 
@@ -73,17 +74,18 @@ class _ProfileTabSelectionModel with ChangeNotifier {
   }
 }
 
-enum Gender {
-  MALE,
-  FEMALE,
-  OTHER,
-}
-
-class _UserInformationModel extends ChangeNotifier {
+class _ProfileFormModel extends ChangeNotifier {
   Gender _gender;
   DateTime _birthdate;
   Country _country;
   String _biography;
+
+  _ProfileFormModel(UserProfile profile) {
+    _country = Country(profile.country, null);
+    _biography = profile.biography;
+    _birthdate = profile.birthdate != null ? DateTime.parse(profile.birthdate) : null;
+    _gender = fromGenderName(profile.gender);
+  }
 
   Gender get gender => _gender;
   void setGender(Gender newGender) => _gender = newGender;
@@ -96,26 +98,53 @@ class _UserInformationModel extends ChangeNotifier {
 
   String get biography => _biography;
   void setBiography(String newBiography) => _biography = newBiography;
+
+  ProfileUpdateRequest toUpdateRequest() => ProfileUpdateRequest(biography: biography, birthdate: birthdate, country: country, gender: gender);
 }
 
-class _InformationForm extends StatefulWidget {
+class _ProfileForm extends StatefulWidget {
   @override
-  _InformationFormState createState() => _InformationFormState();
+  _ProfileFormState createState() => _ProfileFormState();
 }
 
-class _InformationFormState extends State<_InformationForm> {
+enum _ProfileAction {
+  save,
+}
+
+class _ProfileFormState extends State<_ProfileForm> {
   static const backgroundColor = Color.fromARGB(255, 240, 240, 240);
 
   final _formKey = GlobalKey<FormState>();
-  final _informationModel = _UserInformationModel();
-  var _dirty = false;
+  _ProfileFormModel _formModel;
+  bool _dirty;
+  StreamSubscription<_ProfileAction> _actionSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _dirty = false;
+    UserProfile profile = Provider.of(context, listen: false);
+    _formModel = _ProfileFormModel(profile);
+    _actionSubscription = EventBus.current(context).on<_ProfileAction>().listen((event) {
+      if (event == _ProfileAction.save) {
+        _onSave();
+      }
+    });
+  }
+
+
+  @override
+  void dispose() {
+    _actionSubscription.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Container(
       color: backgroundColor,
       child: ChangeNotifierProvider.value(
-        value: _informationModel,
+        value: _formModel,
         child: _buildForm(context)
       ),
       padding: EdgeInsets.all(20.0),
@@ -126,15 +155,14 @@ class _InformationFormState extends State<_InformationForm> {
     if (!_dirty) {
       return true;
     }
-    bool saved = await showConfirmDialog(context, 'Unsaved changes', 'Do you want to save your changes?', _onSave);
-    return !saved;
+    return await showConfirmDialog(context, 'Unsaved changes', 'Do you want to leave without saving your changes?', confirmText: 'Yes', cancelText: 'No');
   }
 
   Form _buildForm(BuildContext context) {
     return Form(
         key: _formKey,
         onChanged: () => _dirty = true,
-        //onWillPop: _allowPop,
+        onWillPop: _allowPop,
         child: Column(
           children: <Widget>[
             _GenderWidget(),
@@ -151,11 +179,17 @@ class _InformationFormState extends State<_InformationForm> {
       );
   }
 
-  void _onSave() {
+  void _onSave() async {
     final form = _formKey.currentState;
     if (form != null && form.validate()) {
       form.save();
-      _dirty = false;
+      try {
+        await ProfileUpdateService.current(context).updateProfile(_formModel.toUpdateRequest());
+        _dirty = false;
+        Navigator.of(context).pop();
+      } catch (e) {
+        showSimpleDialog(context, 'Update failed', e.toString());
+      }
     }
   }
 }
@@ -164,7 +198,7 @@ class _GenderWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-  _UserInformationModel model = Provider.of(context);
+  _ProfileFormModel model = Provider.of(context);
     return Container(
       decoration: BoxDecoration(
           color: Colors.white,
@@ -197,7 +231,7 @@ class _BirthdateWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    _UserInformationModel model = Provider.of(context);
+    _ProfileFormModel model = Provider.of(context);
     return Container(
       decoration: BoxDecoration(
           color: Colors.white,
@@ -242,7 +276,7 @@ class _CountryWidget extends StatelessWidget {
   }
 
   Widget _buildInput(BuildContext context, AsyncSnapshot<List<Country>> snapshot) {
-    _UserInformationModel model = Provider.of(context);
+    _ProfileFormModel model = Provider.of(context);
     return DropdownButtonFormField<Country>(
       onChanged: model.setCountry,
       value: model.country,
@@ -276,7 +310,7 @@ class _BiographyWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    _UserInformationModel model = Provider.of(context);
+    _ProfileFormModel model = Provider.of(context);
     return Container(
       decoration: BoxDecoration(
           color: Colors.white,
@@ -325,13 +359,11 @@ class ProfileEditorPage extends StatefulWidget {
   _ProfileEditorPageState createState() => _ProfileEditorPageState();
 }
 
-class _ProfileEditorPageState extends BasePageState<ProfileEditorPage> {
-
-  _ProfileEditorPageState() : super(AppRoute.ProfileEditor);
+abstract class _BaseProfilePageState<T extends StatefulWidget> extends BasePageState<T> {
+  _BaseProfilePageState(String pageName) : super(pageName);
 
   StreamSubscription<AvatarUploadProgress> uploadProgressSubscription;
   String _uploadTaskId;
-  final _tabSelectionModel = _ProfileTabSelectionModel();
 
   @override
   void initState() {
@@ -354,45 +386,6 @@ class _ProfileEditorPageState extends BasePageState<ProfileEditorPage> {
     super.dispose();
   }
 
-  void _onSave() {
-
-  }
-
-  @override
-  AppBar buildAppBar() {
-    return AppBar(title: Text('Edit profile'),
-        actions: <Widget>[
-          IconButton(onPressed: _choosePicture, icon: Icon(Icons.account_circle)),
-          IconButton(onPressed: _onSave, icon: Icon(Icons.done))
-        ]
-    );
-  }
-
-  @override
-  Widget buildNavBar(BuildContext context) {
-    return ChangeNotifierProvider.value(
-      value: _tabSelectionModel,
-      child: _ProfileBottomNavigationBar(),
-    );
-  }
-
-  @override
-  Widget buildBody(BuildContext context) {
-    return ListView(
-      children: <Widget>[
-        UserHeader(tapCallback: _choosePicture, uploadTaskId: _uploadTaskId),
-        _buildBottomPanel(context),
-      ],
-    );
-  }
-
-  Widget _buildBottomPanel(BuildContext context) {
-    return ChangeNotifierProvider.value(
-      value: _tabSelectionModel,
-      child: _ProfileTabPanel(),
-    );
-  }
-
   void _choosePicture() async {
     final image = await ImagePicker.pickImage(source: ImageSource.gallery);
     if (image != null) {
@@ -412,6 +405,88 @@ class _ProfileEditorPageState extends BasePageState<ProfileEditorPage> {
   }
 }
 
+class _ProfileEditorPageState extends _BaseProfilePageState<ProfileEditorPage> {
+
+  _ProfileEditorPageState() : super(AppRoute.ProfileEditor);
+
+  void _onSave() {
+    EventBus.current(context).fire(_ProfileAction.save);
+  }
+
+  @override
+  AppBar buildAppBar() {
+    return AppBar(title: Text('Edit profile'),
+        actions: <Widget>[
+          IconButton(onPressed: _choosePicture, icon: Icon(Icons.account_circle)),
+          IconButton(onPressed: _onSave, icon: Icon(Icons.done)),
+          SizedBox(width: 20)
+        ]
+    );
+  }
+
+  @override
+  Widget buildBody(BuildContext context) {
+    return ListView(
+      children: <Widget>[
+        UserHeader(tapCallback: _choosePicture, uploadTaskId: _uploadTaskId),
+        _ProfileForm(),
+      ],
+    );
+  }
+}
+
+class ProfileViewerPage extends StatefulWidget {
+  @override
+  _ProfileViewerPageState createState() => _ProfileViewerPageState();
+}
+
+class _ProfileViewerPageState extends _BaseProfilePageState<ProfileViewerPage> {
+
+  final _tabSelectionModel = _ProfileTabSelectionModel();
+
+  _ProfileViewerPageState() : super(AppRoute.ProfileViewer);
+
+  @override
+  AppBar buildAppBar() {
+    return AppBar(title: Text("My profile"),
+      actions: <Widget>[
+        IconButton(onPressed: _choosePicture, icon: Icon(Icons.account_circle)),
+        IconButton(onPressed: _editProfile, icon: Icon(Icons.assignment_ind)),
+        SizedBox(width: 20),
+      ]
+    );
+  }
+
+  @override
+  Widget buildNavBar(BuildContext context) {
+    return ChangeNotifierProvider.value(
+      value: _tabSelectionModel,
+      child: _ProfileBottomNavigationBar(),
+    );
+  }
+
+  void _editProfile() {
+    Navigator.of(context).pushNamed(AppRoute.ProfileEditor);
+  }
+
+  @override
+  Widget buildBody(BuildContext context) {
+    return ListView(
+      children: <Widget>[
+        UserHeader(tapCallback: _choosePicture, uploadTaskId: _uploadTaskId),
+        _buildBottomPanel(context),
+      ],
+    );
+  }
+
+  Widget _buildBottomPanel(BuildContext context) {
+    return ChangeNotifierProvider.value(
+      value: _tabSelectionModel,
+      child: _ProfileTabPanel(),
+    );
+  }
+}
+
 class _ProfileBottomNavigationBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -422,7 +497,7 @@ class _ProfileBottomNavigationBar extends StatelessWidget {
         items: <BottomNavigationBarItem>[
           new BottomNavigationBarItem(
             icon: Icon(Icons.person),
-            title: Text('Personal info'),
+            title: Text('My info'),
           ),
           new BottomNavigationBarItem(
             icon: Icon(Icons.panorama),
@@ -440,12 +515,8 @@ class _ProfileBottomNavigationBar extends StatelessWidget {
 class _ProfileTabPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final tabSelectionModel = Provider.of<_ProfileTabSelectionModel>(context);
-    if (tabSelectionModel.informationSelected) {
-      return _InformationForm();
-    } else {
-      return SizedBox(height: 0, width: 0);
-    }
+    //final tabSelectionModel = Provider.of<_ProfileTabSelectionModel>(context);
+    return SizedBox(height: 0, width: 0);
   }
 }
 

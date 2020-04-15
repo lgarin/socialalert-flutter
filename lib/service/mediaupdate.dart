@@ -93,6 +93,4 @@ class MediaUpdateService extends Service {
   void dispose() {
 
   }
-
-
 }

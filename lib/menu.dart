@@ -43,7 +43,7 @@ class _MenuBar extends StatelessWidget {
         child: ListView(
           children: <Widget>[
             _MenuItem(currentPage: currentPage, targetPage: AppRoute.Home, title: 'Home', icon: Icon(Icons.home)),
-            _MenuItem(currentPage: currentPage, targetPage: AppRoute.ProfileEditor, title: 'My Profile', icon: Icon(Icons.person)),
+            _MenuItem(currentPage: currentPage, targetPage: AppRoute.ProfileViewer, title: 'My Profile', icon: Icon(Icons.person)),
             _MenuItem(currentPage: currentPage, targetPage: AppRoute.Network, title: 'My Network', icon: Icon(Icons.people)),
             _MenuItem(currentPage: currentPage, targetPage: AppRoute.UploadManager, title: 'My Uploads', icon: _buildUploadIcon()),
             _MenuItem(currentPage: currentPage, targetPage: null, title: 'My Statistics', icon: Icon(Icons.show_chart)),

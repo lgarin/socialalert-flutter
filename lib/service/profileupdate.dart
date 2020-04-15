@@ -5,6 +5,7 @@ import 'package:async/async.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_uploader/flutter_uploader.dart';
+import 'package:intl/intl.dart';
 import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/httpservice.dart';
 import 'package:social_alert_app/service/serviceprodiver.dart';
@@ -20,6 +21,62 @@ class AvatarUploadProgress {
   double get value => progress != null ? progress / 100.0 : 0.0;
 
   bool get terminal => status == UploadTaskStatus.complete || status == UploadTaskStatus.failed;
+}
+
+enum Gender {
+  MALE,
+  FEMALE,
+  OTHER,
+}
+
+List<String> _genderNames = ['MALE', 'FEMALE', 'OTHER'];
+Map<String, Gender> _genderMap = {
+  'MALE': Gender.MALE,
+  'FEMALE': Gender.FEMALE,
+  'OTHER': Gender.OTHER,
+};
+
+String toGenderName(Gender gender) => gender != null ? _genderNames[gender.index] : null;
+Gender fromGenderName(String name) => name != null ? _genderMap[name] : null;
+
+class Country {
+  final String code;
+  final String name;
+
+  Country(this.code, this.name);
+
+  @override
+  bool operator ==(other) {
+    if (other is Country) {
+      return other.code == code;
+    }
+    return false;
+  }
+
+  @override
+  int get hashCode {
+    return code.hashCode;
+  }
+}
+
+class ProfileUpdateRequest {
+  static final dateFormat = DateFormat('yyyy-MM-dd');
+
+  final String biography;
+  final DateTime birthdate;
+  final Country country;
+  final Gender gender;
+  final String language;
+
+  ProfileUpdateRequest({this.biography, this.birthdate, this.country, this.gender, this.language});
+
+  Map<String, dynamic> toJson() => {
+    'biography': biography,
+    'birthdate': birthdate != null ? dateFormat.format(birthdate) : null,
+    'country': country?.code,
+    'gender': toGenderName(gender),
+    'language': language,
+  };
 }
 
 class _ProfileUpdateApi {
@@ -54,18 +111,21 @@ class _ProfileUpdateApi {
     }
     throw response.reasonPhrase;
   }
-}
 
-class Country {
-  final String code;
-  final String name;
-
-  Country(this.code, this.name);
+  Future<UserProfile> updateProfile(ProfileUpdateRequest request, String accessToken) async {
+    final uri = '/user/profile';
+    final response = await httpService.postJson(uri: uri, body: request, accessToken: accessToken);
+    if (response.statusCode == 200) {
+      return UserProfile.fromJson(jsonDecode(response.body));
+    }
+    throw response.reasonPhrase;
+  }
 }
 
 class ProfileUpdateService extends Service {
 
   final _progressStreamController = StreamController<AvatarUploadProgress>.broadcast();
+  final _profileController = StreamController<UserProfile>();
   StreamSubscription _progressSubscription;
 
   List<Country> _validCountries;
@@ -83,6 +143,7 @@ class ProfileUpdateService extends Service {
   void dispose() {
     _progressSubscription.cancel();
     _progressStreamController.close();
+    _profileController.close();
   }
 
   Future<String> beginAvatarUpload(String title, File file) async {
@@ -111,7 +172,8 @@ class ProfileUpdateService extends Service {
 
   Stream<UserProfile> get profileStream => StreamGroup.merge([
     _updateApi.resultStream.map(_mapResponse).skipWhile((element) => element == null),
-    _authService.profileStream
+    _authService.profileStream,
+    _profileController.stream
   ]);
 
   Stream<AvatarUploadProgress> get uploadProgressStream => _progressStreamController.stream;
@@ -128,5 +190,17 @@ class ProfileUpdateService extends Service {
     }
 
     return _validCountries;
+  }
+
+  Future<UserProfile> updateProfile(ProfileUpdateRequest request) async {
+    final accessToken = await _authService.accessToken;
+    try {
+      final profile = await _updateApi.updateProfile(request, accessToken);
+      _profileController.add(profile);
+      return profile;
+    } catch (e) {
+      print(e);
+      throw e;
+    }
   }
 }

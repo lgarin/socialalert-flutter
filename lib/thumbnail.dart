@@ -9,9 +9,9 @@ typedef MediaSelectionCallback = void Function(MediaInfo);
 class MediaThumbnailTile extends StatelessWidget {
   final MediaInfo media;
   final MediaSelectionCallback onTapCallback;
-  final MediaSelectionCallback onDoubleTapCallback;
+  final MediaSelectionCallback onLongPressCallback;
 
-  MediaThumbnailTile({@required this.media, this.onTapCallback, this.onDoubleTapCallback}) : super(key: ValueKey(media.mediaUri));
+  MediaThumbnailTile({@required this.media, this.onTapCallback, this.onLongPressCallback}) : super(key: ValueKey(media.mediaUri));
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +25,7 @@ class MediaThumbnailTile extends StatelessWidget {
           footer: _buildTileFooter(media)
       ),
       onTap: onTapCallback != null ? () => onTapCallback(media) : null,
-      onDoubleTap:  onDoubleTapCallback != null ? () => onDoubleTapCallback(media) : null,
+      onLongPress:  onLongPressCallback != null ? () => onLongPressCallback(media) : null,
     );
   }
 

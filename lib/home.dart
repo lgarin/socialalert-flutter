@@ -170,8 +170,6 @@ class _HomePageState extends BasePageState<HomePage> with SingleTickerProviderSt
         ChangeNotifierProvider.value(value: _searchModel,
             child: _SearchTriggerWidget()),
         SizedBox(width: 20),
-        Icon(Icons.more_vert),
-        SizedBox(width: 10),
       ],
       bottom: TabBar(isScrollable: true,
         controller: _categoryController,

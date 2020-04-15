@@ -24,7 +24,7 @@ Future showSimpleDialog(BuildContext context, String title, String message) {
   );
 }
 
-Future<bool> showConfirmDialog(BuildContext context, String title, String message, VoidCallback onConfirm) {
+Future<bool> showConfirmDialog(BuildContext context, String title, String message, {String confirmText = 'Confirm', String cancelText = 'Cancel'}) {
   return showDialog<bool>(
     builder: (context) {
       return AlertDialog(
@@ -32,13 +32,12 @@ Future<bool> showConfirmDialog(BuildContext context, String title, String messag
         content: Text(message),
         actions: <Widget>[
           FlatButton(
-              child: Text('Confirm'),
+              child: Text(confirmText),
               onPressed: () {
                 Navigator.of(context).pop(true);
-                onConfirm();
               }),
           FlatButton(
-            child: Text('Cancel'),
+            child: Text(cancelText),
             onPressed: () {
               Navigator.of(context).pop(false);
             },

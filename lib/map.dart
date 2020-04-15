@@ -206,7 +206,7 @@ class _MapDisplayState extends State<MapDisplay> {
     return Container(width: thumbnailTileWidth, height: thumbnailTileHeight,
         padding: EdgeInsets.symmetric(horizontal: thumbnailInset * (landscape ? 2 : 1), vertical: thumbnailInset * (landscape ? 1 : 2)),
         color: Colors.grey.shade800,
-        child: MediaThumbnailTile(media: media, onTapCallback: _onThumbnailTap, onDoubleTapCallback: _onThumbnailSelection,));
+        child: MediaThumbnailTile(media: media, onTapCallback: _onThumbnailTap, onLongPressCallback: _onThumbnailSelection,));
   }
 
   void _onThumbnailTap(MediaInfo media) {

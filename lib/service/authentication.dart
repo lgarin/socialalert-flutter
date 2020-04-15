@@ -45,6 +45,7 @@ class LoginResponse extends LoginTokenResponse {
   final String country;
   final String biography;
   final String birthdate;
+  final String gender;
   final String imageUri;
   final UserStatistic statistic;
 
@@ -55,6 +56,7 @@ class LoginResponse extends LoginTokenResponse {
     country = json['country'],
     biography = json['biography'],
     birthdate = json['birthdate'],
+    gender = json['gender'],
     imageUri = json['imageUri'],
     statistic = json['statistic'] != null ? UserStatistic.fromJson(json['statistic']) : null,
     super.fromJson(json);
@@ -130,8 +132,9 @@ class UserProfile {
   final String email;
   final String country;
   final String imageUri;
-  final DateTime birthdate;
+  final String birthdate;
   final String biography;
+  final String gender;
   final UserStatistic statistic;
 
   UserProfile(LoginResponse login) :
@@ -140,11 +143,12 @@ class UserProfile {
       email = login.email,
       imageUri = login.imageUri,
       country = login.country,
-      birthdate = login.birthdate != null ? DateTime.parse(login.birthdate) : null,
+      birthdate = login.birthdate,
       biography = login.biography,
+      gender = login.gender,
       statistic = login.statistic;
 
-  UserProfile.offline() : userId = null, username = null, email = null, country = null, imageUri = null, birthdate = null, biography = null, statistic = null;
+  UserProfile.offline() : userId = null, username = null, email = null, country = null, imageUri = null, birthdate = null, biography = null, gender = null, statistic = null;
 
   UserProfile.fromJson(Map<String, dynamic> json) :
         userId = json['id'],
@@ -152,7 +156,8 @@ class UserProfile {
         email = json['email'],
         country = json['country'],
         biography = json['biography'],
-        birthdate = json['birthdate'] != null ? DateTime.parse(json['birthdate']) : null,
+        birthdate = json['birthdate'],
+        gender = json['gender'],
         imageUri = json['imageUri'],
         statistic = UserStatistic.fromJson(json['statistic']);
 

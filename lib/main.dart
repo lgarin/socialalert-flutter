@@ -8,6 +8,7 @@ import 'package:social_alert_app/network.dart';
 import 'package:social_alert_app/picture.dart';
 import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/cameradevice.dart';
+import 'package:social_alert_app/service/eventbus.dart';
 import 'package:social_alert_app/service/geolocation.dart';
 import 'package:social_alert_app/service/httpservice.dart';
 import 'package:social_alert_app/service/mediamodel.dart';
@@ -39,6 +40,7 @@ class SocialAlertApp extends StatelessWidget {
           ServiceProvider<MediaUploadService>(create: (context) => MediaUploadService(context)),
           ServiceProvider<MediaQueryService>(create: (context) => MediaQueryService(context)),
           ServiceProvider<MediaUpdateService>(create: (context) => MediaUpdateService(context)),
+          ServiceProvider<EventBus>(create: (context) => EventBus(context)),
         ],
         child: _buildApp()
     );
@@ -87,6 +89,9 @@ class SocialAlertApp extends StatelessWidget {
       case AppRoute.RemotePictureDetail: return MaterialPageRoute<MediaDetail>(
         builder: (context) => RemotePictureDetailPage(settings.arguments)
       );
+      case AppRoute.ProfileViewer: return MaterialPageRoute(
+        builder: (context) => ProfileViewerPage()
+      );
       case AppRoute.ProfileEditor: return MaterialPageRoute(
         builder: (context) => ProfileEditorPage()
       );
@@ -107,5 +112,6 @@ class AppRoute {
   static const LocalPictureInfo = 'pictureInfo';
   static const RemotePictureDetail ='pictureDetail';
   static const ProfileEditor = 'profileEditor';
+  static const ProfileViewer = 'profileViewer';
   static const SettingsEditor = 'settingsEditor';
 }
