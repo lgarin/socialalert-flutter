@@ -19,7 +19,7 @@ import 'package:social_alert_app/service/profileupdate.dart';
 import 'package:social_alert_app/service/serviceprodiver.dart';
 import 'package:social_alert_app/settings.dart';
 import 'package:social_alert_app/upload.dart';
-import 'package:social_alert_app/user.dart';
+import 'package:social_alert_app/profile.dart';
 
 void main() => runApp(SocialAlertApp());
 

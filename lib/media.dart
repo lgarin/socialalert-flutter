@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:form_field_validator/form_field_validator.dart';
 import 'package:provider/provider.dart';
 import 'package:social_alert_app/base.dart';
-import 'package:social_alert_app/user.dart';
+import 'package:social_alert_app/profile.dart';
 import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/picture.dart';
@@ -159,7 +159,7 @@ class _RemotePictureDetailPageState extends BasePageState<RemotePictureDetailPag
       contentPadding: EdgeInsets.symmetric(horizontal: 5.0),
       dense: true,
       isThreeLine: true,
-      leading: UserAvatar(imageUri: media.creator.imageUri, online: media.creator.online, radius: 50.0),
+      leading: ProfileAvatar(imageUri: media.creator.imageUri, online: media.creator.online, radius: 50.0),
       trailing: Timeago(date: media.timestamp, builder: (_, value) => Text(value, style: TextStyle(fontStyle: FontStyle.italic))),
       title: Text(media.creator.username, style: Theme.of(context).textTheme.headline6),
       subtitle: Row(
@@ -401,7 +401,7 @@ class _MediaCommentListState extends BasePagingState<_MediaCommentList, MediaCom
   ListTile _buildTile(MediaCommentInfo commentInfo) {
     return ListTile(
       key: ValueKey(commentInfo.id),
-      leading: UserAvatar(imageUri: commentInfo.creator.imageUri, online: commentInfo.creator.online, radius: 50.0),
+      leading: ProfileAvatar(imageUri: commentInfo.creator.imageUri, online: commentInfo.creator.online, radius: 50.0),
       title: Row(
         children: <Widget>[
           Text(commentInfo.creator.username, style: Theme.of(context).textTheme.subtitle1,),

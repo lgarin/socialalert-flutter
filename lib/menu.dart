@@ -1,7 +1,7 @@
 import 'package:badges/badges.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:social_alert_app/user.dart';
+import 'package:social_alert_app/profile.dart';
 import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/mediaupload.dart';
@@ -18,7 +18,7 @@ class UserMenu extends StatelessWidget {
           child: Column(
             children: <Widget>[
               Container(height: 10.0, color: Theme.of(context).primaryColorDark.withOpacity(0.9),),
-              UserHeader(tapCallback: () => Navigator.popAndPushNamed(context, AppRoute.ProfileEditor)),
+              ProfileHeader(tapCallback: () => Navigator.popAndPushNamed(context, AppRoute.ProfileEditor)),
               Expanded(
                   child: _MenuBar(currentPage: currentPage)
               )

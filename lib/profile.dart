@@ -15,7 +15,7 @@ import 'package:social_alert_app/service/eventbus.dart';
 import 'package:social_alert_app/service/mediaquery.dart';
 import 'package:social_alert_app/service/profileupdate.dart';
 
-class UserAvatar extends StatelessWidget {
+class ProfileAvatar extends StatelessWidget {
   static const LARGE_RADIUS = 60.0;
 
   final String imageUri;
@@ -23,7 +23,7 @@ class UserAvatar extends StatelessWidget {
   final double radius;
   final String uploadTaskId;
 
-  UserAvatar({this.imageUri, this.online, this.radius, this.uploadTaskId}) : super(key: ValueKey('$imageUri/$online/$uploadTaskId'));
+  ProfileAvatar({this.imageUri, this.online, @required this.radius, this.uploadTaskId}) : super(key: ValueKey('$imageUri/$online/$uploadTaskId'));
 
   @override
   Widget build(BuildContext context) {
@@ -425,7 +425,7 @@ class _ProfileEditorPageState extends _BaseProfilePageState<ProfileEditorPage> {
   Widget buildBody(BuildContext context) {
     return ListView(
       children: <Widget>[
-        UserHeader(tapCallback: _choosePicture, uploadTaskId: _uploadTaskId),
+        ProfileHeader(tapCallback: _choosePicture, uploadTaskId: _uploadTaskId),
         _ProfileForm(),
       ],
     );
@@ -470,7 +470,7 @@ class _ProfileViewerPageState extends _BaseProfilePageState<ProfileViewerPage> {
   Widget buildBody(BuildContext context) {
     return ListView(
       children: <Widget>[
-        UserHeader(tapCallback: _choosePicture, uploadTaskId: _uploadTaskId),
+        ProfileHeader(tapCallback: _choosePicture, uploadTaskId: _uploadTaskId),
         _buildBottomPanel(context),
       ],
     );
@@ -517,11 +517,11 @@ class _ProfileTabPanel extends StatelessWidget {
   }
 }
 
-class UserHeader extends StatelessWidget {
+class ProfileHeader extends StatelessWidget {
   final GestureTapCallback tapCallback;
   final String uploadTaskId;
 
-  UserHeader({this.tapCallback, this.uploadTaskId});
+  ProfileHeader({this.tapCallback, this.uploadTaskId});
 
   Widget build(BuildContext context) {
     final profile = Provider.of<UserProfile>(context);
@@ -630,7 +630,7 @@ class UserHeader extends StatelessWidget {
 
   Widget _buildAvatar(BuildContext context, UserProfile profile) {
     return Hero(tag: profile.userId,
-        child: UserAvatar(radius: 120.0, imageUri: profile.imageUri, online: null, uploadTaskId: uploadTaskId)
+        child: ProfileAvatar(radius: 120.0, imageUri: profile.imageUri, online: null, uploadTaskId: uploadTaskId)
     );
   }
 }

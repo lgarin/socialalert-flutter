@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:social_alert_app/base.dart';
 import 'package:social_alert_app/main.dart';
-import 'package:social_alert_app/user.dart';
+import 'package:social_alert_app/profile.dart';
 
 class _SettingsTabSelectionModel with ChangeNotifier {
   static const identityIndex = 0;
@@ -37,7 +37,7 @@ class _SettingsEditorPageState extends BasePageState<SettingsEditorPage> {
   Widget buildBody(BuildContext context) {
     return ListView(
       children: <Widget>[
-        UserHeader(tapCallback: _showProfile),
+        ProfileHeader(tapCallback: _showProfile),
         _buildBottomPanel(context),
       ],
     );
