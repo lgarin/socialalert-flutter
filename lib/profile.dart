@@ -123,15 +123,13 @@ class _ProfileFormState extends State<_ProfileForm> {
   void initState() {
     super.initState();
     _dirty = false;
-    UserProfile profile = Provider.of(context, listen: false);
-    _formModel = _ProfileFormModel(profile);
-    _actionSubscription = EventBus.current(context).on<_ProfileAction>().listen((event) {
-      if (event == _ProfileAction.save) {
+    _formModel = _ProfileFormModel(Provider.of(context, listen: false));
+    _actionSubscription = EventBus.current(context).on<_ProfileAction>().listen((action) {
+      if (action == _ProfileAction.save) {
         _onSave();
       }
     });
   }
-
 
   @override
   void dispose() {
@@ -143,7 +141,10 @@ class _ProfileFormState extends State<_ProfileForm> {
   Widget build(BuildContext context) {
     return Container(
       color: backgroundColor,
-      child: _buildForm(context),
+      child: Provider.value(
+        value: _formModel,
+        child: _buildForm(context),
+      ),
       padding: EdgeInsets.all(20.0),
     );
   }
