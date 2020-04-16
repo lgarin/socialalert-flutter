@@ -192,6 +192,11 @@ class ProfileUpdateService extends Service {
     return _validCountries;
   }
 
+  Future<Country> findCountry(String countryCode) async {
+    final countries = await readValidCountries();
+    return countries.firstWhere((country) => country.code == countryCode, orElse: () => null);
+  }
+
   Future<UserProfile> updateProfile(ProfileUpdateRequest request) async {
     final accessToken = await _authService.accessToken;
     try {

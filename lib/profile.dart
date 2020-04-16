@@ -513,8 +513,81 @@ class _ProfileBottomNavigationBar extends StatelessWidget {
 class _ProfileTabPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    //final tabSelectionModel = Provider.of<_ProfileTabSelectionModel>(context);
+    final tabSelectionModel = Provider.of<_ProfileTabSelectionModel>(context);
+    if (tabSelectionModel.informationSelected) {
+      return _ProfileInformationPanel();
+    }
     return SizedBox(height: 0, width: 0);
+  }
+}
+
+class _ProfileInformationPanel extends StatelessWidget {
+  static final birthdateFormat = DateFormat('d MMM yyyy');
+  
+  @override
+  Widget build(BuildContext context) {
+
+    return FutureBuilder(
+      future: findCountry(context),
+      builder: _buildContent,
+    );
+  }
+
+  Future<Country> findCountry(BuildContext context) {
+    final profile = Provider.of<UserProfile>(context, listen: false);
+    if (profile.country == null) {
+      return null;
+    }
+    return ProfileUpdateService.current(context).findCountry(profile.country);
+  }
+
+  Widget _buildContent(BuildContext context, AsyncSnapshot<Country> countrySnapshot) {
+    if (countrySnapshot.connectionState == ConnectionState.waiting) {
+      return LoadingCircle();
+    }
+
+    final profile = Provider.of<UserProfile>(context);
+    return Column(
+      children: <Widget>[
+        ListTile(leading: Icon(Icons.wc), title: Text('Gender'), subtitle: profile.gender != null ? _buildGender(fromGenderName(profile.gender)) : null, dense: true),
+        Divider(height: 5.0),
+        ListTile(leading: Icon(Icons.cake), title: Text('Birthdate'), subtitle: profile.birthdate != null ? _buildBirthdate(DateTime.parse(profile.birthdate)) : null, dense: true),
+        Divider(height: 5.0),
+        ListTile(leading: Icon(Icons.flag), title: Text('Country'), subtitle: countrySnapshot.hasData ? _buildCountry(countrySnapshot.data) : null, dense: true),
+        Divider(height: 5.0),
+        ListTile(leading: Icon(Icons.assignment), title: Text('Biography'), subtitle: profile.biography != null ? Text(profile.biography, style: TextStyle(fontSize: 16), maxLines: 50) : null, dense: true),
+      ],
+    );
+  }
+
+  Widget _buildBirthdate(DateTime birthdate) {
+    return Text(birthdateFormat.format(birthdate), style: TextStyle(fontSize: 16));
+  }
+
+  Widget _buildGender(Gender gender) {
+    if (gender == Gender.FEMALE) {
+      return Row(children: <Widget>[
+        Text('Female', style: TextStyle(fontSize: 16)),
+        SizedBox(width: 5),
+        Text('\u{2640}', style: TextStyle(fontSize: 16, color: Colors.purple, fontWeight: FontWeight.bold, textBaseline: TextBaseline.ideographic)),
+      ]);
+    } else if (gender == Gender.MALE) {
+      return Row(children: <Widget>[
+        Text('Male', style: TextStyle(fontSize: 16)),
+        SizedBox(width: 5),
+        Text('\u{2642}', style: TextStyle(fontSize: 16, color: Colors.blue, fontWeight: FontWeight.bold, textBaseline: TextBaseline.ideographic)),
+      ]);
+    } else {
+      return Text('Other', style: TextStyle(fontSize: 16));
+    }
+  }
+
+  Widget _buildCountry(Country country) {
+    return Row(children: <Widget>[
+      Text(country.name, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 16)),
+      SizedBox(width: 5,),
+      Image.asset('images/flags/${country.code.toLowerCase()}.png', width: 25, height: 15, fit: BoxFit.contain,),
+    ]);
   }
 }
 
