@@ -74,7 +74,7 @@ class _ProfileTabSelectionModel with ChangeNotifier {
   }
 }
 
-class _ProfileFormModel extends ChangeNotifier {
+class _ProfileFormModel {
   Gender _gender;
   DateTime _birthdate;
   Country _country;
@@ -143,10 +143,7 @@ class _ProfileFormState extends State<_ProfileForm> {
   Widget build(BuildContext context) {
     return Container(
       color: backgroundColor,
-      child: ChangeNotifierProvider.value(
-        value: _formModel,
-        child: _buildForm(context)
-      ),
+      child: _buildForm(context),
       padding: EdgeInsets.all(20.0),
     );
   }

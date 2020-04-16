@@ -146,10 +146,10 @@ class _MapDisplayState extends State<MapDisplay> {
     GeoLocationService.current(context).readPosition(100.0);
   }
 
-
   @override
   void dispose() {
     postionSubscription.cancel();
+    super.dispose();
   }
 
   Widget _buildInitialContent(BuildContext context, AsyncSnapshot<GeoPosition> snapshot) {

@@ -7,41 +7,40 @@ import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/credential.dart';
 
 class _LoginModel {
-  final username = TextEditingController();
-  final password = TextEditingController();
+  String _username = '';
+  String _password = '';
 
   _LoginModel();
 
   _LoginModel.fromCredential(Credential credential) {
-    username.text = credential.username ?? '';
-    password.text = credential.password ?? '';
+    _username = credential.username ?? '';
+    _password = credential.password ?? '';
   }
 
+  String get username => _username;
+  String get password => _password;
+
+  void setUsername(String newUsername) => _username = newUsername;
+  void setPassword(String newPassword) => _password = newPassword;
+
   bool hasInput() {
-    return username.text != '' || password.text != '';
+    return _username != '' || _password != '';
   }
 
   bool hasUsernameInput() {
-    return username.text != '';
+    return _username != '';
   }
 
   bool hasPasswordInput() {
-    return password.text != '';
+    return _password != '';
   }
 
   bool isDefined() {
     return hasUsernameInput() && hasPasswordInput();
   }
 
-  @override
-  String toString() {
-    return '$runtimeType(${username.text}, ${password.text})';
-  }
-
-  Credential toCredential() => Credential(username.text, password.text);
+  Credential toCredential() => Credential(username, password);
 }
-
-typedef _LoginCallBack = void Function(_LoginModel);
 
 class _LoginHeader extends StatelessWidget {
   static const logoPath = "images/logo_login.png";
@@ -82,7 +81,8 @@ class _UsernameWidget extends StatelessWidget {
       padding: EdgeInsets.all(10),
       child: TextFormField(
         autofocus: !model.hasUsernameInput(),
-        controller: model.username,
+        initialValue: model.username,
+        onSaved: model.setUsername,
         keyboardType: TextInputType.emailAddress,
         decoration: InputDecoration(
             hintText: label,
@@ -112,7 +112,8 @@ class _PasswordWidget extends StatelessWidget {
         padding: EdgeInsets.all(10),
         child: TextFormField(
           autofocus: model.hasUsernameInput() && !model.hasPasswordInput(),
-          controller: model.password,
+          initialValue: model.password,
+          onSaved: model.setPassword,
           obscureText: true,
           decoration: InputDecoration(
               hintText: label,
@@ -128,12 +129,10 @@ class _LoginButton extends StatelessWidget {
 
   _LoginButton({
     Key key,
-    @required this.model,
     @required this.onLogin
   }) : super(key: key);
 
-  final _LoginCallBack onLogin;
-  final _LoginModel model;
+  final VoidCallback onLogin;
 
   @override
   Widget build(BuildContext context) {
@@ -142,7 +141,7 @@ class _LoginButton extends StatelessWidget {
         child:
         RaisedButton(
           child: Text(label, style: Theme.of(context).textTheme.button),
-          onPressed: () => onLogin(model),
+          onPressed: onLogin,
           color: color,
           shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.all(Radius.circular(20))),
@@ -154,9 +153,10 @@ class _LoginButton extends StatelessWidget {
 class _LoginFormState extends State<_LoginForm> {
   final _formKey = GlobalKey<FormState>();
 
-  void _onLogin(_LoginModel model) {
+  void _onLogin() {
     final form = _formKey.currentState;
     if (form != null && form.validate()) {
+      form.save();
       setState(() {});
     }
   }
@@ -238,7 +238,7 @@ class _LoginWidget extends StatelessWidget {
   }) : super(key: key);
 
   final GlobalKey<FormState> formKey;
-  final _LoginCallBack onLogin;
+  final VoidCallback onLogin;
 
   @override
   Widget build(BuildContext context) {
@@ -255,7 +255,7 @@ class _LoginWidget extends StatelessWidget {
             SizedBox(height: spacing),
             _PasswordWidget(model: model),
             SizedBox(height: spacing),
-            _LoginButton(model: model, onLogin: onLogin)
+            _LoginButton(onLogin: onLogin)
           ],
         ));
   }
