@@ -163,15 +163,15 @@ class _ProfileFormState extends State<_ProfileForm> {
         onWillPop: _allowPop,
         child: Column(
           children: <Widget>[
-            _GenderWidget(),
+            _GenderFormField(),
             SizedBox(height: 5),
-            _BirthdateWidget(),
+            _BirthdateFormField(),
             SizedBox(height: 5),
-            _CountryWidget(),
+            _CountryFormField(),
             SizedBox(height: 5),
-            _BiographyWidget(),
+            _BiographyFormField(),
             SizedBox(height: 10),
-            _SaveButton(onSave: _onSave)
+            _ProfileSaveButton(onSave: _onSave)
           ]
         )
       );
@@ -192,7 +192,7 @@ class _ProfileFormState extends State<_ProfileForm> {
   }
 }
 
-class _GenderWidget extends StatelessWidget {
+class _GenderFormField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
@@ -211,13 +211,13 @@ class _GenderWidget extends StatelessWidget {
             icon: Icon(Icons.wc)),
         items: [
           DropdownMenuItem<Gender>(value: Gender.FEMALE,
-              child: Text('Female \u{2640}')
+              child: _GenderWidget(Gender.FEMALE)
           ),
           DropdownMenuItem<Gender>(value: Gender.MALE,
-            child: Text('Male \u{2642}')
+            child: _GenderWidget(Gender.MALE)
           ),
           DropdownMenuItem<Gender>(value: Gender.OTHER,
-              child: Text('Other')
+            child: _GenderWidget(Gender.OTHER)
           ),
         ],
       ),
@@ -225,7 +225,7 @@ class _GenderWidget extends StatelessWidget {
   }
 }
 
-class _BirthdateWidget extends StatelessWidget {
+class _BirthdateFormField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
@@ -256,7 +256,7 @@ class _BirthdateWidget extends StatelessWidget {
   }
 }
 
-class _CountryWidget extends StatelessWidget {
+class _CountryFormField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
@@ -295,16 +295,11 @@ class _CountryWidget extends StatelessWidget {
   DropdownMenuItem<Country> _buildItem(Country country) => DropdownMenuItem(
       key: ValueKey(country.code),
       value: country,
-      child: Row(children: <Widget>[
-          Expanded(child:Text(country.name, overflow: TextOverflow.ellipsis,)),
-          SizedBox(width: 5,),
-          Image.asset('images/flags/${country.code.toLowerCase()}.png', width: 25, height: 15, fit: BoxFit.contain,),
-      ])
-
+      child: _CountryWidget(country)
   );
 }
 
-class _BiographyWidget extends StatelessWidget {
+class _BiographyFormField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
@@ -329,8 +324,8 @@ class _BiographyWidget extends StatelessWidget {
   }
 }
 
-class _SaveButton extends StatelessWidget {
-  _SaveButton({@required this.onSave});
+class _ProfileSaveButton extends StatelessWidget {
+  _ProfileSaveButton({@required this.onSave});
 
   final VoidCallback onSave;
 
@@ -565,29 +560,64 @@ class _ProfileInformationPanel extends StatelessWidget {
   }
 
   Widget _buildGender(Gender gender) {
-    if (gender == Gender.FEMALE) {
-      return Row(children: <Widget>[
-        Text('Female', style: TextStyle(fontSize: 16)),
-        SizedBox(width: 5),
-        Text('\u{2640}', style: TextStyle(fontSize: 16, color: Colors.purple, fontWeight: FontWeight.bold, textBaseline: TextBaseline.ideographic)),
-      ]);
-    } else if (gender == Gender.MALE) {
-      return Row(children: <Widget>[
-        Text('Male', style: TextStyle(fontSize: 16)),
-        SizedBox(width: 5),
-        Text('\u{2642}', style: TextStyle(fontSize: 16, color: Colors.blue, fontWeight: FontWeight.bold, textBaseline: TextBaseline.ideographic)),
-      ]);
-    } else {
-      return Text('Other', style: TextStyle(fontSize: 16));
-    }
+    return _GenderWidget(gender, fontSize: 16.0);
   }
 
   Widget _buildCountry(Country country) {
+    return _CountryWidget(country, fontSize: 16.0);
+  }
+}
+
+class _GenderWidget extends StatelessWidget {
+  _GenderWidget(this.gender, {this.fontSize}) : super(key: ValueKey(gender));
+
+  final Gender gender;
+  final double fontSize;
+
+  @override
+  Widget build(BuildContext context) {
+    if (gender == Gender.FEMALE) {
+      return Row(children: <Widget>[
+        Text('Female', style: TextStyle(fontSize: fontSize)),
+        SizedBox(width: 5),
+        Text('\u{2640}', style: TextStyle(fontSize: fontSize, color: Colors.purple, fontWeight: FontWeight.bold, textBaseline: TextBaseline.ideographic)),
+      ]);
+    } else if (gender == Gender.MALE) {
+      return Row(children: <Widget>[
+        Text('Male', style: TextStyle(fontSize: fontSize)),
+        SizedBox(width: 5),
+        Text('\u{2642}', style: TextStyle(fontSize: fontSize, color: Colors.blue, fontWeight: FontWeight.bold, textBaseline: TextBaseline.ideographic)),
+      ]);
+    } else {
+      return Text('Other', style: TextStyle(fontSize: fontSize));
+    }
+  }
+}
+
+class _CountryWidget extends StatelessWidget {
+  _CountryWidget(this.country, {this.fontSize}) : super(key: ValueKey(country.code));
+
+  final double fontSize;
+  final Country country;
+
+  @override
+  Widget build(BuildContext context) {
     return Row(children: <Widget>[
-      Text(country.name, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 16)),
+      Text(country.name, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: fontSize)),
       SizedBox(width: 5,),
-      Image.asset('images/flags/${country.code.toLowerCase()}.png', width: 25, height: 15, fit: BoxFit.contain,),
+      _CountryFlagWidget(country.code),
     ]);
+  }
+}
+
+class _CountryFlagWidget extends StatelessWidget {
+  _CountryFlagWidget(this.countryCode) : super(key: ValueKey(countryCode));
+
+  final String countryCode;
+
+  @override
+  Widget build(BuildContext context) {
+    return Image.asset('images/flags/${countryCode.toLowerCase()}.png', width: 25, height: 15, fit: BoxFit.contain);
   }
 }
 
@@ -690,7 +720,7 @@ class ProfileHeader extends StatelessWidget {
       children: <Widget>[
         username,
         SizedBox(width: 4),
-        Image.asset('images/flags/${profile.country.toLowerCase()}.png', width: 20, height: 15,)
+        _CountryFlagWidget(profile.country)
       ],
     );
   }
