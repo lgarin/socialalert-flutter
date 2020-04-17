@@ -29,6 +29,7 @@ dependencies:
   fluster:
   device_info:
   datetime_picker_formfield:
+  photo_view:
 
 dev_dependencies:
   flutter_test:

@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:form_field_validator/form_field_validator.dart';
+import 'package:photo_view/photo_view.dart';
 import 'package:provider/provider.dart';
 import 'package:social_alert_app/base.dart';
 import 'package:social_alert_app/profile.dart';
@@ -583,10 +584,17 @@ class NetworkPreviewImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-        future: _buildRequestHeader(context),
-        builder: _buildImage,
+    return GestureDetector(
+        onTap: () => _onTap(context),
+        child: FutureBuilder(
+          future: _buildRequestHeader(context),
+          builder: _buildImage,
+      )
     );
+  }
+
+  void _onTap(BuildContext context) {
+    Navigator.of(context).push(MaterialPageRoute(builder: (context) => FullNetworkImage(imageUri)));
   }
 
   Future<Map<String, String>> _buildRequestHeader(BuildContext context) {
@@ -597,6 +605,8 @@ class NetworkPreviewImage extends StatelessWidget {
       return null;
     }
   }
+
+  // TODO use PhotoView and merge code with FullNetworkImage
 
   Widget _buildImage(BuildContext context, AsyncSnapshot<Map<String, String>> snapshot) {
     if (snapshot.connectionState != ConnectionState.done) {
@@ -621,6 +631,69 @@ class NetworkPreviewImage extends StatelessWidget {
     return _buildProgressIndicator(context, progress);
   }
   
+  Widget _buildProgressIndicator(BuildContext context, double progress) {
+    return Container(
+        decoration: BoxDecoration(border: Border.all()),
+        height: previewHeight.roundToDouble() / MediaQuery.of(context).devicePixelRatio,
+        width: previewWidth.roundToDouble() / MediaQuery.of(context).devicePixelRatio,
+        child: Center(
+            child: CircularProgressIndicator(value: progress)
+        )
+    );
+  }
+}
+
+class FullNetworkImage extends StatelessWidget {
+
+  FullNetworkImage(this.imageUri) : super(key: ValueKey(imageUri));
+
+  final String imageUri;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: BoxConstraints.expand(
+        height: MediaQuery.of(context).size.height,
+      ),
+      child: FutureBuilder(
+        future: _buildRequestHeader(context),
+        builder: _buildImage,
+      ),
+    );
+  }
+
+  Future<Map<String, String>> _buildRequestHeader(BuildContext context) {
+    try {
+      return MediaQueryService.current(context).buildImagePreviewHeader();
+    } catch (e) {
+      showSimpleDialog(context, 'Cannot download image', e.toString());
+      return null;
+    }
+  }
+
+  Widget _buildImage(BuildContext context, AsyncSnapshot<Map<String, String>> snapshot) {
+    if (snapshot.connectionState != ConnectionState.done) {
+      return _buildProgressIndicator(context, null);
+    }
+    final url = MediaQueryService.toFullUrl(imageUri);
+    return PhotoView(
+      minScale: PhotoViewComputedScale.contained,
+      maxScale: PhotoViewComputedScale.covered * 4.0,
+      imageProvider: NetworkImage(url, headers: snapshot.data),
+      loadingBuilder: _loadingBuilder,
+      heroAttributes: PhotoViewHeroAttributes(tag: imageUri),
+    );
+  }
+
+  Widget _loadingBuilder(BuildContext context, ImageChunkEvent loadingProgress) {
+    if (loadingProgress == null) {
+      return _buildProgressIndicator(context, null);
+    }
+    final progress = loadingProgress.expectedTotalBytes == null ? null :
+    loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes;
+    return _buildProgressIndicator(context, progress);
+  }
+
   Widget _buildProgressIndicator(BuildContext context, double progress) {
     return Container(
         decoration: BoxDecoration(border: Border.all()),

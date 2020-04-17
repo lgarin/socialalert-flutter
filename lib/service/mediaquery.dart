@@ -74,6 +74,8 @@ class MediaQueryService extends Service {
 
   static String toPreviewUrl(String mediaUri) => baseServerUrl + '/file/preview/' + mediaUri;
 
+  static String toFullUrl(String mediaUri) => baseServerUrl + '/file/download/' + mediaUri;
+
   static String toSmallAvatarUrl(String imageUri) => baseServerUrl + '/file/avatar/small/' + imageUri;
 
   static String toLargeAvatarUrl(String imageUri) => baseServerUrl + '/file/avatar/large/' + imageUri;
