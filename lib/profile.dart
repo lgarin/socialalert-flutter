@@ -12,8 +12,10 @@ import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/eventbus.dart';
+import 'package:social_alert_app/service/mediamodel.dart';
 import 'package:social_alert_app/service/mediaquery.dart';
 import 'package:social_alert_app/service/profileupdate.dart';
+import 'package:social_alert_app/thumbnail.dart';
 
 class ProfileAvatar extends StatelessWidget {
   static const LARGE_RADIUS = 60.0;
@@ -58,15 +60,15 @@ class ProfileAvatar extends StatelessWidget {
 
 class _ProfileTabSelectionModel with ChangeNotifier {
   static const informationIndex = 0;
-  static const credentialsIndex = 1;
-  static const privacyIndex = 2;
+  static const galleryIndex = 1;
+  static const feedIndex = 2;
 
   int _currentDisplayIndex = informationIndex;
 
   int get currentDisplayIndex => _currentDisplayIndex;
   bool get informationSelected => _currentDisplayIndex == informationIndex;
-  bool get credentialsSelected => _currentDisplayIndex == credentialsIndex;
-  bool get privacySelected => _currentDisplayIndex == privacyIndex;
+  bool get gallerySelected => _currentDisplayIndex == galleryIndex;
+  bool get feedSelected => _currentDisplayIndex == feedIndex;
 
   void tabSelected(int index) {
     _currentDisplayIndex = index;
@@ -436,8 +438,15 @@ class ProfileViewerPage extends StatefulWidget {
 class _ProfileViewerPageState extends _BaseProfilePageState<ProfileViewerPage> {
 
   final _tabSelectionModel = _ProfileTabSelectionModel();
+  final _scrollController = ScrollController();
 
   _ProfileViewerPageState() : super(AppRoute.ProfileViewer);
+
+  @override
+  void initState() {
+    super.initState();
+    _tabSelectionModel.addListener(() => WidgetsBinding.instance.addPostFrameCallback((_) => _scrollController.jumpTo(_scrollController.position.maxScrollExtent)));
+  }
 
   @override
   AppBar buildAppBar() {
@@ -465,6 +474,7 @@ class _ProfileViewerPageState extends _BaseProfilePageState<ProfileViewerPage> {
   @override
   Widget buildBody(BuildContext context) {
     return ListView(
+      controller: _scrollController,
       children: <Widget>[
         ProfileHeader(tapCallback: _choosePicture, uploadTaskId: _uploadTaskId),
         _buildBottomPanel(context),
@@ -511,8 +521,13 @@ class _ProfileTabPanel extends StatelessWidget {
     final tabSelectionModel = Provider.of<_ProfileTabSelectionModel>(context);
     if (tabSelectionModel.informationSelected) {
       return _ProfileInformationPanel();
+    } else if (tabSelectionModel.gallerySelected) {
+      return _ProfileGalleryPanel();
+    } else if (tabSelectionModel.feedSelected) {
+      return _ProfileFeedPanel();
+    } else {
+      return null;
     }
-    return SizedBox(height: 0, width: 0);
   }
 }
 
@@ -621,7 +636,95 @@ class _CountryFlagWidget extends StatelessWidget {
   }
 }
 
+class _ProfileGalleryPanel extends StatefulWidget {
+
+  @override
+  _ProfileGalleryPanelState createState() => _ProfileGalleryPanelState();
+}
+
+class _ProfileGalleryPanelState extends BasePagingState<_ProfileGalleryPanel, MediaInfo> {
+  static final spacing = 4.0;
+
+  Future<MediaInfoPage> loadNextPage(PagingParameter parameter) {
+    final profile = Provider.of<UserProfile>(context, listen: false);
+    return MediaQueryService.current(context).listUserMedia(profile.userId, parameter);
+  }
+
+
+  @override
+  Widget build(BuildContext context) {
+    final height = MediaQuery.of(context).size.height - ProfileHeader.height;
+    return SizedBox(height: height, child: super.build(context));
+  }
+
+  Widget buildContent(BuildContext context, List<MediaInfo> data) {
+    if (data.isEmpty) {
+      return Center(child: _buildNoContent(context));
+    }
+
+    final portrait = MediaQuery.of(context).orientation == Orientation.portrait;
+    return GridView.count(
+        crossAxisCount: portrait ? 2 : 3,
+        childAspectRatio: 16.0 / 9.0,
+        mainAxisSpacing: spacing,
+        crossAxisSpacing: spacing,
+        padding: EdgeInsets.all(spacing),
+        children: data.map(_buildGridTile).toList()
+    );
+  }
+
+  Widget _buildGridTile(MediaInfo media) {
+    return MediaThumbnailTile(media: media, onTapCallback: _onGridTileSelection);
+  }
+
+  void _onGridTileSelection(MediaInfo media) async {
+    final newValue = await Navigator.of(context).pushNamed<MediaDetail>(AppRoute.RemotePictureDetail, arguments: media);
+    if (newValue != null) {
+      replaceItem((item) => item.mediaUri == media.mediaUri, newValue);
+    }
+  }
+
+  Column _buildNoContent(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        Icon(Icons.panorama, size: 100, color: Colors.grey),
+        Text('No content yet', style: Theme
+            .of(context)
+            .textTheme
+            .headline6),
+        Text('Post a Snype and it will appear here.')
+      ],
+    );
+  }
+}
+
+class _ProfileFeedPanel extends StatelessWidget {
+
+  @override
+  Widget build(BuildContext context) {
+    final height = MediaQuery.of(context).size.height - ProfileHeader.height;
+    return SizedBox(height: height, child: _buildNoContent(context));
+  }
+
+  Column _buildNoContent(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        Icon(Icons.edit, size: 100, color: Colors.grey),
+        Text('No content yet', style: Theme
+            .of(context)
+            .textTheme
+            .headline6),
+        Text('Post a Scribe and it will appear here.')
+      ],
+    );
+  }
+}
+
 class ProfileHeader extends StatelessWidget {
+  static const height = 220.0;
+
   final GestureTapCallback tapCallback;
   final String uploadTaskId;
 
@@ -629,8 +732,9 @@ class ProfileHeader extends StatelessWidget {
 
   Widget build(BuildContext context) {
     final profile = Provider.of<UserProfile>(context);
+
     return Container(
-        height: 220,
+        height: height,
         color: Theme.of(context).primaryColorDark.withOpacity(0.9),
         child: profile != null ? _buildBody(context, profile) : LoadingCircle()
     );

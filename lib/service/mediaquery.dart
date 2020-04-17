@@ -13,12 +13,13 @@ class _MediaQueryApi {
 
   _MediaQueryApi(this.httpService);
 
-  Future<MediaInfoPage> listMedia({String category, String keywords, LatLngBounds bounds, @required PagingParameter paging, @required String accessToken}) async {
+  Future<MediaInfoPage> listMedia({String creator, String category, String keywords, LatLngBounds bounds, @required PagingParameter paging, @required String accessToken}) async {
+    final creatorParameter = creator != null ? '&creator=$creator' : '';
     final categoryParameter = category != null ? '&category=$category' : '';
     final keywordsParameter = keywords != null ? '&keywords=$keywords' : '';
     final boundsParameter = bounds != null ? '&minLongitude=${bounds.southwest.longitude}&maxLongitude=${bounds.northeast.longitude}&minLatitude=${bounds.southwest.latitude}&maxLatitude=${bounds.northeast.latitude}' : '';
     final timestampParameter = paging.timestamp != null ? '&pagingTimestamp=${paging.timestamp}' : '';
-    final uri = '/media/search?pageNumber=${paging.pageNumber}&pageSize=${paging.pageSize}$timestampParameter$categoryParameter$keywordsParameter$boundsParameter';
+    final uri = '/media/search?pageNumber=${paging.pageNumber}&pageSize=${paging.pageSize}$timestampParameter$creatorParameter$categoryParameter$keywordsParameter$boundsParameter';
     final response = await httpService.getJson(uri: uri, accessToken: accessToken);
     if (response.statusCode == 200) {
       return MediaInfoPage.fromJson(jsonDecode(response.body));
@@ -93,6 +94,17 @@ class MediaQueryService extends Service {
     final accessToken = await _authService.accessToken;
     try {
       return await _queryApi.listMedia(category: category, keywords: keywords, bounds: bounds,
+          paging: paging, accessToken: accessToken);
+    } catch (e) {
+      print(e);
+      throw e;
+    }
+  }
+
+  Future<MediaInfoPage> listUserMedia(String userId, PagingParameter paging) async {
+    final accessToken = await _authService.accessToken;
+    try {
+      return await _queryApi.listMedia(creator: userId,
           paging: paging, accessToken: accessToken);
     } catch (e) {
       print(e);

@@ -34,9 +34,9 @@ class _GalleryDisplayState extends BasePagingState<GalleryDisplay, MediaInfo> {
     return GridView.count(
         crossAxisCount: portrait ? 2 : 3,
         childAspectRatio: 16.0 / 9.0,
-        mainAxisSpacing: _GalleryDisplayState.spacing,
-        crossAxisSpacing: _GalleryDisplayState.spacing,
-        padding: EdgeInsets.all(_GalleryDisplayState.spacing),
+        mainAxisSpacing: spacing,
+        crossAxisSpacing: spacing,
+        padding: EdgeInsets.all(spacing),
         children: data.map(_buildGridTile).toList()
     );
   }

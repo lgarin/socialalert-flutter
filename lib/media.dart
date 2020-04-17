@@ -56,7 +56,7 @@ class _RemotePictureDetailPageState extends BasePageState<RemotePictureDetailPag
   @override
   void initState() {
     super.initState();
-    _tabSelectionModel.addListener(() => _scrollController.jumpTo(_scrollController.position.maxScrollExtent));
+    _tabSelectionModel.addListener(() => WidgetsBinding.instance.addPostFrameCallback((_) => _scrollController.jumpTo(_scrollController.position.maxScrollExtent)));
   }
 
   AppBar buildAppBar() {
