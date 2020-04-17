@@ -284,20 +284,20 @@ class _CountryFormField extends StatelessWidget {
       decoration: InputDecoration(
           hintText: 'Select country',
           icon: Icon(Icons.flag)),
-      items: _buildItemList(context, snapshot.data),
-      selectedItemBuilder: (context) => _buildItemList(context, snapshot.data),
+      items: _buildItemList(context, snapshot.data, true),
+      selectedItemBuilder: (context) => _buildItemList(context, snapshot.data, false),
       isExpanded: true,
     );
   }
 
-  List<DropdownMenuItem<Country>> _buildItemList(BuildContext context, List<Country> countryList) {
-    return countryList.map(_buildItem).toList(growable: false);
+  List<DropdownMenuItem<Country>> _buildItemList(BuildContext context, List<Country> countryList, bool expandName) {
+    return countryList.map((country) => _buildItem(country, expandName)).toList(growable: false);
   }
 
-  DropdownMenuItem<Country> _buildItem(Country country) => DropdownMenuItem(
+  DropdownMenuItem<Country> _buildItem(Country country, bool expandName) => DropdownMenuItem(
       key: ValueKey(country.code),
       value: country,
-      child: _CountryWidget(country)
+      child: _CountryWidget(country, expandName: expandName)
   );
 }
 
@@ -610,18 +610,27 @@ class _GenderWidget extends StatelessWidget {
 }
 
 class _CountryWidget extends StatelessWidget {
-  _CountryWidget(this.country, {this.fontSize}) : super(key: ValueKey(country.code));
+  _CountryWidget(this.country, {this.fontSize, this.expandName = false}) : super(key: ValueKey(country.code));
 
   final double fontSize;
   final Country country;
+  final bool expandName;
 
   @override
   Widget build(BuildContext context) {
     return Row(children: <Widget>[
-      Text(country.name, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: fontSize)),
+      _buildCountryName(),
       SizedBox(width: 5,),
       _CountryFlagWidget(country.code),
     ]);
+  }
+
+  Widget _buildCountryName() {
+    final text = Text(country.name, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: fontSize));
+    if (expandName) {
+      return Expanded(child: text);
+    }
+    return Flexible(child: text);
   }
 }
 
