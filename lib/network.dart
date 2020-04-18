@@ -8,7 +8,7 @@ class NetworkPage extends StatefulWidget {
 }
 
 class _NetworkPageState extends BasePageState<NetworkPage> {
-  _NetworkPageState() : super(AppRoute.Network);
+  _NetworkPageState() : super(AppRoute.UserNetwork);
 
 
   @override

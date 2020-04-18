@@ -584,7 +584,7 @@ class _ProfileInformationPanel extends StatelessWidget {
 }
 
 class _GenderWidget extends StatelessWidget {
-  _GenderWidget(this.gender, {this.fontSize}) : super(key: ValueKey(gender));
+  _GenderWidget(this.gender, {this.fontSize});
 
   final Gender gender;
   final double fontSize;
@@ -610,7 +610,7 @@ class _GenderWidget extends StatelessWidget {
 }
 
 class _CountryWidget extends StatelessWidget {
-  _CountryWidget(this.country, {this.fontSize, this.expandName = false}) : super(key: ValueKey(country.code));
+  _CountryWidget(this.country, {this.fontSize, this.expandName = false});
 
   final double fontSize;
   final Country country;

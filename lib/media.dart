@@ -1,6 +1,4 @@
-
 import 'dart:async';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:form_field_validator/form_field_validator.dart';
@@ -34,13 +32,13 @@ class _MediaInfoModel with ChangeNotifier {
 
 class RemotePictureDetailPage extends StatefulWidget {
 
-  final MediaInfo _media;
+  final MediaInfo media;
 
-  RemotePictureDetailPage(this._media);
+  RemotePictureDetailPage(this.media);
 
-  String get mediaUri => _media.mediaUri;
+  String get mediaUri => media.mediaUri;
 
-  String get mediaTitle => _media.title;
+  String get mediaTitle => media.title;
 
   @override
   _RemotePictureDetailPageState createState() => _RemotePictureDetailPageState();
@@ -84,7 +82,7 @@ class _RemotePictureDetailPageState extends BasePageState<RemotePictureDetailPag
         },
         child: Consumer<_MediaInfoModel>(
           builder: _buildContent,
-          child: NetworkPreviewImage(imageUri: widget.mediaUri)
+          child: _RemotePictureDisplay(media: widget.media, preview: true)
         )
     );
   }
@@ -577,15 +575,22 @@ class _MediaTabSelectionModel with ChangeNotifier {
   }
 }
 
-class NetworkPreviewImage extends StatelessWidget {
-  final String imageUri;
+class _RemotePictureDisplay extends StatelessWidget {
 
-  NetworkPreviewImage({this.imageUri}) : super(key: ValueKey(imageUri));
+  _RemotePictureDisplay({@required this.media, this.preview = false}) : super(key: ValueKey(media.mediaUri));
+
+  final MediaInfo media;
+  final bool preview;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-        onTap: () => _onTap(context),
+    final screen = MediaQuery.of(context);
+    final constraints = preview ?
+      BoxConstraints.tightFor(height: previewHeight.roundToDouble() / screen.devicePixelRatio) :
+      BoxConstraints.expand(height: screen.size.height);
+    return Container(
+        color: Colors.black,
+        constraints: constraints,
         child: FutureBuilder(
           future: _buildRequestHeader(context),
           builder: _buildImage,
@@ -593,80 +598,10 @@ class NetworkPreviewImage extends StatelessWidget {
     );
   }
 
-  void _onTap(BuildContext context) {
-    Navigator.of(context).push(MaterialPageRoute(builder: (context) => FullNetworkImage(imageUri)));
-  }
-
   Future<Map<String, String>> _buildRequestHeader(BuildContext context) {
     try {
       return MediaQueryService.current(context).buildImagePreviewHeader();
     } catch (e) {
-      showSimpleDialog(context, 'Cannot download image', e.toString());
-      return null;
-    }
-  }
-
-  // TODO use PhotoView and merge code with FullNetworkImage
-
-  Widget _buildImage(BuildContext context, AsyncSnapshot<Map<String, String>> snapshot) {
-    if (snapshot.connectionState != ConnectionState.done) {
-      return _buildProgressIndicator(context, null);
-    }
-    final url = MediaQueryService.toPreviewUrl(imageUri);
-    return Hero(
-        tag: imageUri,
-        child: Image.network(url,
-            fit: BoxFit.contain,
-            headers: snapshot.data,
-            loadingBuilder: _loadingBuilder)
-    );
-  }
-
-  Widget _loadingBuilder(BuildContext context, Widget child, ImageChunkEvent loadingProgress) {
-    if (loadingProgress == null) {
-      return child;
-    }
-    final progress = loadingProgress.expectedTotalBytes == null ? null :
-      loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes;
-    return _buildProgressIndicator(context, progress);
-  }
-  
-  Widget _buildProgressIndicator(BuildContext context, double progress) {
-    return Container(
-        decoration: BoxDecoration(border: Border.all()),
-        height: previewHeight.roundToDouble() / MediaQuery.of(context).devicePixelRatio,
-        width: previewWidth.roundToDouble() / MediaQuery.of(context).devicePixelRatio,
-        child: Center(
-            child: CircularProgressIndicator(value: progress)
-        )
-    );
-  }
-}
-
-class FullNetworkImage extends StatelessWidget {
-
-  FullNetworkImage(this.imageUri) : super(key: ValueKey(imageUri));
-
-  final String imageUri;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      constraints: BoxConstraints.expand(
-        height: MediaQuery.of(context).size.height,
-      ),
-      child: FutureBuilder(
-        future: _buildRequestHeader(context),
-        builder: _buildImage,
-      ),
-    );
-  }
-
-  Future<Map<String, String>> _buildRequestHeader(BuildContext context) {
-    try {
-      return MediaQueryService.current(context).buildImagePreviewHeader();
-    } catch (e) {
-      showSimpleDialog(context, 'Cannot download image', e.toString());
       return null;
     }
   }
@@ -675,13 +610,38 @@ class FullNetworkImage extends StatelessWidget {
     if (snapshot.connectionState != ConnectionState.done) {
       return _buildProgressIndicator(context, null);
     }
-    final url = MediaQueryService.toFullUrl(imageUri);
-    return PhotoView(
+    final url = preview ? MediaQueryService.toPreviewUrl(media.mediaUri) : MediaQueryService.toFullUrl(media.mediaUri);
+    return ClipRect(child: PhotoView(
       minScale: PhotoViewComputedScale.contained,
-      maxScale: PhotoViewComputedScale.covered * 4.0,
+      maxScale: PhotoViewComputedScale.covered * (preview ? 2.0 : 8.0),
+      initialScale: preview ? PhotoViewComputedScale.covered : PhotoViewComputedScale.contained,
+      scaleStateCycle: preview ? (c) => c : defaultScaleStateCycle,
+      tightMode: preview,
+      onTapUp: preview ? _onTap : null,
       imageProvider: NetworkImage(url, headers: snapshot.data),
       loadingBuilder: _loadingBuilder,
-      heroAttributes: PhotoViewHeroAttributes(tag: imageUri),
+      loadFailedChild: _buildErrorWidget(context),
+      heroAttributes: PhotoViewHeroAttributes(tag: media.mediaUri),
+    ));
+  }
+
+  void _onTap(BuildContext context, TapUpDetails details, PhotoViewControllerValue controllerValue) {
+    Navigator.of(context).pushNamed(AppRoute.RemotePictureDisplay, arguments: media);
+  }
+
+  Widget _buildErrorWidget(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Icon(Icons.broken_image, size: 100, color: Colors.grey),
+          Text('Download failed', style: Theme
+              .of(context)
+              .textTheme
+              .headline6),
+          Text('Please retry later.')
+        ],
+      ),
     );
   }
 
@@ -695,13 +655,23 @@ class FullNetworkImage extends StatelessWidget {
   }
 
   Widget _buildProgressIndicator(BuildContext context, double progress) {
-    return Container(
-        decoration: BoxDecoration(border: Border.all()),
-        height: previewHeight.roundToDouble() / MediaQuery.of(context).devicePixelRatio,
-        width: previewWidth.roundToDouble() / MediaQuery.of(context).devicePixelRatio,
-        child: Center(
+    return Center(
             child: CircularProgressIndicator(value: progress)
-        )
+        );
+  }
+}
+
+class RemoteImageDisplayPage extends StatelessWidget {
+
+  final MediaInfo mediaInfo;
+
+  RemoteImageDisplayPage(this.mediaInfo);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(mediaInfo.title, overflow: TextOverflow.ellipsis)),
+      body: _RemotePictureDisplay(media: mediaInfo)
     );
   }
 }

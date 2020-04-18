@@ -21,6 +21,8 @@ import 'package:social_alert_app/settings.dart';
 import 'package:social_alert_app/upload.dart';
 import 'package:social_alert_app/profile.dart';
 
+import 'helper.dart';
+
 void main() => runApp(SocialAlertApp());
 
 class SocialAlertApp extends StatelessWidget {
@@ -80,7 +82,7 @@ class SocialAlertApp extends StatelessWidget {
       case AppRoute.AnnotatePicture: return MaterialPageRoute(
           builder: (context) => AnnotatePicturePage(settings.arguments)
       );
-      case AppRoute.Network: return MaterialPageRoute(
+      case AppRoute.UserNetwork: return MaterialPageRoute(
           builder: (context) => NetworkPage()
       );
       case AppRoute.LocalPictureInfo: return MaterialPageRoute(
@@ -98,6 +100,9 @@ class SocialAlertApp extends StatelessWidget {
       case AppRoute.SettingsEditor: return MaterialPageRoute(
         builder: (context) => SettingsEditorPage()
       );
+      case AppRoute.RemotePictureDisplay: return NoAnimationMaterialPageRoute(
+        builder: (context) => RemoteImageDisplayPage(settings.arguments)
+      );
       default: return null;
     }
   }
@@ -108,9 +113,10 @@ class AppRoute {
   static const Home = 'home';
   static const AnnotatePicture = 'annotatePicture';
   static const UploadManager = 'uploadManager';
-  static const Network = 'network';
+  static const UserNetwork = 'userNetwork';
   static const LocalPictureInfo = 'pictureInfo';
   static const RemotePictureDetail ='pictureDetail';
+  static const RemotePictureDisplay = 'pictureDisplay';
   static const ProfileEditor = 'profileEditor';
   static const ProfileViewer = 'profileViewer';
   static const SettingsEditor = 'settingsEditor';
