@@ -121,18 +121,14 @@ class _UploadManagerPageState extends BasePageState<UploadManagerPage> {
       return CircularProgressIndicator();
     } else if (task.status == MediaUploadStatus.CREATED) {
       return Icon(Icons.navigate_next, size: iconSize);
-    } else if (task.status == MediaUploadStatus.ANNOTATED || task.status == MediaUploadStatus.LOCATED || task.status == MediaUploadStatus.UPLOADED) {
-      return SizedBox(width: 0, height: 0);
-    } else if (task.status == MediaUploadStatus.UPLOAD_ERROR || task.status == MediaUploadStatus.LOCATE_ERROR || task.status == MediaUploadStatus.CLAIM_ERROR) {
+    } else if (task.hasError) {
       return PopupMenuButton(
         child: Icon(Icons.error, size: iconSize),
         itemBuilder: (context) => _buildUploadErrorMenu(context, task),
         onSelected: _onErrorItemSelection,
       );
-    } else if (task.status == MediaUploadStatus.CLAIMED) {
-      return Icon(Icons.done, size: iconSize);
     } else {
-      return null;
+      return SizedBox(width: 0, height: 0);
     }
   }
 
@@ -165,8 +161,6 @@ class _UploadManagerPageState extends BasePageState<UploadManagerPage> {
   void _onItemSelected(MediaUploadTask task) {
     if (task.status == MediaUploadStatus.CREATED) {
       Navigator.of(context).pushNamed(AppRoute.AnnotatePicture, arguments: task);
-    } else if (task.status == MediaUploadStatus.CLAIMED) {
-      MediaUploadService.current(context).deleteTask(task);
     } else {
       Navigator.of(context).pushNamed(AppRoute.LocalPictureInfo, arguments: task);
     }

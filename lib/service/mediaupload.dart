@@ -70,10 +70,6 @@ class MediaUploadTask with ChangeNotifier {
     return file.existsSync();
   }
 
-  bool isObsolete(DateTime now) {
-    return status == MediaUploadStatus.CLAIMED && now.difference(timestamp).inDays > 30;
-  }
-
   String get id => file.path;
 
   String get backgroundTaskId => _uploadTaskId;
@@ -113,6 +109,10 @@ class MediaUploadTask with ChangeNotifier {
           address: _address);
 
   double get uploadProgress => _uploadProgress != null ? _uploadProgress * 0.95 / 100.0 : 0.0;
+
+  bool get isCompleted => _status == null || _status == MediaUploadStatus.CLAIMED;
+
+  bool get hasError => _status == MediaUploadStatus.LOCATE_ERROR || _status == MediaUploadStatus.UPLOAD_ERROR || _status == MediaUploadStatus.CLAIM_ERROR;
 
   void _changeStatus(MediaUploadStatus newStatus) {
     _status = newStatus;
@@ -426,9 +426,8 @@ class MediaUploadService extends Service {
 
   Future<MediaUploadList> _initUploads() async {
     final uploads = MediaUploadList();
-    final now = DateTime.now();
     for (final upload in await _uploadTaskStore.load()) {
-      if (upload.isFileValid() && !upload.isObsolete(now)) {
+      if (upload.isFileValid() && !upload.isCompleted) {
         upload._reset();
         uploads._add(upload);
       }
@@ -510,7 +509,9 @@ class MediaUploadService extends Service {
 
   Future<void> _completeClaim(MediaUploadTask task) async {
     final uploads = await currentUploads();
+    uploads._remove(task);
     await _uploadTaskStore.store(uploads);
+    await task._delete();
     _uploadStreamController.add(task);
   }
 

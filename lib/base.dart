@@ -43,11 +43,11 @@ abstract class BasePageState<T extends StatefulWidget> extends State<T> {
           content: Text('Title for media is missing', style: TextStyle(color: Colors.orange)),
           action: SnackBarAction(label: 'Edit', onPressed: () => Navigator.pushNamed(context, AppRoute.AnnotatePicture, arguments: task))
       ));
-    } else if (task.status == MediaUploadStatus.UPLOADED) {
+    } else if (task.isCompleted) {
       _scaffoldKey.currentState.showSnackBar(SnackBar(
         content: Text('Upload of "${task.title}" has completed', style: TextStyle(color: Colors.green)),
       ));
-    } else if (task.status == MediaUploadStatus.UPLOAD_ERROR || task.status == MediaUploadStatus.CLAIM_ERROR) {
+    } else if (task.hasError) {
       _scaffoldKey.currentState.showSnackBar(SnackBar(
         content: Text('Upload of "${task.title}" has failed', style: TextStyle(color: Colors.red)),
         action: SnackBarAction(label: 'Retry', onPressed: () => MediaUploadService.current(context).restartTask(task)),
