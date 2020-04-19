@@ -64,7 +64,7 @@ class GeoLocation extends GeoPosition {
 
 class GeoLocationService extends Service {
 
-  static const gpsReadTime = Duration(milliseconds: 500);
+  static const gpsReadInterval = Duration(milliseconds: 500);
 
   final Geolocator _geolocator = Geolocator();
 
@@ -87,7 +87,7 @@ class GeoLocationService extends Service {
 
   Future<GeoPosition> _readCurrentPosition() async {
     try {
-      final current = await _geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.best).timeout(gpsReadTime);
+      final current = await _geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.best);
       if (current == null) {
         return null;
       }
@@ -125,11 +125,11 @@ class GeoLocationService extends Service {
   Future<GeoPosition> readPosition(double precisionInMeter) async {
     final position = await _readCurrentPosition();
     if (position == null) {
-      return null;
+      return await readLastKnownPosition();
     }
     var counter = 0;
     do {
-      await Future.delayed(gpsReadTime);
+      await Future.delayed(gpsReadInterval);
     } while (await _isCurrentPositionNear(position, precisionInMeter).then((value) => !value) && ++counter < 6);
 
     return await readLastKnownPosition();
