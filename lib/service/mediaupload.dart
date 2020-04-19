@@ -66,8 +66,8 @@ class MediaUploadTask with ChangeNotifier {
     return status == MediaUploadStatus.CREATED || status == MediaUploadStatus.ANNOTATED || status == MediaUploadStatus.CLAIM_ERROR || status == MediaUploadStatus.CLAIM_ERROR || status == MediaUploadStatus.CLAIMED;
   }
 
-  bool isFileValid() {
-    return file.existsSync();
+  Future<bool> isFileValid() {
+    return file.exists();
   }
 
   String get id => file.path;
@@ -110,7 +110,7 @@ class MediaUploadTask with ChangeNotifier {
 
   double get uploadProgress => _uploadProgress != null ? _uploadProgress * 0.95 / 100.0 : 0.0;
 
-  bool get isCompleted => _status == null || _status == MediaUploadStatus.CLAIMED;
+  bool get isCompleted => _status == MediaUploadStatus.CLAIMED;
 
   bool get hasError => _status == MediaUploadStatus.LOCATE_ERROR || _status == MediaUploadStatus.UPLOAD_ERROR || _status == MediaUploadStatus.CLAIM_ERROR;
 
@@ -227,10 +227,10 @@ class MediaUploadTask with ChangeNotifier {
     _changeStatus(MediaUploadStatus.CLAIMED);
   }
 
-  Future<void> _delete() async {
+  Future<void> _deleteFile() async {
     assert(canBeDeleted());
     await file.delete();
-    _changeStatus(null);
+    _status = null;
   }
 
   void _setUploadProgress(int progress) {
@@ -249,6 +249,10 @@ class MediaUploadTask with ChangeNotifier {
       _status = MediaUploadStatus.CLAIM_ERROR;
     }
     notifyListeners();
+  }
+
+  void _abort() {
+    _status = null;
   }
 }
 
@@ -427,8 +431,8 @@ class MediaUploadService extends Service {
   Future<MediaUploadList> _initUploads() async {
     final uploads = MediaUploadList();
     for (final upload in await _uploadTaskStore.load()) {
-      if (upload.isFileValid() && !upload.isCompleted) {
-        upload._reset();
+      await _initUpload(upload);
+      if (upload.status != null) {
         uploads._add(upload);
       }
     }
@@ -437,6 +441,18 @@ class MediaUploadService extends Service {
       restartTask(upload);
     }
     return uploads;
+  }
+
+  void _initUpload(MediaUploadTask upload) async {
+    if (await upload.isFileValid()) {
+      if (upload.isCompleted) {
+        await upload._deleteFile();
+      } else {
+        upload._reset();
+      }
+    } else {
+      upload._abort();
+    }
   }
 
   Future<void> saveTask(MediaUploadTask task) async {
@@ -466,7 +482,7 @@ class MediaUploadService extends Service {
     final uploads = await currentUploads();
     uploads._remove(task);
     await _uploadTaskStore.store(uploads);
-    await task._delete();
+    await task._deleteFile();
   }
 
   void _startLocating(MediaUploadTask task) {
@@ -511,7 +527,7 @@ class MediaUploadService extends Service {
     final uploads = await currentUploads();
     uploads._remove(task);
     await _uploadTaskStore.store(uploads);
-    await task._delete();
+    await task._deleteFile();
     _uploadStreamController.add(task);
   }
 
