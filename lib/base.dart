@@ -97,7 +97,6 @@ abstract class BasePageState<T extends StatefulWidget> extends State<T> {
 
   FloatingActionButton buildCaptureButton(BuildContext context) {
     return FloatingActionButton(
-      key: ValueKey('captureButton'),
       onPressed: () => _takePicture(context),
       tooltip: 'Take picture',
       backgroundColor: Theme.of(context).primaryColor,

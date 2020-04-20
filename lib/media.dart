@@ -577,7 +577,7 @@ class _MediaTabSelectionModel with ChangeNotifier {
 
 class _RemotePictureDisplay extends StatelessWidget {
 
-  _RemotePictureDisplay({@required this.media, this.preview = false}) : super(key: ValueKey(media.mediaUri));
+  _RemotePictureDisplay({@required this.media, this.preview = false});
 
   final MediaInfo media;
   final bool preview;

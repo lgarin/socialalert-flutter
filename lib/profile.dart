@@ -25,7 +25,7 @@ class ProfileAvatar extends StatelessWidget {
   final double radius;
   final String uploadTaskId;
 
-  ProfileAvatar({this.imageUri, this.online, @required this.radius, this.uploadTaskId}) : super(key: ValueKey('$imageUri/$online/$uploadTaskId'));
+  ProfileAvatar({this.imageUri, this.online, @required this.radius, this.uploadTaskId});
 
   @override
   Widget build(BuildContext context) {
