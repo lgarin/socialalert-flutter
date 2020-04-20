@@ -443,7 +443,7 @@ class MediaUploadService extends Service {
     return uploads;
   }
 
-  void _initUpload(MediaUploadTask upload) async {
+  Future<void> _initUpload(MediaUploadTask upload) async {
     if (await upload.isFileValid()) {
       if (upload.isCompleted) {
         await upload._deleteFile();

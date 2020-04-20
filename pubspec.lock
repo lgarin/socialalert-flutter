@@ -64,13 +64,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.1.4"
-  datetime_picker_formfield:
-    dependency: "direct main"
-    description:
-      name: datetime_picker_formfield
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "1.0.0"
   device_info:
     dependency: "direct main"
     description:
@@ -124,7 +117,7 @@ packages:
       name: flutter_secure_storage
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "3.3.2"
+    version: "3.3.3"
   flutter_test:
     dependency: "direct dev"
     description: flutter
@@ -171,7 +164,7 @@ packages:
       name: google_maps_flutter
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.5.25+3"
+    version: "0.5.26"
   http:
     dependency: "direct main"
     description:

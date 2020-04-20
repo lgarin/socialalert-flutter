@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:datetime_picker_formfield/datetime_picker_formfield.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:form_field_validator/form_field_validator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
@@ -78,22 +78,51 @@ class _ProfileTabSelectionModel with ChangeNotifier {
 
 class _ProfileFormModel {
   Gender _gender;
-  DateTime _birthdate;
   Country _country;
   String _biography;
+  int _birthdateDay;
+  int _birthdateMonth;
+  int _birthdateYear;
 
   _ProfileFormModel(UserProfile profile) {
     _country = Country(profile.country, null);
     _biography = profile.biography;
-    _birthdate = profile.birthdate != null ? DateTime.parse(profile.birthdate) : null;
+    final birthdate = profile.birthdate != null ? DateTime.parse(profile.birthdate) : null;
+    _birthdateDay = birthdate?.day;
+    _birthdateMonth = birthdate?.month;
+    _birthdateYear = birthdate?.year;
     _gender = fromGenderName(profile.gender);
+  }
+
+  int get birthdateDay => _birthdateDay;
+  void setBithdateDay(int value) => _birthdateDay = value;
+  int get birthdateMonth => _birthdateMonth;
+  void setBithdateMonth(int value) => _birthdateMonth = value;
+  int get birthdateYear => _birthdateYear;
+  void setBithdateYear(int value) => _birthdateYear = value;
+
+  String validateBirthdateDay(int value) {
+    if (value == null) {
+      return null;
+    } else if (_birthdateMonth == null) {
+      return null;
+    } else if (_birthdateYear == null) {
+      final date = DateTime(2000, _birthdateMonth, value);
+      if (date.day != value) {
+        return 'Invalid date';
+      }
+      return null;
+    }
+
+    final date = DateTime(_birthdateYear, _birthdateMonth, value);
+    if (date.day != value) {
+      return 'Invalid date';
+    }
+    return null;
   }
 
   Gender get gender => _gender;
   void setGender(Gender newGender) => _gender = newGender;
-
-  DateTime get birthdate => _birthdate;
-  void setBirthdate(DateTime newBirthdate) => _birthdate = newBirthdate;
 
   Country get country => _country;
   void setCountry(Country newCountry) => _country = newCountry;
@@ -101,7 +130,7 @@ class _ProfileFormModel {
   String get biography => _biography;
   void setBiography(String newBiography) => _biography = newBiography;
 
-  ProfileUpdateRequest toUpdateRequest() => ProfileUpdateRequest(biography: biography, birthdate: birthdate, country: country, gender: gender);
+  ProfileUpdateRequest toUpdateRequest() => ProfileUpdateRequest(biography: biography, birthdate: DateTime.utc(birthdateYear, birthdateMonth, birthdateDay), country: country, gender: gender);
 }
 
 class _ProfileForm extends StatefulWidget {
@@ -228,6 +257,10 @@ class _GenderFormField extends StatelessWidget {
 }
 
 class _BirthdateFormField extends StatelessWidget {
+  static final _monthFormatter = DateFormat('MMM');
+  static final _maxYear = DateTime.now().year;
+  static final _minYear = _maxYear - 100;
+  static final _monthNames = [for (int i = 1; i <= 12; i++) _monthFormatter.format(DateTime(2000, i, 1))];
 
   @override
   Widget build(BuildContext context) {
@@ -237,24 +270,47 @@ class _BirthdateFormField extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.all(Radius.circular(10))),
       padding: EdgeInsets.all(10),
-      child: DateTimeField(
-        format: DateFormat('d MMM yyyy'),
-        onSaved: model.setBirthdate,
-        onFieldSubmitted: model.setBirthdate,
-        initialValue: model.birthdate,
-        decoration: InputDecoration(
-            hintText: 'Select birthdate',
-            icon: Icon(Icons.cake)),
-        onShowPicker: (context, currentValue) {
-          return showDatePicker(
-              context: context,
-              initialDatePickerMode: DatePickerMode.year,
-              firstDate: DateTime(1900),
-              initialDate: currentValue ?? DateTime.now(),
-              lastDate: DateTime(2100));
-        },
-      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Flexible(child: _buildDayDropdown(model)),
+          Flexible(child: _buildMonthDropdown(model)),
+          Flexible(child: _buildYearDropdown(model)),
+        ],
+      )
     );
+  }
+
+  DropdownButtonFormField<int> _buildYearDropdown(_ProfileFormModel model) {
+    return DropdownButtonFormField(
+          onChanged: model.setBithdateYear,
+          value: model.birthdateYear,
+          hint: Text('Year'),
+          icon: Row(children: <Widget>[Icon(Icons.expand_more), SizedBox(width: 10)]),
+          items: [for(var i=_minYear; i<_maxYear; i+=1) DropdownMenuItem(value: i, child: Text(i.toString()))],
+        );
+  }
+
+  DropdownButtonFormField<int> _buildMonthDropdown(_ProfileFormModel model) {
+    return DropdownButtonFormField(
+            onChanged: model.setBithdateMonth,
+            value: model.birthdateMonth,
+            hint: Text('Month'),
+            icon: Row(children: <Widget>[Icon(Icons.expand_more), SizedBox(width: 10)]),
+            items: [for(var i=1; i<=12; i+=1) DropdownMenuItem(value: i, child: Text(_monthNames[i-1]))],
+          );
+  }
+
+  DropdownButtonFormField<int> _buildDayDropdown(_ProfileFormModel model) {
+    return DropdownButtonFormField(
+          onChanged: model.setBithdateDay,
+          value: model.birthdateDay,
+          decoration: InputDecoration(icon: Icon(Icons.cake)),
+          hint: Text('Day'),
+          icon: Row(children: <Widget>[Icon(Icons.expand_more), SizedBox(width: 10)]),
+          items: [for(var i=1; i<=31; i+=1) DropdownMenuItem(value: i, child: Text(i.toString()))],
+          validator: model.validateBirthdateDay,
+        );
   }
 }
 
