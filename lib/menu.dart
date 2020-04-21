@@ -64,7 +64,7 @@ class _MenuBar extends StatelessWidget {
   }
 
   Widget _buildUploadBadge(BuildContext context, MediaUploadList uploads, Widget child) {
-    if (uploads != null) {
+    if (uploads != null && uploads.length > 0) {
       return Badge(
         badgeColor: Colors.grey,
         badgeContent: Text(uploads.length.toString()),

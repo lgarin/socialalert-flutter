@@ -85,7 +85,7 @@ class _ProfileFormModel {
   int _birthdateYear;
 
   _ProfileFormModel(UserProfile profile) {
-    _country = Country(profile.country, null);
+    _country = profile.country != null ? Country(profile.country, null) : null;
     _biography = profile.biography;
     final birthdate = profile.birthdate != null ? DateTime.parse(profile.birthdate) : null;
     _birthdateDay = birthdate?.day;
@@ -101,22 +101,50 @@ class _ProfileFormModel {
   int get birthdateYear => _birthdateYear;
   void setBithdateYear(int value) => _birthdateYear = value;
 
-  String validateBirthdateDay(int value) {
+  String validateBirthdateYear(int value) {
+    if (value != null) {
+      if (value < 1900 || value > 2100) {
+        return 'Invalid year';
+      }
+    }
     if (value == null) {
-      return null;
-    } else if (_birthdateMonth == null) {
-      return null;
-    } else if (_birthdateYear == null) {
-      final date = DateTime(2000, _birthdateMonth, value);
-      if (date.day != value) {
+      if (_birthdateDay != null || _birthdateMonth != null) {
+        return 'Select year';
+      }
+    }
+    return null;
+  }
+
+  String validateBirthdateMonth(int value) {
+    if (value != null) {
+      if (value < 1 || value > 12) {
+        return 'Invalid month';
+      }
+    }
+    if (value == null) {
+      if (_birthdateDay != null || _birthdateYear != null) {
+        return 'Select month';
+      }
+    }
+    return null;
+  }
+
+  String validateBirthdateDay(int value) {
+    if (value != null) {
+      if (value < 1 || value > 31) {
         return 'Invalid date';
       }
-      return null;
+      if (_birthdateYear != null && _birthdateMonth != null) {
+        final date = DateTime(_birthdateYear, _birthdateMonth, value);
+        if (date.day != value) {
+          return 'Invalid date';
+        }
+      }
     }
-
-    final date = DateTime(_birthdateYear, _birthdateMonth, value);
-    if (date.day != value) {
-      return 'Invalid date';
+    if (value == null) {
+      if (_birthdateMonth != null || _birthdateYear != null) {
+        return 'Select date';
+      }
     }
     return null;
   }
@@ -274,10 +302,19 @@ class _BirthdateFormField extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Flexible(child: _buildDayDropdown(model)),
+          SizedBox(width: 10),
           Flexible(child: _buildMonthDropdown(model)),
+          SizedBox(width: 10),
           Flexible(child: _buildYearDropdown(model)),
         ],
       )
+    );
+  }
+
+  DropdownMenuItem<int> _buildDropdownMenuItem(int value, String text) {
+    return DropdownMenuItem(
+      value: value,
+      child: Text(text),
     );
   }
 
@@ -287,7 +324,8 @@ class _BirthdateFormField extends StatelessWidget {
           value: model.birthdateYear,
           hint: Text('Year'),
           icon: Row(children: <Widget>[Icon(Icons.expand_more), SizedBox(width: 10)]),
-          items: [for(var i=_minYear; i<_maxYear; i+=1) DropdownMenuItem(value: i, child: Text(i.toString()))],
+          items: [for(var i=_minYear; i<_maxYear; i+=1) _buildDropdownMenuItem(i, i.toString())],
+          validator: model.validateBirthdateYear,
         );
   }
 
@@ -297,7 +335,8 @@ class _BirthdateFormField extends StatelessWidget {
             value: model.birthdateMonth,
             hint: Text('Month'),
             icon: Row(children: <Widget>[Icon(Icons.expand_more), SizedBox(width: 10)]),
-            items: [for(var i=1; i<=12; i+=1) DropdownMenuItem(value: i, child: Text(_monthNames[i-1]))],
+            items: [for(var i=1; i<=12; i+=1) _buildDropdownMenuItem(i, _monthNames[i-1])],
+            validator: model.validateBirthdateMonth,
           );
   }
 
@@ -308,7 +347,7 @@ class _BirthdateFormField extends StatelessWidget {
           decoration: InputDecoration(icon: Icon(Icons.cake)),
           hint: Text('Day'),
           icon: Row(children: <Widget>[Icon(Icons.expand_more), SizedBox(width: 10)]),
-          items: [for(var i=1; i<=31; i+=1) DropdownMenuItem(value: i, child: Text(i.toString()))],
+          items: [for(var i=1; i<=31; i+=1) _buildDropdownMenuItem(i, i.toString())],
           validator: model.validateBirthdateDay,
         );
   }
