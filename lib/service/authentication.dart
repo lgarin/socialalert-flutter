@@ -2,42 +2,22 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/widgets.dart';
 import 'package:social_alert_app/service/credential.dart';
+import 'package:social_alert_app/service/dataobjet.dart';
 import 'package:social_alert_app/service/httpservice.dart';
 import 'package:social_alert_app/service/serviceprodiver.dart';
 
-class UserStatistic {
-  final int hitCount;
-  final int likeCount;
-  final int dislikeCount;
-  final int followerCount;
-  final int pictureCount;
-  final int videoCount;
-  final int commentCount;
-
-  UserStatistic.fromJson(Map<String, dynamic> json) :
-        hitCount = json['hitCount'],
-        likeCount = json['likeCount'],
-        dislikeCount = json['dislikeCount'],
-        followerCount = json['followerCount'],
-        pictureCount = json['pictureCount'],
-        videoCount = json['videoCount'],
-        commentCount = json['commentCount'];
-
-  int get mediaCount => pictureCount + videoCount;
-}
-
-class LoginTokenResponse {
+class _LoginTokenResponse {
   final String accessToken;
   final String refreshToken;
   final int expiration;
 
-  LoginTokenResponse.fromJson(Map<String, dynamic> json) :
+  _LoginTokenResponse.fromJson(Map<String, dynamic> json) :
         accessToken = json['accessToken'],
         refreshToken =  json['refreshToken'],
         expiration = json['expiration'];
 }
 
-class LoginResponse extends LoginTokenResponse {
+class _LoginResponse extends _LoginTokenResponse {
   final String userId;
   final String username;
 
@@ -49,7 +29,7 @@ class LoginResponse extends LoginTokenResponse {
   final String imageUri;
   final UserStatistic statistic;
 
-  LoginResponse.fromJson(Map<String, dynamic> json) :
+  _LoginResponse.fromJson(Map<String, dynamic> json) :
     userId = json['id'],
     username = json['username'],
     email = json['email'],
@@ -68,20 +48,20 @@ class _AuthenticationApi {
 
   _AuthenticationApi(this.httpService);
 
-  Future<LoginResponse> loginUser(Credential credential) async {
+  Future<_LoginResponse> loginUser(Credential credential) async {
     final response = await httpService.postJson(uri: '/user/login', body: credential);
     if (response.statusCode == 200) {
-      return LoginResponse.fromJson(jsonDecode(response.body));
+      return _LoginResponse.fromJson(jsonDecode(response.body));
     } else if (response.statusCode == 401) {
       throw 'Bad credential';
     }
     throw response.reasonPhrase;
   }
 
-  Future<LoginTokenResponse> renewLogin(String refreshToken) async {
+  Future<_LoginTokenResponse> renewLogin(String refreshToken) async {
     final response = await httpService.postText(uri: '/user/renewLogin', body: refreshToken);
     if (response.statusCode == 200) {
-      return LoginTokenResponse.fromJson(jsonDecode(response.body));
+      return _LoginTokenResponse.fromJson(jsonDecode(response.body));
     } else if (response.statusCode == 401) {
       throw 'Session timeout';
     }
@@ -107,7 +87,6 @@ class _AuthenticationApi {
   }
 }
 
-
 class _AuthToken {
   static const refreshTokenDelta = 10000;
 
@@ -115,7 +94,7 @@ class _AuthToken {
   final refreshToken;
   final _expiration;
 
-  _AuthToken(LoginTokenResponse login)
+  _AuthToken(_LoginTokenResponse login)
       : accessToken = login.accessToken,
         refreshToken = login.refreshToken,
         _expiration = login.expiration;
@@ -137,7 +116,7 @@ class UserProfile {
   final String gender;
   final UserStatistic statistic;
 
-  UserProfile(LoginResponse login) :
+  UserProfile(_LoginResponse login) :
       userId = login.userId,
       username = login.username,
       email = login.email,

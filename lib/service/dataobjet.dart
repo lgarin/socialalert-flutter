@@ -66,38 +66,50 @@ class MediaInfo {
   }
 }
 
-class CreatorStatistic {
+class UserInfo {
+  final String userId;
+  final String username;
+  final bool online;
+  final String email;
+  final String country;
+  final String imageUri;
+  final String birthdate;
+  final String biography;
+  final String gender;
+  final UserStatistic statistic;
+
+  UserInfo.fromJson(Map<String, dynamic> json) :
+        userId = json['id'],
+        username = json['username'],
+        online = json['online'],
+        email = json['email'],
+        country = json['country'],
+        biography = json['biography'],
+        birthdate = json['birthdate'],
+        gender = json['gender'],
+        imageUri = json['imageUri'],
+        statistic = UserStatistic.fromJson(json['statistic']);
+}
+
+class UserStatistic {
   final int hitCount;
   final int likeCount;
+  final int dislikeCount;
   final int followerCount;
   final int pictureCount;
   final int videoCount;
   final int commentCount;
 
-  CreatorStatistic.fromJson(Map<String, dynamic> json) :
+  UserStatistic.fromJson(Map<String, dynamic> json) :
         hitCount = json['hitCount'],
         likeCount = json['likeCount'],
+        dislikeCount = json['dislikeCount'],
         followerCount = json['followerCount'],
         pictureCount = json['pictureCount'],
         videoCount = json['videoCount'],
         commentCount = json['commentCount'];
 
   int get mediaCount => pictureCount + videoCount;
-}
-
-class CreatorInfo {
-  final String id;
-  final String username;
-  final bool online;
-  final String imageUri;
-  final CreatorStatistic statistic;
-
-  CreatorInfo.fromJson(Map<String, dynamic> json) :
-        id = json['id'],
-        username = json['username'],
-        online = json['online'],
-        imageUri = json['imageUri'],
-        statistic = CreatorStatistic.fromJson(json['statistic']);
 }
 
 class MediaDetail extends MediaInfo {
@@ -112,7 +124,7 @@ class MediaDetail extends MediaInfo {
   final String category;
   final List<String> tags;
   final ApprovalModifier userApprovalModifier;
-  final CreatorInfo creator;
+  final UserInfo creator;
   final String cameraMaker;
   final String cameraModel;
 
@@ -125,7 +137,7 @@ class MediaDetail extends MediaInfo {
         category = json['category'],
         tags = List<String>.from(json['tags']),
         userApprovalModifier = json['userApprovalModifier'] != null ? _approvalModifierMap[json['userApprovalModifier']] : null,
-        creator = CreatorInfo.fromJson(json['creator']),
+        creator = UserInfo.fromJson(json['creator']),
         cameraMaker = json['cameraMaker'],
         cameraModel = json['cameraModel'],
         super.fromJson(json);
@@ -161,7 +173,7 @@ class MediaCommentInfo {
   final String comment;
   final DateTime creation;
   final String id;
-  final CreatorInfo creator;
+  final UserInfo creator;
   final MediaInfo media;
   final int likeCount;
   final int dislikeCount;
@@ -171,7 +183,7 @@ class MediaCommentInfo {
         comment = json['comment'],
         creation = DateTime.fromMillisecondsSinceEpoch(json['creation']),
         id = json['id'],
-        creator = json['creator'] != null ? CreatorInfo.fromJson(json['creator']) : null,
+        creator = json['creator'] != null ? UserInfo.fromJson(json['creator']) : null,
         media = json['media'] != null ? MediaInfo.fromJson(json['media']) : null,
         likeCount = json['likeCount'],
         dislikeCount = json['dislikeCount'],
