@@ -11,11 +11,13 @@ import 'package:social_alert_app/base.dart';
 import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/service/authentication.dart';
+import 'package:social_alert_app/service/commentquery.dart';
 import 'package:social_alert_app/service/eventbus.dart';
-import 'package:social_alert_app/service/mediamodel.dart';
+import 'package:social_alert_app/service/dataobjet.dart';
 import 'package:social_alert_app/service/mediaquery.dart';
 import 'package:social_alert_app/service/profileupdate.dart';
 import 'package:social_alert_app/thumbnail.dart';
+import 'package:timeago_flutter/timeago_flutter.dart';
 
 class ProfileAvatar extends StatelessWidget {
   static const LARGE_RADIUS = 60.0;
@@ -614,12 +616,13 @@ class _ProfileTabPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tabSelectionModel = Provider.of<_ProfileTabSelectionModel>(context);
+    final userProfile = Provider.of<UserProfile>(context, listen: false);
     if (tabSelectionModel.informationSelected) {
       return _ProfileInformationPanel();
     } else if (tabSelectionModel.gallerySelected) {
-      return _ProfileGalleryPanel();
+      return _ProfileGalleryPanel(userProfile.userId);
     } else if (tabSelectionModel.feedSelected) {
-      return _ProfileFeedPanel();
+      return _UserCommentList(userProfile.userId);
     } else {
       return null;
     }
@@ -742,6 +745,10 @@ class _CountryFlagWidget extends StatelessWidget {
 
 class _ProfileGalleryPanel extends StatefulWidget {
 
+  final String userId;
+
+  _ProfileGalleryPanel(this.userId) : super(key: ValueKey(userId));
+
   @override
   _ProfileGalleryPanelState createState() => _ProfileGalleryPanelState();
 }
@@ -750,10 +757,8 @@ class _ProfileGalleryPanelState extends BasePagingState<_ProfileGalleryPanel, Me
   static final spacing = 4.0;
 
   Future<MediaInfoPage> loadNextPage(PagingParameter parameter) {
-    final profile = Provider.of<UserProfile>(context, listen: false);
-    return MediaQueryService.current(context).listUserMedia(profile.userId, parameter);
+    return MediaQueryService.current(context).listUserMedia(widget.userId, parameter);
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -803,12 +808,83 @@ class _ProfileGalleryPanelState extends BasePagingState<_ProfileGalleryPanel, Me
   }
 }
 
-class _ProfileFeedPanel extends StatelessWidget {
+class _UserCommentList extends StatefulWidget {
+
+  final String userId;
+
+  _UserCommentList(this.userId) : super(key: ValueKey(userId));
+
+  @override
+  _UserCommentListState createState() => _UserCommentListState();
+}
+
+class _UserCommentListState extends BasePagingState<_UserCommentList, MediaCommentInfo> {
 
   @override
   Widget build(BuildContext context) {
     final height = MediaQuery.of(context).size.height - ProfileHeader.height;
-    return SizedBox(height: height, child: _buildNoContent(context));
+    return SizedBox(height: height, child: super.build(context));
+  }
+
+  @override
+  Widget buildContent(BuildContext context, List<MediaCommentInfo> data) {
+    if (data.isEmpty) {
+      return _buildNoContent(context);
+    }
+
+    return ListView(
+      children: ListTile.divideTiles(
+        context: context,
+        tiles: data.map(_buildTile).toList(),
+      ).toList(),
+    );
+  }
+
+  ListTile _buildTile(MediaCommentInfo commentInfo) {
+    return ListTile(
+      key: ValueKey(commentInfo.id),
+      //leading: MediaThumbnailTile(media: commentInfo.media),
+      title: _buildTitle(commentInfo),
+      subtitle: Text(commentInfo.comment, softWrap: true),
+      trailing: ConstrainedBox(constraints: BoxConstraints.tightFor(width: 30), child: _buildStatistic(commentInfo)),
+    );
+  }
+
+  Row _buildTitle(MediaCommentInfo commentInfo) {
+    return Row(
+      children: <Widget>[
+        Text(commentInfo.creator.username, style: Theme.of(context).textTheme.subtitle1,),
+        Spacer(),
+        Timeago(date: commentInfo.creation,
+          builder: (_, value) => Text(value, style: Theme.of(context).textTheme.caption.copyWith(fontStyle: FontStyle.italic)),
+        )
+      ],
+    );
+  }
+
+  Column _buildStatistic(MediaCommentInfo commentInfo) {
+    return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: <Widget>[
+          SizedBox(height: 10),
+          Row(children: <Widget>[
+            Icon(Icons.thumb_up, size: 14),
+            SizedBox(width: 4,),
+            Text(commentInfo.likeCount.toString(), style: TextStyle(fontSize: 12)),
+          ]),
+          SizedBox(height: 4),
+          Row(children: <Widget>[
+            Icon(Icons.thumb_down, size: 14),
+            SizedBox(width: 4,),
+            Text(commentInfo.dislikeCount.toString(), style: TextStyle(fontSize: 12)),
+          ]),
+        ]);
+  }
+
+  @override
+  Future<ResultPage<MediaCommentInfo>> loadNextPage(PagingParameter parameter) {
+    return CommentQueryService.current(context).listUserComments(widget.userId, parameter);
   }
 
   Column _buildNoContent(BuildContext context) {

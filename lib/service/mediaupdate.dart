@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter/widgets.dart';
 import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/httpservice.dart';
-import 'package:social_alert_app/service/mediamodel.dart';
+import 'package:social_alert_app/service/dataobjet.dart';
 import 'package:social_alert_app/service/serviceprodiver.dart';
 
 class _MediaUpdateApi {

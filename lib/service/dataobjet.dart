@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:social_alert_app/service/configuration.dart';
 import 'package:social_alert_app/service/geolocation.dart';
@@ -15,6 +15,31 @@ class PagingParameter {
         pageSize = json['pageSize'],
         timestamp = json['timestamp'];
 }
+
+typedef PageContentBuilder<T> = List<T> Function(List<dynamic> json);
+
+abstract class ResultPage<T> {
+  final List<T> content;
+  final PagingParameter nextPage;
+  final int pageCount;
+  final int pageNumber;
+
+  ResultPage.fromJson(Map<String, dynamic> json, PageContentBuilder<T> contentBuilder) :
+        content = contentBuilder(json['content']),
+        nextPage = json['nextPage'] != null ? PagingParameter.fromJson(json['nextPage']) : null,
+        pageCount = json['pageCount'],
+        pageNumber = json['pageNumber'];
+}
+
+enum ApprovalModifier {
+  LIKE,
+  DISLIKE,
+}
+
+const Map<String, ApprovalModifier> _approvalModifierMap = {
+  'LIKE': ApprovalModifier.LIKE,
+  'DISLIKE': ApprovalModifier.DISLIKE,
+};
 
 class MediaInfo {
   final String title;
@@ -40,16 +65,6 @@ class MediaInfo {
     return json.map((e) => MediaInfo.fromJson(e)).toList();
   }
 }
-
-enum ApprovalModifier {
-  LIKE,
-  DISLIKE,
-}
-
-const Map<String, ApprovalModifier> _approvalModifierMap = {
-  'LIKE': ApprovalModifier.LIKE,
-  'DISLIKE': ApprovalModifier.DISLIKE,
-};
 
 class CreatorStatistic {
   final int hitCount;
@@ -109,7 +124,7 @@ class MediaDetail extends MediaInfo {
         country = json['country'],
         category = json['category'],
         tags = List<String>.from(json['tags']),
-        userApprovalModifier = _approvalModifierMap[json['userApprovalModifier']],
+        userApprovalModifier = json['userApprovalModifier'] != null ? _approvalModifierMap[json['userApprovalModifier']] : null,
         creator = CreatorInfo.fromJson(json['creator']),
         cameraMaker = json['cameraMaker'],
         cameraModel = json['cameraModel'],
@@ -138,21 +153,6 @@ class MediaDetail extends MediaInfo {
   }
 }
 
-typedef PageContentBuilder<T> = List<T> Function(List<dynamic> json);
-
-abstract class ResultPage<T> {
-  final List<T> content;
-  final PagingParameter nextPage;
-  final int pageCount;
-  final int pageNumber;
-
-  ResultPage.fromJson(Map<String, dynamic> json, PageContentBuilder<T> contentBuilder) :
-        content = contentBuilder(json['content']),
-        nextPage = json['nextPage'] != null ? PagingParameter.fromJson(json['nextPage']) : null,
-        pageCount = json['pageCount'],
-        pageNumber = json['pageNumber'];
-}
-
 class MediaInfoPage extends ResultPage<MediaInfo> {
   MediaInfoPage.fromJson(Map<String, dynamic> json) : super.fromJson(json, MediaInfo.fromJsonList);
 }
@@ -162,6 +162,7 @@ class MediaCommentInfo {
   final DateTime creation;
   final String id;
   final CreatorInfo creator;
+  final MediaInfo media;
   final int likeCount;
   final int dislikeCount;
   final ApprovalModifier userApprovalModifier;
@@ -170,10 +171,11 @@ class MediaCommentInfo {
         comment = json['comment'],
         creation = DateTime.fromMillisecondsSinceEpoch(json['creation']),
         id = json['id'],
-        creator = CreatorInfo.fromJson(json['creator']),
+        creator = json['creator'] != null ? CreatorInfo.fromJson(json['creator']) : null,
+        media = json['media'] != null ? MediaInfo.fromJson(json['media']) : null,
         likeCount = json['likeCount'],
         dislikeCount = json['dislikeCount'],
-        userApprovalModifier = _approvalModifierMap[json['userApprovalModifier']];
+        userApprovalModifier = json['userApprovalModifier'] != null ? _approvalModifierMap[json['userApprovalModifier']] : null;
 
   static List<MediaCommentInfo> fromJsonList(List<dynamic> json) {
     return json.map((e) => MediaCommentInfo.fromJson(e)).toList();
@@ -212,4 +214,3 @@ class GeoStatistic {
     return json.map((e) => GeoStatistic.fromJson(e)).toList();
   }
 }
-

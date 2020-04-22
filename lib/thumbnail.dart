@@ -1,7 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:social_alert_app/service/configuration.dart';
-import 'package:social_alert_app/service/mediamodel.dart';
+import 'package:social_alert_app/service/dataobjet.dart';
 import 'package:social_alert_app/service/mediaquery.dart';
 
 typedef MediaSelectionCallback = void Function(MediaInfo);

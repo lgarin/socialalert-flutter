@@ -4,7 +4,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/configuration.dart';
 import 'package:social_alert_app/service/httpservice.dart';
-import 'package:social_alert_app/service/mediamodel.dart';
+import 'package:social_alert_app/service/dataobjet.dart';
 import 'package:social_alert_app/service/serviceprodiver.dart';
 
 class _MediaQueryApi {
@@ -53,16 +53,6 @@ class _MediaQueryApi {
     final response = await httpService.getJson(uri: uri, accessToken: accessToken);
     if (response.statusCode == 200) {
       return MediaDetail.fromJson(jsonDecode(response.body));
-    }
-    throw response.reasonPhrase;
-  }
-
-  Future<MediaCommentPage> listComments({@required String mediaUri, @required PagingParameter paging, @required String accessToken}) async {
-    final timestampParameter = paging.timestamp != null ? '&pagingTimestamp=${paging.timestamp}' : '';
-    final uri = '/media/comments/$mediaUri?pageNumber=${paging.pageNumber}&pageSize=${paging.pageSize}$timestampParameter';
-    final response = await httpService.getJson(uri: uri, accessToken: accessToken);
-    if (response.statusCode == 200) {
-      return MediaCommentPage.fromJson(jsonDecode(response.body));
     }
     throw response.reasonPhrase;
   }
@@ -156,16 +146,6 @@ class MediaQueryService extends Service {
       'Accept': 'image/jpeg',
       'Authorization': accessToken
     };
-  }
-
-  Future<MediaCommentPage> listComments(String mediaUri, PagingParameter paging) async {
-    final accessToken = await _authService.accessToken;
-    try {
-      return await _queryApi.listComments(mediaUri: mediaUri, paging: paging, accessToken: accessToken);
-    } catch (e) {
-      print(e);
-      throw e;
-    }
   }
 
   @override

@@ -9,7 +9,7 @@ import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/menu.dart';
 import 'package:social_alert_app/service/cameradevice.dart';
 import 'package:social_alert_app/service/geolocation.dart';
-import 'package:social_alert_app/service/mediamodel.dart';
+import 'package:social_alert_app/service/dataobjet.dart';
 import 'package:social_alert_app/service/mediaupload.dart';
 
 abstract class BasePageState<T extends StatefulWidget> extends State<T> {

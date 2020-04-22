@@ -16,7 +16,7 @@ class FeedDisplay extends StatelessWidget {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: <Widget>[
-        Icon(Icons.create, size: 100, color: Colors.grey),
+        Icon(Icons.forum, size: 100, color: Colors.grey),
         Text('No content yet', style: Theme
             .of(context)
             .textTheme

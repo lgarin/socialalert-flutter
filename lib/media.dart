@@ -9,8 +9,9 @@ import 'package:social_alert_app/profile.dart';
 import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/picture.dart';
+import 'package:social_alert_app/service/commentquery.dart';
 import 'package:social_alert_app/service/configuration.dart';
-import 'package:social_alert_app/service/mediamodel.dart';
+import 'package:social_alert_app/service/dataobjet.dart';
 import 'package:social_alert_app/service/mediaquery.dart';
 import 'package:social_alert_app/service/mediaupdate.dart';
 import 'package:timeago_flutter/timeago_flutter.dart';
@@ -360,27 +361,6 @@ class _MediaCommentList extends StatefulWidget {
   _MediaCommentListState createState() => _MediaCommentListState();
 }
 
-enum _CommentAction {
-  LIKE,
-  DISLIKE,
-}
-
-class _CommentActionItem {
-  final _CommentAction action;
-  final MediaCommentInfo item;
-
-  _CommentActionItem(this.action, this.item);
-
-  ApprovalModifier get modifier {
-    switch (action) {
-      case _CommentAction.LIKE: return ApprovalModifier.LIKE;
-      case _CommentAction.DISLIKE: return ApprovalModifier.DISLIKE;
-      default: return null;
-    }
-  }
-  String get commentId => item.id;
-}
-
 class _MediaCommentListState extends BasePagingState<_MediaCommentList, MediaCommentInfo> {
 
   @override
@@ -451,7 +431,7 @@ class _MediaCommentListState extends BasePagingState<_MediaCommentList, MediaCom
 
   @override
   Future<ResultPage<MediaCommentInfo>> loadNextPage(PagingParameter parameter) {
-    return MediaQueryService.current(context).listComments(widget.mediaUri, parameter);
+    return CommentQueryService.current(context).listMediaComments(widget.mediaUri, parameter);
   }
 
   Column _buildNoContent(BuildContext context) {
@@ -467,6 +447,27 @@ class _MediaCommentListState extends BasePagingState<_MediaCommentList, MediaCom
       ],
     );
   }
+}
+
+enum _CommentAction {
+  LIKE,
+  DISLIKE,
+}
+
+class _CommentActionItem {
+  final _CommentAction action;
+  final MediaCommentInfo item;
+
+  _CommentActionItem(this.action, this.item);
+
+  ApprovalModifier get modifier {
+    switch (action) {
+      case _CommentAction.LIKE: return ApprovalModifier.LIKE;
+      case _CommentAction.DISLIKE: return ApprovalModifier.DISLIKE;
+      default: return null;
+    }
+  }
+  String get commentId => item.id;
 }
 
 class _ApprovalButton extends StatelessWidget {

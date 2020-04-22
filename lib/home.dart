@@ -187,8 +187,8 @@ class _HomePageState extends BasePageState<HomePage> with SingleTickerProviderSt
             title: Text('Snypes'),
           ),
           new BottomNavigationBarItem(
-            icon: Icon(Icons.create),
-            title: Text('Scribes'),
+            icon: Icon(Icons.forum),
+            title: Text('Feed'),
           ),
           new BottomNavigationBarItem(
               icon: Icon(Icons.place),

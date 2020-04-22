@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:social_alert_app/base.dart';
 import 'package:social_alert_app/main.dart';
-import 'package:social_alert_app/service/mediamodel.dart';
+import 'package:social_alert_app/service/dataobjet.dart';
 import 'package:social_alert_app/service/mediaquery.dart';
 import 'package:social_alert_app/thumbnail.dart';
 
