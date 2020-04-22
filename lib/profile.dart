@@ -12,6 +12,7 @@ import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/commentquery.dart';
+import 'package:social_alert_app/service/configuration.dart';
 import 'package:social_alert_app/service/eventbus.dart';
 import 'package:social_alert_app/service/dataobjet.dart';
 import 'package:social_alert_app/service/mediaquery.dart';
@@ -843,18 +844,39 @@ class _UserCommentListState extends BasePagingState<_UserCommentList, MediaComme
   ListTile _buildTile(MediaCommentInfo commentInfo) {
     return ListTile(
       key: ValueKey(commentInfo.id),
-      //leading: MediaThumbnailTile(media: commentInfo.media),
+      leading: _buildThumbnail(commentInfo),
       title: _buildTitle(commentInfo),
-      subtitle: Text(commentInfo.comment, softWrap: true),
-      trailing: ConstrainedBox(constraints: BoxConstraints.tightFor(width: 30), child: _buildStatistic(commentInfo)),
+      subtitle: _buildContent(commentInfo),
+    );
+  }
+
+  Widget _buildThumbnail(MediaCommentInfo commentInfo) {
+    return GestureDetector(
+      child: Image.network(MediaQueryService.toThumbnailUrl(commentInfo.media.mediaUri),
+              fit: BoxFit.cover, cacheHeight: thumbnailHeight, cacheWidth: thumbnailWidth, width: 80, height: 45
+      ),
+      onTap: () => _onThumbnailSelection(commentInfo.media),
+    );
+  }
+
+  void _onThumbnailSelection(MediaInfo media) async {
+    print(media.mediaUri);
+    await Navigator.of(context).pushNamed<MediaDetail>(AppRoute.RemotePictureDetail, arguments: media);
+  }
+
+  Widget _buildContent(MediaCommentInfo commentInfo) {
+    return Row(
+        children: <Widget>[
+          Expanded(child: Text(commentInfo.comment, softWrap: true)),
+          _buildStatistic(commentInfo)
+        ]
     );
   }
 
   Row _buildTitle(MediaCommentInfo commentInfo) {
     return Row(
       children: <Widget>[
-        Text(commentInfo.creator.username, style: Theme.of(context).textTheme.subtitle1,),
-        Spacer(),
+        Expanded(child: Text(commentInfo.media.title, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.subtitle1,)),
         Timeago(date: commentInfo.creation,
           builder: (_, value) => Text(value, style: Theme.of(context).textTheme.caption.copyWith(fontStyle: FontStyle.italic)),
         )
@@ -867,7 +889,6 @@ class _UserCommentListState extends BasePagingState<_UserCommentList, MediaComme
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.start,
         children: <Widget>[
-          SizedBox(height: 10),
           Row(children: <Widget>[
             Icon(Icons.thumb_up, size: 14),
             SizedBox(width: 4,),
