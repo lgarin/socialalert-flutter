@@ -16,6 +16,7 @@ import 'package:social_alert_app/service/configuration.dart';
 import 'package:social_alert_app/service/eventbus.dart';
 import 'package:social_alert_app/service/dataobjet.dart';
 import 'package:social_alert_app/service/mediaquery.dart';
+import 'package:social_alert_app/service/profilequery.dart';
 import 'package:social_alert_app/service/profileupdate.dart';
 import 'package:social_alert_app/thumbnail.dart';
 import 'package:timeago_flutter/timeago_flutter.dart';
@@ -545,7 +546,7 @@ class _ProfileViewerPageState extends _BaseProfilePageState<ProfileViewerPage> {
 
   final _tabSelectionModel = _ProfileTabSelectionModel();
   final _scrollController = ScrollController();
-  final UserProfile profileOverride;
+  UserProfile profileOverride;
 
   _ProfileViewerPageState(this.profileOverride) : super(AppRoute.ProfileViewer);
 
@@ -578,12 +579,28 @@ class _ProfileViewerPageState extends _BaseProfilePageState<ProfileViewerPage> {
     );
   }
 
-  void _followUser() {
-
+  void _followUser() async {
+    try {
+      await ProfileUpdateService.current(context).followUser(profileOverride.userId);
+      final newProfile = await ProfileQueryService.current(context).get(profileOverride.userId);
+      setState(() {
+        profileOverride = newProfile;
+      });
+    } catch (e) {
+      showSimpleDialog(context, 'Cannot start following user', e.toString());
+    }
   }
 
-  void _unfollowUser() {
-
+  void _unfollowUser() async {
+    try {
+      await ProfileUpdateService.current(context).unfollowUser(profileOverride.userId);
+      final newProfile = await ProfileQueryService.current(context).get(profileOverride.userId);
+      setState(() {
+        profileOverride = newProfile;
+      });
+    } catch (e) {
+      showSimpleDialog(context, 'Cannot stop following user', e.toString());
+    }
   }
 
   @override
@@ -603,7 +620,11 @@ class _ProfileViewerPageState extends _BaseProfilePageState<ProfileViewerPage> {
     return ListView(
       controller: _scrollController,
       children: <Widget>[
-        ProfileHeader(profileOverride: profileOverride, tapCallback: _choosePicture, uploadTaskId: _uploadTaskId),
+        ProfileHeader(
+            profileOverride: profileOverride,
+            tapCallback: profileOverride == null ? _choosePicture : null,
+            uploadTaskId: _uploadTaskId
+        ),
         _buildBottomPanel(context),
       ],
     );

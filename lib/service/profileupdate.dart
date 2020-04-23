@@ -120,6 +120,24 @@ class _ProfileUpdateApi {
     }
     throw response.reasonPhrase;
   }
+
+  Future<void> followUser(String userId, String accessToken) async {
+    final uri = '/user/follow/$userId';
+    final response = await httpService.post(uri: uri,accessToken: accessToken);
+    if (response.statusCode == 201 || response.statusCode == 200) {
+      return;
+    }
+    throw response.reasonPhrase;
+  }
+
+  Future<void> unfollowUser(String userId, String accessToken) async {
+    final uri = '/user/unfollow/$userId';
+    final response = await httpService.post(uri: uri,accessToken: accessToken);
+    if (response.statusCode == 201 || response.statusCode == 200) {
+      return;
+    }
+    throw response.reasonPhrase;
+  }
 }
 
 class ProfileUpdateService extends Service {
@@ -147,8 +165,8 @@ class ProfileUpdateService extends Service {
   }
 
   Future<String> beginAvatarUpload(String title, File file) async {
+    final accessToken = await _authService.accessToken;
     try {
-      final accessToken = await _authService.accessToken;
       return await _updateApi.enqueueAvatar(title: title, file: file, accessToken: accessToken);
     } catch (e) {
       print(e);
@@ -203,6 +221,26 @@ class ProfileUpdateService extends Service {
       final profile = await _updateApi.updateProfile(request, accessToken);
       _profileController.add(profile);
       return profile;
+    } catch (e) {
+      print(e);
+      throw e;
+    }
+  }
+
+  Future<void> followUser(String userId) async {
+    final accessToken = await _authService.accessToken;
+    try {
+      return await _updateApi.followUser(userId, accessToken);
+    } catch (e) {
+      print(e);
+      throw e;
+    }
+  }
+
+  Future<void> unfollowUser(String userId) async {
+    final accessToken = await _authService.accessToken;
+    try {
+      return await _updateApi.unfollowUser(userId, accessToken);
     } catch (e) {
       print(e);
       throw e;
