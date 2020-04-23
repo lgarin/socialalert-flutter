@@ -154,6 +154,7 @@ class MediaDetail extends MediaInfo {
     }
   }
 
+  // TODO this information should be delivered by the server
   String get format => numberFormat.format(previewHeight * previewWidth / oneMega) + 'MP - $previewWidth x $previewHeight';
 
   String get camera {

@@ -9,11 +9,13 @@ import 'package:social_alert_app/profile.dart';
 import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/picture.dart';
+import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/commentquery.dart';
 import 'package:social_alert_app/service/configuration.dart';
 import 'package:social_alert_app/service/dataobjet.dart';
 import 'package:social_alert_app/service/mediaquery.dart';
 import 'package:social_alert_app/service/mediaupdate.dart';
+import 'package:social_alert_app/service/profilequery.dart';
 import 'package:timeago_flutter/timeago_flutter.dart';
 
 class _MediaInfoModel with ChangeNotifier {
@@ -154,33 +156,51 @@ class _RemotePictureDetailPageState extends BasePageState<RemotePictureDetailPag
     );
   }
 
+  void _showUserProfile(String userId) async {
+    final currentProfile = Provider.of<UserProfile>(context, listen: false);
+    if (userId != currentProfile.userId) {
+      final profile = await ProfileQueryService.current(context).get(userId);
+      Navigator.pushNamed(context, AppRoute.ProfileViewer, arguments: profile);
+    } else {
+      Navigator.pushNamed(context, AppRoute.ProfileViewer);
+    }
+  }
+
   Widget _buildCreatorBanner(BuildContext context, MediaDetail media) {
     return ListTile(
       contentPadding: EdgeInsets.symmetric(horizontal: 5.0),
       dense: true,
       isThreeLine: true,
-      leading: ProfileAvatar(imageUri: media.creator.imageUri, online: media.creator.online, radius: 50.0),
+      leading: ProfileAvatar(radius: 50.0,
+          imageUri: media.creator.imageUri,
+          online: media.creator.online,
+          tapCallback: () => _showUserProfile(media.creator.userId),
+      ),
       trailing: Timeago(date: media.timestamp, builder: (_, value) => Text(value, style: TextStyle(fontStyle: FontStyle.italic))),
       title: Text(media.creator.username, style: Theme.of(context).textTheme.headline6),
-      subtitle: Row(
-        children: <Widget>[
-          Icon(Icons.people, size: 14, color: Colors.black),
-          SizedBox(width: 4,),
-          Text(media.creator.statistic.followerCount.toString(), style: TextStyle(fontSize: 12, color: Colors.black)),
-          Spacer(),
-          Icon(Icons.thumb_up, size: 14, color: Colors.black),
-          SizedBox(width: 4,),
-          Text(media.creator.statistic.likeCount.toString(), style: TextStyle(fontSize: 12, color: Colors.black)),
-          Spacer(),
-          Icon(Icons.panorama, size: 14, color: Colors.black),
-          SizedBox(width: 4,),
-          Text(media.creator.statistic.mediaCount.toString(), style: TextStyle(fontSize: 12, color: Colors.black)),
-          Spacer(),
-          Icon(Icons.create, size: 14, color: Colors.black),
-          SizedBox(width: 4,),
-          Text(media.creator.statistic.commentCount.toString(), style: TextStyle(fontSize: 12, color: Colors.black)),
-        ],
-      ),
+      subtitle: _buildCreatorStatistic(media),
+    );
+  }
+
+  Row _buildCreatorStatistic(MediaDetail media) {
+    return Row(
+      children: <Widget>[
+        Icon(Icons.people, size: 14, color: Colors.black),
+        SizedBox(width: 4,),
+        Text(media.creator.statistic.followerCount.toString(), style: TextStyle(fontSize: 12, color: Colors.black)),
+        Spacer(),
+        Icon(Icons.thumb_up, size: 14, color: Colors.black),
+        SizedBox(width: 4,),
+        Text(media.creator.statistic.likeCount.toString(), style: TextStyle(fontSize: 12, color: Colors.black)),
+        Spacer(),
+        Icon(Icons.panorama, size: 14, color: Colors.black),
+        SizedBox(width: 4,),
+        Text(media.creator.statistic.mediaCount.toString(), style: TextStyle(fontSize: 12, color: Colors.black)),
+        Spacer(),
+        Icon(Icons.create, size: 14, color: Colors.black),
+        SizedBox(width: 4,),
+        Text(media.creator.statistic.commentCount.toString(), style: TextStyle(fontSize: 12, color: Colors.black)),
+      ],
     );
   }
 }
@@ -377,10 +397,24 @@ class _MediaCommentListState extends BasePagingState<_MediaCommentList, MediaCom
     );
   }
 
+  void _showUserProfile(String userId) async {
+    final currentProfile = Provider.of<UserProfile>(context, listen: false);
+    if (userId != currentProfile.userId) {
+      final profile = await ProfileQueryService.current(context).get(userId);
+      Navigator.pushNamed(context, AppRoute.ProfileViewer, arguments: profile);
+    } else {
+      Navigator.pushNamed(context, AppRoute.ProfileViewer);
+    }
+  }
+
   ListTile _buildTile(MediaCommentInfo commentInfo) {
     return ListTile(
       key: ValueKey(commentInfo.id),
-      leading: ProfileAvatar(imageUri: commentInfo.creator.imageUri, online: commentInfo.creator.online, radius: 50.0),
+      leading: ProfileAvatar(radius: 50.0,
+          imageUri: commentInfo.creator.imageUri,
+          online: commentInfo.creator.online,
+          tapCallback: () => _showUserProfile(commentInfo.creator.userId)
+      ),
       title: Row(
         children: <Widget>[
           Text(commentInfo.creator.username, style: Theme.of(context).textTheme.subtitle1,),

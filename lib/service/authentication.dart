@@ -115,8 +115,9 @@ class UserProfile {
   final String biography;
   final String gender;
   final UserStatistic statistic;
+  final bool followed;
 
-  UserProfile(_LoginResponse login) :
+  UserProfile.fromLogin(_LoginResponse login) :
       userId = login.userId,
       username = login.username,
       email = login.email,
@@ -125,9 +126,22 @@ class UserProfile {
       birthdate = login.birthdate,
       biography = login.biography,
       gender = login.gender,
-      statistic = login.statistic;
+      statistic = login.statistic,
+      followed = null;
 
-  UserProfile.offline() : userId = null, username = null, email = null, country = null, imageUri = null, birthdate = null, biography = null, gender = null, statistic = null;
+  UserProfile.fromInfo(UserInfo info) :
+        userId = info.userId,
+        username = info.username,
+        email = info.email,
+        imageUri = info.imageUri,
+        country = info.country,
+        birthdate = info.birthdate,
+        biography = info.biography,
+        gender = info.gender,
+        statistic = info.statistic,
+        followed = null;
+
+  UserProfile.offline() : userId = null, username = null, email = null, country = null, imageUri = null, birthdate = null, biography = null, gender = null, statistic = null, followed = null;
 
   UserProfile.fromJson(Map<String, dynamic> json) :
         userId = json['id'],
@@ -138,7 +152,8 @@ class UserProfile {
         birthdate = json['birthdate'],
         gender = json['gender'],
         imageUri = json['imageUri'],
-        statistic = UserStatistic.fromJson(json['statistic']);
+        statistic = UserStatistic.fromJson(json['statistic']),
+        followed = json['followed'];
 
   bool get offline => userId == null;
 }
@@ -171,7 +186,7 @@ class AuthService extends Service {
 
     _token = _AuthToken(login);
 
-    final profile = UserProfile(login);
+    final profile = UserProfile.fromLogin(login);
     _profileController.add(profile);
     return profile;
   }

@@ -27,17 +27,21 @@ class ProfileAvatar extends StatelessWidget {
   final bool online;
   final double radius;
   final String uploadTaskId;
+  final GestureTapCallback tapCallback;
 
-  ProfileAvatar({this.imageUri, this.online, @required this.radius, this.uploadTaskId});
+  ProfileAvatar({this.imageUri, this.online, @required this.radius, this.uploadTaskId, this.tapCallback});
 
   @override
   Widget build(BuildContext context) {
     final url = imageUri != null ? MediaQueryService.toAvatarUrl(imageUri, radius < LARGE_RADIUS) : null;
-    return Container(
-      width: radius,
-      height: radius,
-      decoration: _buildDecoration(url, context),
-      child: uploadTaskId != null ? _buildUploadProgress() : SizedBox(height: 0, width: 0),
+    return GestureDetector(
+      onTap: tapCallback,
+      child: Container(
+        width: radius,
+        height: radius,
+        decoration: _buildDecoration(url, context),
+        child: uploadTaskId != null ? _buildUploadProgress() : SizedBox(height: 0, width: 0),
+      )
     );
   }
 
@@ -529,16 +533,21 @@ class _ProfileEditorPageState extends _BaseProfilePageState<ProfileEditorPage> {
 }
 
 class ProfileViewerPage extends StatefulWidget {
+  final UserProfile profileOverride;
+
+  ProfileViewerPage(this.profileOverride);
+
   @override
-  _ProfileViewerPageState createState() => _ProfileViewerPageState();
+  _ProfileViewerPageState createState() => _ProfileViewerPageState(profileOverride);
 }
 
 class _ProfileViewerPageState extends _BaseProfilePageState<ProfileViewerPage> {
 
   final _tabSelectionModel = _ProfileTabSelectionModel();
   final _scrollController = ScrollController();
+  final UserProfile profileOverride;
 
-  _ProfileViewerPageState() : super(AppRoute.ProfileViewer);
+  _ProfileViewerPageState(this.profileOverride) : super(AppRoute.ProfileViewer);
 
   @override
   void initState() {
@@ -548,13 +557,33 @@ class _ProfileViewerPageState extends _BaseProfilePageState<ProfileViewerPage> {
 
   @override
   AppBar buildAppBar() {
-    return AppBar(title: Text("My profile"),
+    if (profileOverride != null) {
+      return AppBar(title: Text(profileOverride.username, overflow: TextOverflow.ellipsis),
+          actions: <Widget>[
+            IconButton(
+                onPressed: profileOverride.followed ? _unfollowUser : _followUser,
+                icon: Icon(profileOverride.followed ? Icons.speaker_notes_off : Icons.speaker_notes),
+                tooltip: profileOverride.followed ? 'Unfollow' : 'Follow',
+            ),
+            SizedBox(width: 20),
+          ]
+      );
+    }
+    return AppBar(title: Text('My profile'),
       actions: <Widget>[
         IconButton(onPressed: _choosePicture, icon: Icon(Icons.account_circle)),
         IconButton(onPressed: _editProfile, icon: Icon(Icons.assignment_ind)),
         SizedBox(width: 20),
       ]
     );
+  }
+
+  void _followUser() {
+
+  }
+
+  void _unfollowUser() {
+
   }
 
   @override
@@ -574,7 +603,7 @@ class _ProfileViewerPageState extends _BaseProfilePageState<ProfileViewerPage> {
     return ListView(
       controller: _scrollController,
       children: <Widget>[
-        ProfileHeader(tapCallback: _choosePicture, uploadTaskId: _uploadTaskId),
+        ProfileHeader(profileOverride: profileOverride, tapCallback: _choosePicture, uploadTaskId: _uploadTaskId),
         _buildBottomPanel(context),
       ],
     );
@@ -583,7 +612,7 @@ class _ProfileViewerPageState extends _BaseProfilePageState<ProfileViewerPage> {
   Widget _buildBottomPanel(BuildContext context) {
     return ChangeNotifierProvider.value(
       value: _tabSelectionModel,
-      child: _ProfileTabPanel(),
+      child: _ProfileTabPanel(profileOverride: profileOverride),
     );
   }
 }
@@ -598,15 +627,15 @@ class _ProfileBottomNavigationBar extends StatelessWidget {
         items: <BottomNavigationBarItem>[
           new BottomNavigationBarItem(
             icon: Icon(Icons.person),
-            title: Text('My info'),
+            title: Text('About'),
           ),
           new BottomNavigationBarItem(
             icon: Icon(Icons.panorama),
-            title: Text('My Snypes'),
+            title: Text('Snypes'),
           ),
           new BottomNavigationBarItem(
             icon: Icon(Icons.create),
-            title: Text('My Scribes'),
+            title: Text('Scribes'),
           )
         ]
     );
@@ -614,12 +643,16 @@ class _ProfileBottomNavigationBar extends StatelessWidget {
 }
 
 class _ProfileTabPanel extends StatelessWidget {
+  final UserProfile profileOverride;
+
+  _ProfileTabPanel({this.profileOverride});
+
   @override
   Widget build(BuildContext context) {
     final tabSelectionModel = Provider.of<_ProfileTabSelectionModel>(context);
-    final userProfile = Provider.of<UserProfile>(context, listen: false);
+    final userProfile = profileOverride == null ? Provider.of<UserProfile>(context) : profileOverride;
     if (tabSelectionModel.informationSelected) {
-      return _ProfileInformationPanel();
+      return _ProfileInformationPanel(userProfile);
     } else if (tabSelectionModel.gallerySelected) {
       return _ProfileGalleryPanel(userProfile.userId);
     } else if (tabSelectionModel.feedSelected) {
@@ -632,7 +665,11 @@ class _ProfileTabPanel extends StatelessWidget {
 
 class _ProfileInformationPanel extends StatelessWidget {
   static final birthdateFormat = DateFormat('d MMM yyyy');
-  
+
+  final UserProfile _profile;
+
+  _ProfileInformationPanel(this._profile);
+
   @override
   Widget build(BuildContext context) {
 
@@ -643,11 +680,10 @@ class _ProfileInformationPanel extends StatelessWidget {
   }
 
   Future<Country> findCountry(BuildContext context) {
-    final profile = Provider.of<UserProfile>(context, listen: false);
-    if (profile.country == null) {
+    if (_profile.country == null) {
       return null;
     }
-    return ProfileUpdateService.current(context).findCountry(profile.country);
+    return ProfileUpdateService.current(context).findCountry(_profile.country);
   }
 
   Widget _buildContent(BuildContext context, AsyncSnapshot<Country> countrySnapshot) {
@@ -655,25 +691,40 @@ class _ProfileInformationPanel extends StatelessWidget {
       return LoadingCircle();
     }
 
-    final profile = Provider.of<UserProfile>(context);
     return Column(
       children: <Widget>[
-        ListTile(leading: Icon(Icons.wc), title: Text('Gender'), subtitle: profile.gender != null ? _buildGender(fromGenderName(profile.gender)) : null, dense: true),
+        ListTile(leading: Icon(Icons.wc),
+            title: Text('Gender'),
+            subtitle: _profile.gender != null ? _buildGender() : null,
+            dense: true),
         Divider(height: 5.0),
-        ListTile(leading: Icon(Icons.cake), title: Text('Birthdate'), subtitle: profile.birthdate != null ? _buildBirthdate(DateTime.parse(profile.birthdate)) : null, dense: true),
+        ListTile(leading: Icon(Icons.cake),
+            title: Text('Birthdate'),
+            subtitle: _profile.birthdate != null ? _buildBirthdate() : null,
+            dense: true),
         Divider(height: 5.0),
-        ListTile(leading: Icon(Icons.flag), title: Text('Country'), subtitle: countrySnapshot.hasData ? _buildCountry(countrySnapshot.data) : null, dense: true),
+        ListTile(leading: Icon(Icons.flag),
+            title: Text('Country'),
+            subtitle: countrySnapshot.hasData ? _buildCountry(countrySnapshot.data) : null,
+            dense: true),
         Divider(height: 5.0),
-        ListTile(leading: Icon(Icons.assignment), title: Text('Biography'), subtitle: profile.biography != null ? Text(profile.biography, style: TextStyle(fontSize: 16), maxLines: 50) : null, dense: true),
+        ListTile(leading: Icon(Icons.assignment),
+            title: Text('Biography'),
+            subtitle: _profile.biography != null ? _buildBiography() : null,
+            dense: true),
       ],
     );
   }
 
-  Widget _buildBirthdate(DateTime birthdate) {
+  Text _buildBiography() => Text(_profile.biography, style: TextStyle(fontSize: 16), maxLines: 50);
+
+  Widget _buildBirthdate() {
+    final birthdate = DateTime.parse(_profile.birthdate);
     return Text(birthdateFormat.format(birthdate), style: TextStyle(fontSize: 16));
   }
 
-  Widget _buildGender(Gender gender) {
+  Widget _buildGender() {
+    final gender = fromGenderName(_profile.gender);
     return _GenderWidget(gender, fontSize: 16.0);
   }
 
@@ -928,11 +979,13 @@ class ProfileHeader extends StatelessWidget {
 
   final GestureTapCallback tapCallback;
   final String uploadTaskId;
+  final UserProfile profileOverride;
 
-  ProfileHeader({this.tapCallback, this.uploadTaskId});
+  ProfileHeader({this.profileOverride, this.tapCallback, this.uploadTaskId});
 
+  @override
   Widget build(BuildContext context) {
-    final profile = Provider.of<UserProfile>(context);
+    final profile = profileOverride == null ? Provider.of<UserProfile>(context) : profileOverride;
 
     return Container(
         height: height,
@@ -1039,7 +1092,7 @@ class ProfileHeader extends StatelessWidget {
 
   Widget _buildAvatar(BuildContext context, UserProfile profile) {
     return Hero(tag: profile.userId,
-        child: ProfileAvatar(radius: 120.0, imageUri: profile.imageUri, online: null, uploadTaskId: uploadTaskId)
+        child: ProfileAvatar(radius: 120.0, imageUri: profile.imageUri, uploadTaskId: uploadTaskId, tapCallback: tapCallback)
     );
   }
 }

@@ -16,6 +16,7 @@ import 'package:social_alert_app/service/dataobjet.dart';
 import 'package:social_alert_app/service/mediaquery.dart';
 import 'package:social_alert_app/service/mediaupdate.dart';
 import 'package:social_alert_app/service/mediaupload.dart';
+import 'package:social_alert_app/service/profilequery.dart';
 import 'package:social_alert_app/service/profileupdate.dart';
 import 'package:social_alert_app/service/serviceprodiver.dart';
 import 'package:social_alert_app/settings.dart';
@@ -37,6 +38,7 @@ class SocialAlertApp extends StatelessWidget {
           ServiceProvider<GeoLocationService>(create: (context) => GeoLocationService(context)),
           StreamProvider<GeoLocation>(create: (context) => GeoLocationService.current(context).locationStream, lazy: false),
           ServiceProvider<AuthService>(create: (context) => AuthService(context)),
+          ServiceProvider<ProfileQueryService>(create: (context) => ProfileQueryService(context)),
           ServiceProvider<ProfileUpdateService>(create: (context) => ProfileUpdateService(context)),
           StreamProvider<UserProfile>(create: (context) => ProfileUpdateService.current(context).profileStream, lazy: false),
           StreamProvider<AvatarUploadProgress>(create: (context) => ProfileUpdateService.current(context).uploadProgressStream, lazy: false),
@@ -94,7 +96,7 @@ class SocialAlertApp extends StatelessWidget {
         builder: (context) => RemotePictureDetailPage(settings.arguments)
       );
       case AppRoute.ProfileViewer: return MaterialPageRoute(
-        builder: (context) => ProfileViewerPage()
+        builder: (context) => ProfileViewerPage(settings.arguments)
       );
       case AppRoute.ProfileEditor: return MaterialPageRoute(
         builder: (context) => ProfileEditorPage()

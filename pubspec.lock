@@ -70,7 +70,7 @@ packages:
       name: device_info
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.4.2+1"
+    version: "0.4.2+2"
   equatable:
     dependency: transitive
     description:
@@ -110,7 +110,7 @@ packages:
       name: flutter_plugin_android_lifecycle
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.0.6"
+    version: "1.0.7"
   flutter_secure_storage:
     dependency: "direct main"
     description:
@@ -164,7 +164,7 @@ packages:
       name: google_maps_flutter
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.5.26"
+    version: "0.5.26+2"
   http:
     dependency: "direct main"
     description:
@@ -192,7 +192,7 @@ packages:
       name: image_picker
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.6.5"
+    version: "0.6.5+2"
   intl:
     dependency: "direct main"
     description:
