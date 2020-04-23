@@ -150,6 +150,7 @@ class _PublishIconButton extends StatelessWidget {
     final userProfile = Provider.of<UserProfile>(context, listen: false);
     return IconButton(
         icon: Icon(userProfile.offline ? Icons.save_alt : Icons.cloud_upload),
+        tooltip: userProfile.offline ? 'Save' : 'Publish',
         onPressed: onPublish
     );
   }

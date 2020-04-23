@@ -363,6 +363,7 @@ class _MediaFeedPanelState extends State<_MediaFeedPanel> {
     final model = Provider.of<_MediaInfoModel>(context, listen: false);
     try {
       await MediaUpdateService.current(context).postComment(model.mediaUri, comment);
+      showSuccessSnackBar(context, 'Scribe for "${model.detail.title}" has been posted');
       _endEditingComment();
     } catch (e) {
       showSimpleDialog(context, "Post failed", e.toString());
@@ -438,11 +439,20 @@ class _MediaCommentListState extends BasePagingState<_MediaCommentList, MediaCom
     );
   }
 
+  void _showSnackBar(BuildContext context, MediaCommentInfo comment, ApprovalModifier modifier) {
+    if (modifier == ApprovalModifier.LIKE) {
+      showSuccessSnackBar(context, 'You liked the scribe from "${comment.creator.username}"');
+    } else if (modifier == ApprovalModifier.DISLIKE) {
+      showWarningSnackBar(context, 'You disliked the scribe from "${comment.creator.username}"');
+    }
+  }
+
   void _onActionSelection(_CommentActionItem selection) {
     if (selection.action == _CommentAction.LIKE || selection.action == _CommentAction.DISLIKE) {
       MediaUpdateService.current(context).changeCommentApproval(selection.commentId, selection.modifier)
           .catchError((error) => showSimpleDialog(context, 'Failure', error.toString()))
-          .then(_refreshItem);
+          .then(_refreshItem)
+          .then((_) => _showSnackBar(context, selection.item, selection.modifier));
     }
   }
 
@@ -538,6 +548,14 @@ class _ApprovalButton extends StatelessWidget {
     }
   }
 
+  void _showSnackBar(BuildContext context, MediaInfo media, ApprovalModifier modifier) {
+    if (modifier == ApprovalModifier.LIKE) {
+      showSuccessSnackBar(context, 'You liked "${media.title}"');
+    } else if (modifier == ApprovalModifier.DISLIKE) {
+      showWarningSnackBar(context, 'You disliked "${media.title}"');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final model = Provider.of<_MediaInfoModel>(context);
@@ -547,7 +565,8 @@ class _ApprovalButton extends StatelessWidget {
       onPressed = () {
         MediaUpdateService.current(context).changeMediaApproval(model.mediaUri, _approval)
             .catchError((error) => showSimpleDialog(context, 'Failure', error.toString()))
-            .then(model.refresh);
+            .then(model.refresh)
+            .then((_) => _showSnackBar(context, media, _approval));
       };
     }
     return RaisedButton.icon(onPressed: onPressed,

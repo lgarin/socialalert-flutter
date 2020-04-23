@@ -252,6 +252,7 @@ class _ProfileFormState extends State<_ProfileForm> {
         await ProfileUpdateService.current(context).updateProfile(_formModel.toUpdateRequest());
         _dirty = false;
         Navigator.of(context).pop();
+        showSuccessSnackBar(context, 'Your profile has been updated');
       } catch (e) {
         showSimpleDialog(context, 'Update failed', e.toString());
       }
@@ -515,8 +516,8 @@ class _ProfileEditorPageState extends _BaseProfilePageState<ProfileEditorPage> {
   AppBar buildAppBar() {
     return AppBar(title: Text('Edit profile'),
         actions: <Widget>[
-          IconButton(onPressed: _choosePicture, icon: Icon(Icons.account_circle)),
-          IconButton(onPressed: _onSave, icon: Icon(Icons.done)),
+          IconButton(onPressed: _choosePicture, icon: Icon(Icons.account_circle), tooltip: 'Change avatar',),
+          IconButton(onPressed: _onSave, icon: Icon(Icons.done), tooltip: 'Save changes',),
           SizedBox(width: 20)
         ]
     );
@@ -526,7 +527,7 @@ class _ProfileEditorPageState extends _BaseProfilePageState<ProfileEditorPage> {
   Widget buildBody(BuildContext context) {
     return ListView(
       children: <Widget>[
-        ProfileHeader(tapCallback: _choosePicture, uploadTaskId: _uploadTaskId),
+        ProfileHeader(tapCallback: _choosePicture, uploadTaskId: _uploadTaskId, tapTooltip: 'Change avatar',),
         _ProfileForm(),
       ],
     );
@@ -559,23 +560,31 @@ class _ProfileViewerPageState extends _BaseProfilePageState<ProfileViewerPage> {
   @override
   AppBar buildAppBar() {
     if (profileOverride != null) {
-      return AppBar(title: Text(profileOverride.username, overflow: TextOverflow.ellipsis),
-          actions: <Widget>[
-            IconButton(
-                onPressed: profileOverride.followed ? _unfollowUser : _followUser,
-                icon: Icon(profileOverride.followed ? Icons.speaker_notes_off : Icons.speaker_notes),
-                tooltip: profileOverride.followed ? 'Unfollow' : 'Follow',
-            ),
-            SizedBox(width: 20),
-          ]
-      );
+      return _buildProfileAppBar(profileOverride);
     }
+    return _buildOwnAppBar();
+  }
+
+  AppBar _buildOwnAppBar() {
     return AppBar(title: Text('My profile'),
-      actions: <Widget>[
-        IconButton(onPressed: _choosePicture, icon: Icon(Icons.account_circle)),
-        IconButton(onPressed: _editProfile, icon: Icon(Icons.assignment_ind)),
-        SizedBox(width: 20),
-      ]
+    actions: <Widget>[
+      IconButton(onPressed: _choosePicture, icon: Icon(Icons.account_circle), tooltip: 'Change avatar'),
+      IconButton(onPressed: _editProfile, icon: Icon(Icons.assignment_ind), tooltip: 'Edit profile'),
+      SizedBox(width: 20),
+    ]
+  );
+  }
+
+  AppBar _buildProfileAppBar(UserProfile profile) {
+    return AppBar(title: Text(profile.username, overflow: TextOverflow.ellipsis),
+        actions: <Widget>[
+          IconButton(
+              onPressed: profile.followed ? _unfollowUser : _followUser,
+              icon: Icon(profile.followed ? Icons.speaker_notes_off : Icons.speaker_notes),
+              tooltip: profile.followed ? 'Unfollow' : 'Follow',
+          ),
+          SizedBox(width: 20),
+        ]
     );
   }
 
@@ -583,6 +592,7 @@ class _ProfileViewerPageState extends _BaseProfilePageState<ProfileViewerPage> {
     try {
       await ProfileUpdateService.current(context).followUser(profileOverride.userId);
       final newProfile = await ProfileQueryService.current(context).get(profileOverride.userId);
+      super.showSuccessSnackBar('User "${profileOverride.username}" has been added to your network');
       setState(() {
         profileOverride = newProfile;
       });
@@ -595,6 +605,7 @@ class _ProfileViewerPageState extends _BaseProfilePageState<ProfileViewerPage> {
     try {
       await ProfileUpdateService.current(context).unfollowUser(profileOverride.userId);
       final newProfile = await ProfileQueryService.current(context).get(profileOverride.userId);
+      super.showWarningSnackBar('User "${profileOverride.username}" has been removed from your network');
       setState(() {
         profileOverride = newProfile;
       });
@@ -615,25 +626,42 @@ class _ProfileViewerPageState extends _BaseProfilePageState<ProfileViewerPage> {
     Navigator.of(context).pushNamed(AppRoute.ProfileEditor);
   }
 
+  Widget _buildProfileOverrideProvider({Widget child}) {
+    if (profileOverride != null) {
+      return Provider.value(value: profileOverride, child: child);
+    }
+    return child;
+  }
+
   @override
   Widget buildBody(BuildContext context) {
     return ListView(
       controller: _scrollController,
       children: <Widget>[
-        ProfileHeader(
-            profileOverride: profileOverride,
-            tapCallback: profileOverride == null ? _choosePicture : null,
-            uploadTaskId: _uploadTaskId
-        ),
+        _buildProfileHeader(),
         _buildBottomPanel(context),
       ],
     );
   }
 
+  void _changeNetwork() async {
+    profileOverride.followed ? _unfollowUser() : _followUser();
+  }
+
+  Widget _buildProfileHeader() {
+    return _buildProfileOverrideProvider(
+          child: ProfileHeader(
+            tapCallback: profileOverride == null ? _choosePicture : _changeNetwork,
+            tapTooltip: profileOverride == null ? 'Change avatar' : (profileOverride.followed ? 'Unfollow' : 'Follow'),
+            uploadTaskId: _uploadTaskId
+          )
+      );
+  }
+
   Widget _buildBottomPanel(BuildContext context) {
     return ChangeNotifierProvider.value(
       value: _tabSelectionModel,
-      child: _ProfileTabPanel(profileOverride: profileOverride),
+      child: _buildProfileOverrideProvider(child: _ProfileTabPanel()),
     );
   }
 }
@@ -664,20 +692,17 @@ class _ProfileBottomNavigationBar extends StatelessWidget {
 }
 
 class _ProfileTabPanel extends StatelessWidget {
-  final UserProfile profileOverride;
-
-  _ProfileTabPanel({this.profileOverride});
 
   @override
   Widget build(BuildContext context) {
     final tabSelectionModel = Provider.of<_ProfileTabSelectionModel>(context);
-    final userProfile = profileOverride == null ? Provider.of<UserProfile>(context) : profileOverride;
+    final profile = Provider.of<UserProfile>(context);
     if (tabSelectionModel.informationSelected) {
-      return _ProfileInformationPanel(userProfile);
+      return _ProfileInformationPanel(profile);
     } else if (tabSelectionModel.gallerySelected) {
-      return _ProfileGalleryPanel(userProfile.userId);
+      return _ProfileGalleryPanel(profile.userId);
     } else if (tabSelectionModel.feedSelected) {
-      return _UserCommentList(userProfile.userId);
+      return _UserCommentList(profile.userId);
     } else {
       return null;
     }
@@ -999,14 +1024,14 @@ class ProfileHeader extends StatelessWidget {
   static const height = 220.0;
 
   final GestureTapCallback tapCallback;
+  final String tapTooltip;
   final String uploadTaskId;
-  final UserProfile profileOverride;
 
-  ProfileHeader({this.profileOverride, this.tapCallback, this.uploadTaskId});
+  ProfileHeader({this.tapCallback, this.uploadTaskId, this.tapTooltip});
 
   @override
   Widget build(BuildContext context) {
-    final profile = profileOverride == null ? Provider.of<UserProfile>(context) : profileOverride;
+    final profile = Provider.of<UserProfile>(context);
 
     return Container(
         height: height,
@@ -1015,14 +1040,21 @@ class ProfileHeader extends StatelessWidget {
     );
   }
 
+  Widget _wrapWithTooltip(Widget child, String tooltip) {
+    if (tooltip != null) {
+      return Tooltip(message: tooltip, child: child);
+    }
+    return child;
+  }
+
   Widget _buildBody(BuildContext context, UserProfile profile) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       mainAxisAlignment: MainAxisAlignment.center,
       children: <Widget>[
-        _buildProfileColumn(context, profile),
+        _wrapWithTooltip(_buildProfileColumn(context, profile), tapTooltip),
         SizedBox(width: 20),
-        _buildStatisticColumn(context, profile),
+        _wrapWithTooltip(_buildStatisticColumn(context, profile), 'Show statistics'),
       ],
     );
   }

@@ -102,6 +102,7 @@ class _SearchTriggerWidget extends StatelessWidget {
     final searchModel = Provider.of<_KeywordSearchModel>(context);
     return IconButton(
       icon: Icon(searchModel.searching ? Icons.cancel : Icons.search),
+      tooltip: searchModel.searching ? 'Cancel' : 'Search',
       onPressed: searchModel.switchSearching,
     );
   }

@@ -14,7 +14,6 @@ import 'package:social_alert_app/service/mediaupload.dart';
 
 abstract class BasePageState<T extends StatefulWidget> extends State<T> {
   final appName = 'Snypix';
-
   final String pageName;
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   StreamSubscription<MediaUploadTask> uploadResultListener;
@@ -24,7 +23,7 @@ abstract class BasePageState<T extends StatefulWidget> extends State<T> {
   @override
   void initState() {
     super.initState();
-    uploadResultListener = MediaUploadService.current(context).uploadResultStream.listen(_showSnackBar);
+    uploadResultListener = MediaUploadService.current(context).uploadResultStream.listen(_showUploadSnackBar);
   }
 
   @override
@@ -33,25 +32,39 @@ abstract class BasePageState<T extends StatefulWidget> extends State<T> {
     super.dispose();
   }
 
-  void _showSnackBar(MediaUploadTask task) {
+  void _showSnackBar(String message, Color color, SnackBarAction action) {
     if (_scaffoldKey.currentState == null) {
       return;
     }
+    _scaffoldKey.currentState.showSnackBar(SnackBar(content: Text(message, style: TextStyle(color: color)), action: action));
+  }
 
+  @protected
+  void showSuccessSnackBar(String message, {SnackBarAction action}) {
+    _showSnackBar(message, Colors.green, action);
+  }
+
+  @protected
+  void showWarningSnackBar(String message, {SnackBarAction action}) {
+    _showSnackBar(message, Colors.orange, action);
+  }
+
+  @protected
+  void showErrorSnackBar(String message, {SnackBarAction action}) {
+    _showSnackBar(message, Colors.red, action);
+  }
+
+  void _showUploadSnackBar(MediaUploadTask task) {
     if (task.title == null) {
-      _scaffoldKey.currentState.showSnackBar(SnackBar(
-          content: Text('Title for media is missing', style: TextStyle(color: Colors.orange)),
+      showWarningSnackBar('Title for media is missing',
           action: SnackBarAction(label: 'Edit', onPressed: () => Navigator.pushNamed(context, AppRoute.AnnotatePicture, arguments: task))
-      ));
+      );
     } else if (task.isCompleted) {
-      _scaffoldKey.currentState.showSnackBar(SnackBar(
-        content: Text('Upload of "${task.title}" has completed', style: TextStyle(color: Colors.green)),
-      ));
+      showSuccessSnackBar('Upload of "${task.title}" has completed');
     } else if (task.hasError) {
-      _scaffoldKey.currentState.showSnackBar(SnackBar(
-        content: Text('Upload of "${task.title}" has failed', style: TextStyle(color: Colors.red)),
+      showErrorSnackBar('Upload of "${task.title}" has failed',
         action: SnackBarAction(label: 'Retry', onPressed: () => MediaUploadService.current(context).restartTask(task)),
-      ));
+      );
     }
   }
 
@@ -59,7 +72,7 @@ abstract class BasePageState<T extends StatefulWidget> extends State<T> {
     final uploadList = await MediaUploadService.current(context).currentUploads();
     for (final upload in uploadList) {
       if (upload.title == null) {
-        _showSnackBar(upload);
+        _showUploadSnackBar(upload);
       }
     }
     return uploadList;
@@ -70,16 +83,20 @@ abstract class BasePageState<T extends StatefulWidget> extends State<T> {
     return FutureProvider<MediaUploadList>(
         create: _loadUploadList,
         lazy: false,
-        child: Scaffold(
-            key: _scaffoldKey,
-            appBar: buildAppBar(),
-            drawer: buildDrawer(),
-            body: buildBody(context),
-            floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-            floatingActionButton: buildCaptureButton(context),
-            bottomNavigationBar: buildNavBar(context)
-        )
+        child: _buildScaffold(context)
     );
+  }
+
+  Scaffold _buildScaffold(BuildContext context) {
+    return Scaffold(
+          key: _scaffoldKey,
+          appBar: buildAppBar(),
+          drawer: buildDrawer(),
+          body: buildBody(context),
+          floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+          floatingActionButton: buildCaptureButton(context),
+          bottomNavigationBar: buildNavBar(context)
+      );
   }
 
   AppBar buildAppBar() {
@@ -119,7 +136,6 @@ abstract class BasePageState<T extends StatefulWidget> extends State<T> {
       await MediaUploadService.current(context).saveTask(task);
       await Navigator.of(context).pushNamed(AppRoute.AnnotatePicture, arguments: task);
     }
-
   }
 
   Widget buildNavBar(BuildContext context) => null;

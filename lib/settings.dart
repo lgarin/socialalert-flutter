@@ -37,7 +37,7 @@ class _SettingsEditorPageState extends BasePageState<SettingsEditorPage> {
   Widget buildBody(BuildContext context) {
     return ListView(
       children: <Widget>[
-        ProfileHeader(tapCallback: _showProfile),
+        ProfileHeader(tapCallback: _showProfile, tapTooltip: 'Show profile',),
         _buildBottomPanel(context),
       ],
     );

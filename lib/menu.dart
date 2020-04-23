@@ -18,7 +18,7 @@ class UserMenu extends StatelessWidget {
           child: Column(
             children: <Widget>[
               Container(height: 10.0, color: Theme.of(context).primaryColorDark.withOpacity(0.9),),
-              ProfileHeader(tapCallback: () => Navigator.popAndPushNamed(context, AppRoute.ProfileEditor)),
+              ProfileHeader(tapCallback: () => Navigator.popAndPushNamed(context, AppRoute.ProfileEditor), tapTooltip: 'Edit profile'),
               Expanded(
                   child: _MenuBar(currentPage: currentPage)
               )

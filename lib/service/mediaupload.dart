@@ -414,10 +414,10 @@ class MediaUploadService extends Service {
   _MediaUploadApi get _uploadApi => _MediaUploadApi(lookup());
 
   void dispose() {
-    _uploadStreamController.close();
-    _progressStreamController.close();
     _progressSubscription.cancel();
     _uploadSubscription.cancel();
+    _uploadStreamController.close();
+    _progressStreamController.close();
   }
 
   Future<MediaUploadList> currentUploads() async {

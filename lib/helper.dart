@@ -48,6 +48,25 @@ Future<bool> showConfirmDialog(BuildContext context, String title, String messag
     context: context);
 }
 
+void _showSnackBar(BuildContext context, String message, Color color, SnackBarAction action) {
+  final scaffoldState = Scaffold.of(context, nullOk: true);
+  if (scaffoldState != null) {
+    scaffoldState.showSnackBar(SnackBar(content: Text(message, style: TextStyle(color: color)), action: action));
+  }
+}
+
+void showSuccessSnackBar(BuildContext context, String message, {SnackBarAction action}) {
+  _showSnackBar(context, message, Colors.green, action);
+}
+
+void showWarningSnackBar(BuildContext context, String message, {SnackBarAction action}) {
+  _showSnackBar(context, message, Colors.orange, action);
+}
+
+void showErrorSnackBar(BuildContext context, String message, {SnackBarAction action}) {
+  _showSnackBar(context, message, Colors.red, action);
+}
+
 class LoadingCircle extends StatelessWidget {
   final double progressValue;
 

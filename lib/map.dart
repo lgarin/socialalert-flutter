@@ -135,15 +135,20 @@ class _MapDisplayState extends State<MapDisplay> {
   List<_Cluster> _clusterList = [];
   StreamSubscription<GeoPosition> postionSubscription;
 
+
   @override
   void initState() {
     super.initState();
-    postionSubscription = GeoLocationService.current(context).positionStream.listen((event) {
+    postionSubscription = _createPositionSubscription();
+    GeoLocationService.current(context).readPosition(100.0);
+  }
+
+  StreamSubscription<GeoPosition> _createPositionSubscription() {
+    return GeoLocationService.current(context).positionStream.listen((event) {
       if (_mapController != null) {
         _mapController.animateCamera(CameraUpdate.newLatLng(LatLng(event.latitude, event.longitude)));
       }
     });
-    GeoLocationService.current(context).readPosition(100.0);
   }
 
   @override
