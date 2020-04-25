@@ -124,7 +124,7 @@ class _AnnotatePicturePageState extends State<AnnotatePicturePage> {
       try {
         final userProfile = Provider.of<UserProfile>(context, listen: false);
         await MediaUploadService.current(context).saveTask(_upload);
-        if (!userProfile.offline) {
+        if (!userProfile.anonym) {
           MediaUploadService.current(context).restartTask(_upload);
         }
         Navigator.pop(context);
@@ -149,8 +149,8 @@ class _PublishIconButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final userProfile = Provider.of<UserProfile>(context, listen: false);
     return IconButton(
-        icon: Icon(userProfile.offline ? Icons.save_alt : Icons.cloud_upload),
-        tooltip: userProfile.offline ? 'Save' : 'Publish',
+        icon: Icon(userProfile.anonym ? Icons.save_alt : Icons.cloud_upload),
+        tooltip: userProfile.anonym ? 'Save' : 'Publish',
         onPressed: onPublish
     );
   }
@@ -362,7 +362,7 @@ class _PublishButton extends StatelessWidget {
         height: 40,
         child:
         RaisedButton(
-          child: Text(userProfile.offline ? 'Save' : 'Publish',
+          child: Text(userProfile.anonym ? 'Save' : 'Publish',
               style: Theme.of(context).textTheme.button),
           onPressed: onPublish,
           color: Theme.of(context).buttonColor,

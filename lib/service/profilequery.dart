@@ -20,6 +20,15 @@ class _ProfileQueryApi {
     }
     throw response.reasonPhrase;
   }
+
+  Future<List<UserProfile>> getFollowedUsers({@required String accessToken}) async {
+    final uri = '/user/followed';
+    final response = await httpService.getJson(uri: uri, accessToken: accessToken);
+    if (response.statusCode == 200) {
+      return  UserProfile.fromJsonList(jsonDecode(response.body));
+    }
+    throw response.reasonPhrase;
+  }
 }
 
 class ProfileQueryService extends Service {
@@ -35,6 +44,16 @@ class ProfileQueryService extends Service {
     final accessToken = await _authService.accessToken;
     try {
       return await _queryApi.get(userId: userId, accessToken: accessToken);
+    } catch (e) {
+      print(e);
+      throw e;
+    }
+  }
+
+  Future<List<UserProfile>> getFollowedUsers() async {
+    final accessToken = await _authService.accessToken;
+    try {
+      return await _queryApi.getFollowedUsers(accessToken: accessToken);
     } catch (e) {
       print(e);
       throw e;

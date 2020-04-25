@@ -108,6 +108,7 @@ class _AuthToken {
 class UserProfile {
   final String userId;
   final String username;
+  final bool online;
   final String email;
   final String country;
   final String imageUri;
@@ -120,6 +121,7 @@ class UserProfile {
   UserProfile.fromLogin(_LoginResponse login) :
       userId = login.userId,
       username = login.username,
+      online = true,
       email = login.email,
       imageUri = login.imageUri,
       country = login.country,
@@ -127,11 +129,12 @@ class UserProfile {
       biography = login.biography,
       gender = login.gender,
       statistic = login.statistic,
-        followedSince = null;
+      followedSince = null;
 
   UserProfile.fromInfo(UserInfo info) :
         userId = info.userId,
         username = info.username,
+        online = info.online,
         email = info.email,
         imageUri = info.imageUri,
         country = info.country,
@@ -141,11 +144,12 @@ class UserProfile {
         statistic = info.statistic,
         followedSince = null;
 
-  UserProfile.offline() : userId = null, username = null, email = null, country = null, imageUri = null, birthdate = null, biography = null, gender = null, statistic = null, followedSince = null;
+  UserProfile.anonym() : userId = null, username = null, online = false, email = null, country = null, imageUri = null, birthdate = null, biography = null, gender = null, statistic = null, followedSince = null;
 
   UserProfile.fromJson(Map<String, dynamic> json) :
         userId = json['id'],
         username = json['username'],
+        online = json['online'],
         email = json['email'],
         country = json['country'],
         biography = json['biography'],
@@ -155,7 +159,11 @@ class UserProfile {
         statistic = UserStatistic.fromJson(json['statistic']),
         followedSince = json['followedSince'] != null ? DateTime.fromMillisecondsSinceEpoch(json['followedSince']) : null;
 
-  bool get offline => userId == null;
+  static List<UserProfile> fromJsonList(List<dynamic> json) {
+    return json.map((e) => UserProfile.fromJson(e)).toList();
+  }
+
+  bool get anonym => userId == null;
 
   bool get followed => followedSince != null;
 }
@@ -199,7 +207,7 @@ class AuthService extends Service {
       profile = await _authApi.currentUser(await accessToken);
     } catch (e) {
       // no server connection
-      profile = UserProfile.offline();
+      profile = UserProfile.anonym();
     }
     if (profile != null) {
       _profileController.add(profile);

@@ -182,7 +182,7 @@ class _LoginFormState extends State<_LoginForm> {
   }
 
   void _showNextPage(UserProfile userProfile) {
-    if (userProfile.offline) {
+    if (userProfile.anonym) {
       Future(() => Navigator.pushReplacementNamed(context, AppRoute.UploadManager, arguments: userProfile));
     } else {
       Future(() => Navigator.pushReplacementNamed(context, AppRoute.Home, arguments: userProfile));
