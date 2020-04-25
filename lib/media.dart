@@ -176,9 +176,22 @@ class _RemotePictureDetailPageState extends BasePageState<RemotePictureDetailPag
           online: media.creator.online,
           tapCallback: () => _showUserProfile(media.creator.userId),
       ),
-      trailing: Timeago(date: media.timestamp, builder: (_, value) => Text(value, style: TextStyle(fontStyle: FontStyle.italic))),
-      title: Text(media.creator.username, style: Theme.of(context).textTheme.headline6),
+      trailing: _buildUploadTimestamp(context, media),
+      title: UsernameWidget(
+          username: media.creator.username,
+          country: media.creator.country,
+          textStyle: Theme.of(context).textTheme.headline6
+      ),
       subtitle: _buildCreatorStatistic(media),
+    );
+  }
+
+  Widget _buildUploadTimestamp(BuildContext context, MediaDetail media) {
+    final textStyle = TextStyle(fontStyle: FontStyle.italic);
+    return ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: 100),
+        child: Timeago(date: media.timestamp,
+            builder: (_, value) => Text('Uploaded ' + value, softWrap: true, style: textStyle))
     );
   }
 
@@ -418,7 +431,11 @@ class _MediaCommentListState extends BasePagingState<_MediaCommentList, MediaCom
       ),
       title: Row(
         children: <Widget>[
-          Text(commentInfo.creator.username, style: Theme.of(context).textTheme.subtitle1,),
+          UsernameWidget(
+            username: commentInfo.creator.username,
+            country: commentInfo.creator.country,
+            textStyle: Theme.of(context).textTheme.subtitle1
+          ),
           Spacer(),
           Timeago(date: commentInfo.creation,
             builder: (_, value) => Text(value, style: Theme.of(context).textTheme.caption.copyWith(fontStyle: FontStyle.italic)),

@@ -645,7 +645,10 @@ class _ProfileViewerPageState extends _BaseProfilePageState<ProfileViewerPage> {
   }
 
   void _changeNetwork() async {
-    profileOverride.followed ? _unfollowUser() : _followUser();
+    final message = 'Do you want to ${profileOverride.followed ? "stop" : "start"} following this user?';
+    if (await showConfirmDialog(context, 'Update network', message)) {
+      profileOverride.followed ? _unfollowUser() : _followUser();
+    }
   }
 
   Widget _buildProfileHeader() {
@@ -1036,7 +1039,7 @@ class ProfileHeader extends StatelessWidget {
     return Container(
         height: height,
         color: Theme.of(context).primaryColorDark.withOpacity(0.9),
-        child: profile != null ? _buildBody(context, profile) : LoadingCircle()
+        child: profile != null ? _buildPanel(context, profile) : LoadingCircle()
     );
   }
 
@@ -1045,6 +1048,34 @@ class ProfileHeader extends StatelessWidget {
       return Tooltip(message: tooltip, child: child);
     }
     return child;
+  }
+
+  Widget _buildPanel(BuildContext context, UserProfile profile) {
+    if (profile.followed) {
+      return Stack(
+        children: <Widget>[
+          _buildLinkInfo(context, profile),
+          _buildBody(context, profile),
+        ],
+      );
+    }
+    return _buildBody(context, profile);
+  }
+
+  Widget _buildLinkInfo(BuildContext context, UserProfile profile) {
+    final textStyle = Theme.of(context).textTheme.caption.copyWith(fontStyle: FontStyle.italic, color: Colors.white);
+    return Container(
+        padding: EdgeInsets.all(10),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: <Widget>[
+            Timeago(
+              date: profile.followedSince,
+              builder: (_, value) => Text('Followed since ' + value, style: textStyle),
+            ),
+          ],
+        )
+    );
   }
 
   Widget _buildBody(BuildContext context, UserProfile profile) {
@@ -1123,16 +1154,10 @@ class ProfileHeader extends StatelessWidget {
   }
 
   Widget _buildUsername(BuildContext context, UserProfile profile) {
-    final username = Text(profile.username, style: Theme.of(context).textTheme.subtitle2);
-    if (profile.country == null) {
-      return username;
-    }
-    return Row(
-      children: <Widget>[
-        username,
-        SizedBox(width: 4),
-        _CountryFlagWidget(profile.country)
-      ],
+    return UsernameWidget(
+        username: profile.username,
+        country: profile.country,
+        textStyle: Theme.of(context).textTheme.subtitle2
     );
   }
 
@@ -1146,6 +1171,33 @@ class ProfileHeader extends StatelessWidget {
   Widget _buildAvatar(BuildContext context, UserProfile profile) {
     return Hero(tag: profile.userId,
         child: ProfileAvatar(radius: 120.0, imageUri: profile.imageUri, uploadTaskId: uploadTaskId, tapCallback: tapCallback)
+    );
+  }
+}
+
+class UsernameWidget extends StatelessWidget {
+  final String username;
+  final String country;
+  final TextStyle textStyle;
+
+  const UsernameWidget({
+    Key key,
+    this.username,
+    this.country,
+    this.textStyle
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    if (country == null) {
+      return Text(username, style: textStyle);
+    }
+    return Row(
+      children: <Widget>[
+        Text(username, style: textStyle),
+        SizedBox(width: 4),
+        _CountryFlagWidget(country)
+      ],
     );
   }
 }

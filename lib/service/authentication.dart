@@ -115,7 +115,7 @@ class UserProfile {
   final String biography;
   final String gender;
   final UserStatistic statistic;
-  final bool followed;
+  final DateTime followedSince;
 
   UserProfile.fromLogin(_LoginResponse login) :
       userId = login.userId,
@@ -127,7 +127,7 @@ class UserProfile {
       biography = login.biography,
       gender = login.gender,
       statistic = login.statistic,
-      followed = null;
+        followedSince = null;
 
   UserProfile.fromInfo(UserInfo info) :
         userId = info.userId,
@@ -139,9 +139,9 @@ class UserProfile {
         biography = info.biography,
         gender = info.gender,
         statistic = info.statistic,
-        followed = null;
+        followedSince = null;
 
-  UserProfile.offline() : userId = null, username = null, email = null, country = null, imageUri = null, birthdate = null, biography = null, gender = null, statistic = null, followed = null;
+  UserProfile.offline() : userId = null, username = null, email = null, country = null, imageUri = null, birthdate = null, biography = null, gender = null, statistic = null, followedSince = null;
 
   UserProfile.fromJson(Map<String, dynamic> json) :
         userId = json['id'],
@@ -153,9 +153,11 @@ class UserProfile {
         gender = json['gender'],
         imageUri = json['imageUri'],
         statistic = UserStatistic.fromJson(json['statistic']),
-        followed = json['followed'];
+        followedSince = json['followedSince'] != null ? DateTime.fromMillisecondsSinceEpoch(json['followedSince']) : null;
 
   bool get offline => userId == null;
+
+  bool get followed => followedSince != null;
 }
 
 class AuthService extends Service {
