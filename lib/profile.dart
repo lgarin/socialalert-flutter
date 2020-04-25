@@ -16,7 +16,6 @@ import 'package:social_alert_app/service/configuration.dart';
 import 'package:social_alert_app/service/eventbus.dart';
 import 'package:social_alert_app/service/dataobjet.dart';
 import 'package:social_alert_app/service/mediaquery.dart';
-import 'package:social_alert_app/service/profilequery.dart';
 import 'package:social_alert_app/service/profileupdate.dart';
 import 'package:social_alert_app/thumbnail.dart';
 import 'package:timeago_flutter/timeago_flutter.dart';
@@ -590,27 +589,25 @@ class _ProfileViewerPageState extends _BaseProfilePageState<ProfileViewerPage> {
 
   void _followUser() async {
     try {
-      await ProfileUpdateService.current(context).followUser(profileOverride.userId);
-      final newProfile = await ProfileQueryService.current(context).get(profileOverride.userId);
+      final newProfile = await ProfileUpdateService.current(context).followUser(profileOverride.userId);
       super.showSuccessSnackBar('User "${profileOverride.username}" has been added to your network');
       setState(() {
         profileOverride = newProfile;
       });
     } catch (e) {
-      showSimpleDialog(context, 'Cannot start following user', e.toString());
+      showSimpleDialog(context, 'Update failure', e.toString());
     }
   }
 
   void _unfollowUser() async {
     try {
-      await ProfileUpdateService.current(context).unfollowUser(profileOverride.userId);
-      final newProfile = await ProfileQueryService.current(context).get(profileOverride.userId);
+      final newProfile = await ProfileUpdateService.current(context).unfollowUser(profileOverride.userId);
       super.showWarningSnackBar('User "${profileOverride.username}" has been removed from your network');
       setState(() {
         profileOverride = newProfile;
       });
     } catch (e) {
-      showSimpleDialog(context, 'Cannot stop following user', e.toString());
+      showSimpleDialog(context, 'Update failure', e.toString());
     }
   }
 
@@ -635,13 +632,21 @@ class _ProfileViewerPageState extends _BaseProfilePageState<ProfileViewerPage> {
 
   @override
   Widget buildBody(BuildContext context) {
-    return ListView(
-      controller: _scrollController,
-      children: <Widget>[
-        _buildProfileHeader(),
-        _buildBottomPanel(context),
-      ],
+    return WillPopScope(
+      onWillPop: _onPageExit,
+      child: ListView(
+        controller: _scrollController,
+        children: <Widget>[
+          _buildProfileHeader(),
+          _buildBottomPanel(context),
+        ],
+      )
     );
+  }
+
+  Future<bool> _onPageExit() {
+    Navigator.pop(context, profileOverride);
+    return Future.value(false);
   }
 
   void _changeNetwork() async {
@@ -1154,7 +1159,7 @@ class ProfileHeader extends StatelessWidget {
   }
 
   Widget _buildUsername(BuildContext context, UserProfile profile) {
-    return UsernameWidget(
+    return UsernameCountry(
         username: profile.username,
         country: profile.country,
         textStyle: Theme.of(context).textTheme.subtitle2
@@ -1175,12 +1180,12 @@ class ProfileHeader extends StatelessWidget {
   }
 }
 
-class UsernameWidget extends StatelessWidget {
+class UsernameCountry extends StatelessWidget {
   final String username;
   final String country;
   final TextStyle textStyle;
 
-  const UsernameWidget({
+  const UsernameCountry({
     Key key,
     this.username,
     this.country,
@@ -1197,6 +1202,38 @@ class UsernameWidget extends StatelessWidget {
         Text(username, style: textStyle),
         SizedBox(width: 4),
         _CountryFlagWidget(country)
+      ],
+    );
+  }
+}
+
+class HorizontalUserStatistic extends StatelessWidget {
+  HorizontalUserStatistic({
+    Key key,
+    @required this.statistic,
+  }) : super(key: key);
+
+  final UserStatistic statistic;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: <Widget>[
+        Icon(Icons.people, size: 14, color: Colors.black),
+        SizedBox(width: 4,),
+        Text(statistic.followerCount.toString(), style: TextStyle(fontSize: 12, color: Colors.black)),
+        Spacer(),
+        Icon(Icons.thumb_up, size: 14, color: Colors.black),
+        SizedBox(width: 4,),
+        Text(statistic.likeCount.toString(), style: TextStyle(fontSize: 12, color: Colors.black)),
+        Spacer(),
+        Icon(Icons.panorama, size: 14, color: Colors.black),
+        SizedBox(width: 4,),
+        Text(statistic.mediaCount.toString(), style: TextStyle(fontSize: 12, color: Colors.black)),
+        Spacer(),
+        Icon(Icons.create, size: 14, color: Colors.black),
+        SizedBox(width: 4,),
+        Text(statistic.commentCount.toString(), style: TextStyle(fontSize: 12, color: Colors.black)),
       ],
     );
   }

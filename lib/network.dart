@@ -5,6 +5,7 @@ import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/profile.dart';
 import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/profilequery.dart';
+import 'package:social_alert_app/service/profileupdate.dart';
 import 'package:timeago_flutter/timeago_flutter.dart';
 
 class NetworkPage extends StatefulWidget {
@@ -13,6 +14,10 @@ class NetworkPage extends StatefulWidget {
 }
 
 class _NetworkPageState extends BasePageState<NetworkPage> {
+  static final itemMargin = EdgeInsets.only(left: 10, right: 10, top: 10);
+
+  List<UserProfile> followedProfiles;
+
   _NetworkPageState() : super(AppRoute.UserNetwork);
 
 
@@ -35,21 +40,55 @@ class _NetworkPageState extends BasePageState<NetworkPage> {
     if (snapshot.connectionState == ConnectionState.waiting) {
       return LoadingCircle();
     }
-    if (snapshot.data.isEmpty) {
+    followedProfiles = snapshot.data;
+    if (followedProfiles.isEmpty) {
       return _buildEmptyContent(context);
     }
+    followedProfiles.sort((a, b) => b.followedSince.compareTo(a.followedSince));
     return ListView.builder(
-        itemCount: snapshot.data.length,
-        itemBuilder: (context, index) => _buildCard(context, snapshot.data[index])
+        itemCount: followedProfiles.length,
+        itemBuilder: (context, index) => _buildCard(context, followedProfiles[index])
     );
   }
 
   Widget _buildCard(BuildContext context, UserProfile profile) {
-    return Card(
+    return Dismissible(
         key: ValueKey(profile.userId),
-        margin: EdgeInsets.only(left: 10, right: 10, top: 10),
-        child: _buildItem(context, profile),
+        direction: DismissDirection.endToStart,
+        confirmDismiss: (_) => confirmRemove(profile),
+        onDismissed: (_) => _unfollowUser(profile),
+        background: _buildDismissibleBackground(),
+        child: Card(
+          margin: itemMargin,
+          child: _buildItem(context, profile)
+        )
     );
+  }
+
+  Container _buildDismissibleBackground() {
+    return Container(alignment: AlignmentDirectional.centerEnd,
+        padding: EdgeInsets.all(10),
+        margin: itemMargin,
+        color: Colors.grey,
+        child: Icon(Icons.speaker_notes_off)
+      );
+  }
+
+  void _unfollowUser(UserProfile profile) async {
+    try {
+      await ProfileUpdateService.current(context).unfollowUser(profile.userId);
+      super.showWarningSnackBar('User "${profile.username}" has been removed from your network');
+      setState(() {
+        followedProfiles.remove(profile);
+      });
+    } catch (e) {
+      showSimpleDialog(context, 'Update failure', e.toString());
+    }
+  }
+
+  Future<bool> confirmRemove(UserProfile profile) {
+    final message = 'Do you want to stop following this user?';
+    return showConfirmDialog(context, 'Update network', message);
   }
 
   Widget _buildItem(BuildContext context, UserProfile profile) {
@@ -57,23 +96,31 @@ class _NetworkPageState extends BasePageState<NetworkPage> {
       contentPadding: EdgeInsets.all(10),
       dense: true,
       isThreeLine: true,
-      leading: ProfileAvatar(radius: 50.0,
-        imageUri: profile.imageUri,
-        online: profile.online,
-        tapCallback: () => _showUserProfile(profile),
+      onTap: () => _showUserProfile(profile),
+      leading: Hero(
+        tag: profile.userId,
+        child: ProfileAvatar(radius: 50.0,
+          imageUri: profile.imageUri,
+          online: profile.online,
+        )
       ),
       trailing: _buildLinkInfo(context, profile),
-      title: UsernameWidget(
+      title: UsernameCountry(
           username: profile.username,
           country: profile.country,
           textStyle: Theme.of(context).textTheme.headline6
       ),
-      subtitle: _buildUserStatistic(profile),
+      subtitle: HorizontalUserStatistic(statistic: profile.statistic),
     );
   }
 
-  void _showUserProfile(UserProfile profile) {
-    Navigator.pushNamed(context, AppRoute.ProfileViewer, arguments: profile);
+  void _showUserProfile(UserProfile profile) async {
+    UserProfile newProfile = await Navigator.pushNamed(context, AppRoute.ProfileViewer, arguments: profile);
+    if (!newProfile.followed) {
+      setState(() {
+        followedProfiles.remove(profile);
+      });
+    }
   }
 
   Widget _buildLinkInfo(BuildContext context, UserProfile profile) {
@@ -87,27 +134,6 @@ class _NetworkPageState extends BasePageState<NetworkPage> {
     );
   }
 
-  Row _buildUserStatistic(UserProfile profile) {
-    return Row(
-      children: <Widget>[
-        Icon(Icons.people, size: 14, color: Colors.black),
-        SizedBox(width: 4,),
-        Text(profile.statistic.followerCount.toString(), style: TextStyle(fontSize: 12, color: Colors.black)),
-        Spacer(),
-        Icon(Icons.thumb_up, size: 14, color: Colors.black),
-        SizedBox(width: 4,),
-        Text(profile.statistic.likeCount.toString(), style: TextStyle(fontSize: 12, color: Colors.black)),
-        Spacer(),
-        Icon(Icons.panorama, size: 14, color: Colors.black),
-        SizedBox(width: 4,),
-        Text(profile.statistic.mediaCount.toString(), style: TextStyle(fontSize: 12, color: Colors.black)),
-        Spacer(),
-        Icon(Icons.create, size: 14, color: Colors.black),
-        SizedBox(width: 4,),
-        Text(profile.statistic.commentCount.toString(), style: TextStyle(fontSize: 12, color: Colors.black)),
-      ],
-    );
-  }
 
   Center _buildEmptyContent(BuildContext context) {
     return Center(child: Column(

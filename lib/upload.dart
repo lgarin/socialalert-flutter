@@ -27,6 +27,7 @@ class _UploadErrorItem {
 class _UploadManagerPageState extends BasePageState<UploadManagerPage> {
 
   static const iconSize = 50.0;
+  static final itemMargin = EdgeInsets.only(left: 10, right: 10, top: 10);
 
   _UploadManagerPageState() : super(AppRoute.UploadManager);
 
@@ -78,16 +79,30 @@ class _UploadManagerPageState extends BasePageState<UploadManagerPage> {
   }
 
   Widget _buildTask(BuildContext context, MediaUploadTask task) {
-    return Card(
-          key: ValueKey(task.id),
-          margin: EdgeInsets.only(left: 10, right: 10, top: 10),
-          child: ChangeNotifierProvider.value(value: task, child: _buildListTile(context, task))
-      );
+    return Dismissible(
+        key: ValueKey(task.id),
+        direction: DismissDirection.endToStart,
+        confirmDismiss: (_) => _confirmDelete(),
+        onDismissed: (_) => _onConfirmUploadDeletion(task),
+        background: _buildDismissibleBackground(),
+        child: Card(margin: itemMargin,
+            child: ChangeNotifierProvider.value(value: task, child: _buildListTile(context, task))
+          )
+    );
+  }
+
+  Container _buildDismissibleBackground() {
+    return Container(alignment: AlignmentDirectional.centerEnd,
+        padding: EdgeInsets.all(10),
+        margin: itemMargin,
+        color: Colors.grey,
+        child: Icon(Icons.delete)
+    );
   }
 
   Widget _buildListTile(BuildContext context, MediaUploadTask task) {
     return Consumer<MediaUploadTask>(
-      child: Hero(tag: task.id, child: Image.file(task.file, height: 70, width: 70, fit: BoxFit.cover)),
+      child: Hero(tag: task.id, child: Image.file(task.file, height: 160, width: 90, fit: BoxFit.cover)),
       builder: (context, task, child) => ListTile(
             leading: child,
             title: Text(task.title ?? '?'),
@@ -145,13 +160,17 @@ class _UploadManagerPageState extends BasePageState<UploadManagerPage> {
 
   void _onErrorItemSelection(_UploadErrorItem item) async {
     if (item.action == _UploadErrorAction.DELETE) {
-      final confirmed = await showConfirmDialog(context, 'Delete Snype', 'Do you really want to delete this upload?');
+      bool confirmed = await _confirmDelete();
       if (confirmed) {
         _onConfirmUploadDeletion(item.task);
       }
     } else if (item.action == _UploadErrorAction.RETRY) {
       MediaUploadService.current(context).restartTask(item.task);
     }
+  }
+
+  Future<bool> _confirmDelete() {
+    return showConfirmDialog(context, 'Delete Snype', 'Do you really want to delete this upload?');
   }
 
   void _onConfirmUploadDeletion(MediaUploadTask task) {

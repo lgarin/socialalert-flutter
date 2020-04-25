@@ -95,7 +95,7 @@ class SocialAlertApp extends StatelessWidget {
       case AppRoute.RemotePictureDetail: return MaterialPageRoute<MediaDetail>(
         builder: (context) => RemotePictureDetailPage(settings.arguments)
       );
-      case AppRoute.ProfileViewer: return MaterialPageRoute(
+      case AppRoute.ProfileViewer: return MaterialPageRoute<UserProfile>(
         builder: (context) => ProfileViewerPage(settings.arguments)
       );
       case AppRoute.ProfileEditor: return MaterialPageRoute(

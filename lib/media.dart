@@ -171,18 +171,20 @@ class _RemotePictureDetailPageState extends BasePageState<RemotePictureDetailPag
       contentPadding: EdgeInsets.symmetric(horizontal: 5.0),
       dense: true,
       isThreeLine: true,
-      leading: ProfileAvatar(radius: 50.0,
-          imageUri: media.creator.imageUri,
-          online: media.creator.online,
-          tapCallback: () => _showUserProfile(media.creator.userId),
+      onTap: () => _showUserProfile(media.creator.userId),
+      leading: Hero(tag: media.creator.userId,
+          child: ProfileAvatar(radius: 50.0,
+            imageUri: media.creator.imageUri,
+            online: media.creator.online
+          )
       ),
       trailing: _buildUploadTimestamp(context, media),
-      title: UsernameWidget(
+      title: UsernameCountry(
           username: media.creator.username,
           country: media.creator.country,
           textStyle: Theme.of(context).textTheme.headline6
       ),
-      subtitle: _buildCreatorStatistic(media),
+      subtitle: HorizontalUserStatistic(statistic: media.creator.statistic),
     );
   }
 
@@ -192,28 +194,6 @@ class _RemotePictureDetailPageState extends BasePageState<RemotePictureDetailPag
         constraints: BoxConstraints(maxWidth: 100),
         child: Timeago(date: media.timestamp,
             builder: (_, value) => Text('Uploaded ' + value, softWrap: true, style: textStyle))
-    );
-  }
-
-  Row _buildCreatorStatistic(MediaDetail media) {
-    return Row(
-      children: <Widget>[
-        Icon(Icons.people, size: 14, color: Colors.black),
-        SizedBox(width: 4,),
-        Text(media.creator.statistic.followerCount.toString(), style: TextStyle(fontSize: 12, color: Colors.black)),
-        Spacer(),
-        Icon(Icons.thumb_up, size: 14, color: Colors.black),
-        SizedBox(width: 4,),
-        Text(media.creator.statistic.likeCount.toString(), style: TextStyle(fontSize: 12, color: Colors.black)),
-        Spacer(),
-        Icon(Icons.panorama, size: 14, color: Colors.black),
-        SizedBox(width: 4,),
-        Text(media.creator.statistic.mediaCount.toString(), style: TextStyle(fontSize: 12, color: Colors.black)),
-        Spacer(),
-        Icon(Icons.create, size: 14, color: Colors.black),
-        SizedBox(width: 4,),
-        Text(media.creator.statistic.commentCount.toString(), style: TextStyle(fontSize: 12, color: Colors.black)),
-      ],
     );
   }
 }
@@ -431,7 +411,7 @@ class _MediaCommentListState extends BasePagingState<_MediaCommentList, MediaCom
       ),
       title: Row(
         children: <Widget>[
-          UsernameWidget(
+          UsernameCountry(
             username: commentInfo.creator.username,
             country: commentInfo.creator.country,
             textStyle: Theme.of(context).textTheme.subtitle1

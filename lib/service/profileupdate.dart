@@ -121,20 +121,20 @@ class _ProfileUpdateApi {
     throw response.reasonPhrase;
   }
 
-  Future<void> followUser(String userId, String accessToken) async {
+  Future<UserProfile> followUser(String userId, String accessToken) async {
     final uri = '/user/follow/$userId';
     final response = await httpService.post(uri: uri,accessToken: accessToken);
     if (response.statusCode == 201 || response.statusCode == 200) {
-      return;
+      return UserProfile.fromJson(jsonDecode(response.body));
     }
     throw response.reasonPhrase;
   }
 
-  Future<void> unfollowUser(String userId, String accessToken) async {
+  Future<UserProfile> unfollowUser(String userId, String accessToken) async {
     final uri = '/user/unfollow/$userId';
     final response = await httpService.post(uri: uri,accessToken: accessToken);
     if (response.statusCode == 201 || response.statusCode == 200) {
-      return;
+      return UserProfile.fromJson(jsonDecode(response.body));
     }
     throw response.reasonPhrase;
   }
@@ -227,7 +227,7 @@ class ProfileUpdateService extends Service {
     }
   }
 
-  Future<void> followUser(String userId) async {
+  Future<UserProfile> followUser(String userId) async {
     final accessToken = await _authService.accessToken;
     try {
       return await _updateApi.followUser(userId, accessToken);
@@ -237,7 +237,7 @@ class ProfileUpdateService extends Service {
     }
   }
 
-  Future<void> unfollowUser(String userId) async {
+  Future<UserProfile> unfollowUser(String userId) async {
     final accessToken = await _authService.accessToken;
     try {
       return await _updateApi.unfollowUser(userId, accessToken);
