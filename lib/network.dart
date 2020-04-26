@@ -17,9 +17,9 @@ class _NetworkPageState extends BasePageState<NetworkPage> {
   static final itemMargin = EdgeInsets.only(left: 10, right: 10, top: 10);
 
   List<UserProfile> followedProfiles;
+  final scrollController = ScrollController();
 
   _NetworkPageState() : super(AppRoute.UserNetwork);
-
 
   @override
   AppBar buildAppBar() {
@@ -46,6 +46,7 @@ class _NetworkPageState extends BasePageState<NetworkPage> {
     }
     followedProfiles.sort((a, b) => b.followedSince.compareTo(a.followedSince));
     return ListView.builder(
+        controller: scrollController,
         itemCount: followedProfiles.length,
         itemBuilder: (context, index) => _buildCard(context, followedProfiles[index])
     );
