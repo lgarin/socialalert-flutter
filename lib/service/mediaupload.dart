@@ -230,7 +230,6 @@ class MediaUploadTask with ChangeNotifier {
   Future<void> _deleteFile() async {
     assert(canBeDeleted());
     await file.delete();
-    _status = null;
   }
 
   void _setUploadProgress(int progress) {
@@ -527,8 +526,8 @@ class MediaUploadService extends Service {
     final uploads = await currentUploads();
     uploads._remove(task);
     await _uploadTaskStore.store(uploads);
-    await task._deleteFile();
     _uploadStreamController.add(task);
+    await task._deleteFile();
   }
 
   Future<MediaUploadTask> _mapUploadResult(_UploadTaskResult result) async {
