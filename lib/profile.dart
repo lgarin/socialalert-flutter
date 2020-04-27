@@ -578,7 +578,7 @@ class _ProfileViewerPageState extends _BaseProfilePageState<ProfileViewerPage> {
     return AppBar(title: Text(profile.username, overflow: TextOverflow.ellipsis),
         actions: <Widget>[
           IconButton(
-              onPressed: profile.followed ? _unfollowUser : _followUser,
+              onPressed: _changeNetwork,
               icon: Icon(profile.followed ? Icons.speaker_notes_off : Icons.speaker_notes),
               tooltip: profile.followed ? 'Unfollow' : 'Follow',
           ),
