@@ -14,17 +14,22 @@ class UserMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     return Theme(
         data: Theme.of(context).copyWith(canvasColor: Colors.transparent),
-        child: Drawer(
-          child: Column(
-            children: <Widget>[
-              Container(height: 10.0, color: Theme.of(context).primaryColorDark.withOpacity(0.9),),
-              ProfileHeader(tapCallback: () => Navigator.popAndPushNamed(context, AppRoute.ProfileEditor), tapTooltip: 'Edit profile'),
-              Expanded(
-                  child: _MenuBar(currentPage: currentPage)
-              )
-            ],
-          ),
-        ));
+        child: SafeArea(child: _buildDrawer(context))
+    );
+  }
+
+  Drawer _buildDrawer(BuildContext context) {
+    return Drawer(
+        child: Column(
+          children: <Widget>[
+            Container(height: 10.0, color: Theme.of(context).primaryColorDark.withOpacity(0.9),),
+            ProfileHeader(tapCallback: () => Navigator.popAndPushNamed(context, AppRoute.ProfileEditor), tapTooltip: 'Edit profile'),
+            Expanded(
+                child: _MenuBar(currentPage: currentPage)
+            )
+          ],
+        ),
+      );
   }
 }
 
