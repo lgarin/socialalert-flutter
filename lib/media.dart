@@ -85,7 +85,7 @@ class _RemotePictureDetailPageState extends BasePageState<RemotePictureDetailPag
         },
         child: Consumer<_MediaInfoModel>(
           builder: _buildContent,
-          child: _RemotePictureDisplay(media: widget.media, preview: true)
+          child: RemotePictureDisplay(media: widget.media, preview: true)
         )
     );
   }
@@ -111,7 +111,6 @@ class _RemotePictureDetailPageState extends BasePageState<RemotePictureDetailPag
         _buildCreatorBanner(context, model.detail),
         Divider(),
         _buildMediaTitle(context, model.detail),
-        _buildMediaDescription(context, model.detail),
         SizedBox(height: spacing),
         WillPopScope(child: picture, onWillPop: () => _onCloseDetailPage(model)),
         _buildMediaTagList(context, model.detail),
@@ -130,10 +129,6 @@ class _RemotePictureDetailPageState extends BasePageState<RemotePictureDetailPag
   Future<bool> _onCloseDetailPage(_MediaInfoModel model) {
     Navigator.pop(context, model.detail);
     return Future.value(false);
-  }
-
-  Text _buildMediaDescription(BuildContext context, MediaDetail media) {
-    return Text(media.description ?? '', softWrap: true);
   }
 
   Text _buildMediaTitle(BuildContext context, MediaDetail media) {
@@ -626,9 +621,9 @@ class _MediaTabSelectionModel with ChangeNotifier {
   }
 }
 
-class _RemotePictureDisplay extends StatelessWidget {
+class RemotePictureDisplay extends StatelessWidget {
 
-  _RemotePictureDisplay({@required this.media, this.preview = false});
+  RemotePictureDisplay({@required this.media, this.preview = false});
 
   final MediaInfo media;
   final bool preview;
@@ -722,7 +717,7 @@ class RemoteImageDisplayPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(mediaInfo.title, overflow: TextOverflow.ellipsis)),
-      body: _RemotePictureDisplay(media: mediaInfo)
+      body: RemotePictureDisplay(media: mediaInfo)
     );
   }
 }

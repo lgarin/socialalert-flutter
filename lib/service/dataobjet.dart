@@ -116,7 +116,6 @@ class MediaDetail extends MediaInfo {
   static final oneMega = 1000 * 1000;
   static final numberFormat = new NumberFormat('0.0');
 
-  final String description;
   final DateTime timestamp;
   final int commentCount;
   final String locality;
@@ -129,7 +128,6 @@ class MediaDetail extends MediaInfo {
   final String cameraModel;
 
   MediaDetail.fromJson(Map<String, dynamic> json) :
-        description = json['description'],
         timestamp = DateTime.fromMillisecondsSinceEpoch(json['timestamp']),
         commentCount = json['commentCount'],
         locality = json['locality'],
@@ -226,4 +224,47 @@ class GeoStatistic {
   static List<GeoStatistic> fromJsonList(List<dynamic> json) {
     return json.map((e) => GeoStatistic.fromJson(e)).toList();
   }
+}
+
+enum FeedActivity {
+  NEW_MEDIA,
+  NEW_COMMENT,
+  LIKE_MEDIA,
+  DISLIKE_MEDIA,
+  LIKE_COMMENT,
+  DISLIKE_COMMENT,
+  WATCH_MEDIA
+}
+
+const Map<String, FeedActivity> _feedActivityMap = {
+  'NEW_MEDIA': FeedActivity.NEW_MEDIA,
+  'NEW_COMMENT': FeedActivity.NEW_COMMENT,
+  'LIKE_MEDIA': FeedActivity.LIKE_MEDIA,
+  'DISLIKE_MEDIA': FeedActivity.DISLIKE_MEDIA,
+  'LIKE_COMMENT': FeedActivity.LIKE_COMMENT,
+  'DISLIKE_COMMENT': FeedActivity.DISLIKE_COMMENT,
+  'WATCH_MEDIA': FeedActivity.WATCH_MEDIA,
+};
+
+class FeedItem {
+  final FeedActivity activity;
+  final DateTime creation;
+  final UserInfo creator;
+  final MediaInfo media;
+  final MediaCommentInfo comment;
+
+  FeedItem.fromJson(Map<String, dynamic> json) :
+        activity = _feedActivityMap[json['activity']],
+        creation = DateTime.fromMillisecondsSinceEpoch(json['creation']),
+        creator = UserInfo.fromJson(json['creator']),
+        media = MediaInfo.fromJson(json['media']),
+        comment = json['comment'] != null ? MediaCommentInfo.fromJson(json['comment']) : null;
+
+  static List<FeedItem> fromJsonList(List<dynamic> json) {
+    return json.map((e) => FeedItem.fromJson(e)).toList();
+  }
+}
+
+class FeedItemPage extends ResultPage<FeedItem> {
+  FeedItemPage.fromJson(Map<String, dynamic> json) : super.fromJson(json, FeedItem.fromJsonList);
 }

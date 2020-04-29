@@ -149,7 +149,7 @@ class _HomePageState extends BasePageState<HomePage> with SingleTickerProviderSt
       case _galleryIndex:
         return GalleryDisplay(categoryToken, keyword);
       case _feedIndex:
-        return FeedDisplay(categoryToken);
+        return FeedDisplay(categoryToken, keyword);
       case _mapIndex:
         return MapDisplay(categoryToken, keyword);
       default:

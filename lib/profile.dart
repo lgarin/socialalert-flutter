@@ -965,7 +965,6 @@ class _UserCommentListState extends BasePagingState<_UserCommentList, MediaComme
   }
 
   void _onThumbnailSelection(MediaInfo media) async {
-    print(media.mediaUri);
     await Navigator.of(context).pushNamed<MediaDetail>(AppRoute.RemotePictureDetail, arguments: media);
   }
 
