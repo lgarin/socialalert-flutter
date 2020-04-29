@@ -38,6 +38,8 @@ class _FeedDisplayState extends BasePagingState<FeedDisplay, FeedItem> {
     FeedActivity.WATCH_MEDIA: 'Watched this picture',
   };
 
+  final scrollController = ScrollController();
+
   @override
   Future<FeedItemPage> loadNextPage(PagingParameter parameter) {
     return FeedQueryService.current(context).getFeed(widget.categoryToken, widget.keywords, parameter);
@@ -49,6 +51,7 @@ class _FeedDisplayState extends BasePagingState<FeedDisplay, FeedItem> {
       return Center(child: _buildNoContent(context));
     }
     return ListView.separated(
+        controller: scrollController,
         padding: EdgeInsets.symmetric(horizontal: spacing),
         itemBuilder: (context, index) => _buildItem(context, data[index]),
         separatorBuilder: (context, index) => Divider(height: spacing, thickness: 1.5,),
@@ -78,15 +81,15 @@ class _FeedDisplayState extends BasePagingState<FeedDisplay, FeedItem> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text(activityText[item.activity], overflow: TextOverflow.ellipsis,),
-          Text(item.comment.comment, softWrap: true, maxLines: 5, overflow: TextOverflow.fade,)
+          Text(activityText[item.activity], overflow: TextOverflow.ellipsis),
+          Text(item.comment.comment, softWrap: true, maxLines: 5, overflow: TextOverflow.fade, style: TextStyle(color: Colors.black),)
         ],
       );
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Text(activityText[item.activity], overflow: TextOverflow.ellipsis,),
+        Text(activityText[item.activity], overflow: TextOverflow.ellipsis),
         Text(item.media.title, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.headline6)
       ],
     );
@@ -107,6 +110,7 @@ class _FeedDisplayState extends BasePagingState<FeedDisplay, FeedItem> {
 
   Widget _buildLargeItem(BuildContext context, FeedItem item) {
     return Column(
+      key: ValueKey(item.creation), // TODO use a better id
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         _buildFeedBanner(context, item, _buildActivityText(context, item)),
