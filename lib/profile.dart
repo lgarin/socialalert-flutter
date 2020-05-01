@@ -1174,7 +1174,7 @@ class ProfileHeader extends StatelessWidget {
 
   Widget _buildAvatar(BuildContext context, UserProfile profile) {
     return Hero(tag: profile.userId,
-        child: ProfileAvatar(radius: 120.0, imageUri: profile.imageUri, uploadTaskId: uploadTaskId, tapCallback: tapCallback)
+        child: ProfileAvatar(radius: 120.0, imageUri: profile.imageUri, uploadTaskId: uploadTaskId)
     );
   }
 }

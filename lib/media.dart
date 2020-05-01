@@ -222,11 +222,14 @@ class _MediaDetailPanel extends StatelessWidget {
     );
   }
 
-  RaisedButton _buildViewCountButton(MediaDetail media) {
-    return RaisedButton.icon(onPressed: null,
-        disabledTextColor: Colors.black,
-        icon: Icon(Icons.remove_red_eye),
-        label: Text(media.hitCount.toString())
+  Widget _buildViewCountButton(MediaDetail media) {
+    return Tooltip(
+      message: 'Hit count',
+      child: RaisedButton.icon(onPressed: null,
+          disabledTextColor: Colors.black,
+          icon: Icon(Icons.remove_red_eye),
+          label: Text(media.hitCount.toString())
+      ),
     );
   }
 }
@@ -339,12 +342,15 @@ class _MediaFeedPanelState extends State<_MediaFeedPanel> {
     );
   }
 
-  RaisedButton _buildCommentCountButton(MediaDetail media) {
-    return RaisedButton.icon(
-        onPressed: null,
-        disabledTextColor: Colors.black,
-        icon: Icon(Icons.create),
-        label: Text(media.commentCount.toString()));
+  Widget _buildCommentCountButton(MediaDetail media) {
+    return Tooltip(
+      message: 'Comment count',
+      child: RaisedButton.icon(
+          onPressed: null,
+          disabledTextColor: Colors.black,
+          icon: Icon(Icons.create),
+          label: Text(media.commentCount.toString())),
+    );
   }
 
   void _postComment(String comment) async {
@@ -532,6 +538,14 @@ class _ApprovalButton extends StatelessWidget {
     }
   }
 
+  String _computeTooltip(MediaDetail media, bool enabled) {
+    switch (_approval) {
+      case ApprovalModifier.DISLIKE: return enabled ? 'Add dislike' : 'Dislike count';
+      case ApprovalModifier.LIKE: return enabled ? 'Add like' : 'Like count';
+      default: return null;
+    }
+  }
+
   String _computeLabel(MediaDetail media) {
     switch (_approval) {
       case ApprovalModifier.DISLIKE: return media.dislikeCount.toString();
@@ -561,11 +575,14 @@ class _ApprovalButton extends StatelessWidget {
             .then((_) => _showSnackBar(context, media, _approval));
       };
     }
-    return RaisedButton.icon(onPressed: onPressed,
-        color: buttonColor,
-        disabledColor: buttonColor,
-        icon: Icon(_computeIcon(media)),
-        label: Text(_computeLabel(media))
+    return Tooltip(
+      message: _computeTooltip(media, onPressed != null),
+      child: RaisedButton.icon(onPressed: onPressed,
+          color: buttonColor,
+          disabledColor: buttonColor,
+          icon: Icon(_computeIcon(media)),
+          label: Text(_computeLabel(media))
+      ),
     );
   }
 }
