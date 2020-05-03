@@ -1,4 +1,5 @@
 
+import 'package:camera/camera.dart';
 import 'package:device_info/device_info.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
@@ -28,6 +29,36 @@ class CameraDeviceService extends Service {
       return DeviceInfo(maker: iosInfo.name, model:  iosInfo.model);
     }
     return null;
+  }
+
+  Future<CameraDescription> _findCamera(CameraLensDirection lensDirection) async {
+    try {
+      final cameras = await availableCameras();
+      if (cameras.isEmpty) {
+        return null;
+      }
+
+      return cameras.firstWhere((element) => element.lensDirection == lensDirection, orElse: () => null);
+    } catch (e) {
+      print(e.toString());
+      throw e;
+    }
+  }
+
+  Future<CameraController> findCamera(CameraLensDirection lensDirection, ResolutionPreset resolutionPreset) async {
+    WidgetsFlutterBinding.ensureInitialized();
+    try {
+      final camera = await _findCamera(lensDirection);
+      if (camera == null) {
+        return null;
+      }
+      final controller = CameraController(camera, resolutionPreset);
+      await controller.initialize();
+      return controller;
+    } catch (e) {
+      print(e.toString());
+      throw e;
+    }
   }
 
   @override

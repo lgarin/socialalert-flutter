@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:social_alert_app/annotate.dart';
+import 'package:social_alert_app/capture.dart';
 import 'package:social_alert_app/home.dart';
 import 'package:social_alert_app/login.dart';
 import 'package:social_alert_app/media.dart';
@@ -109,6 +110,9 @@ class SocialAlertApp extends StatelessWidget {
       case AppRoute.RemotePictureDisplay: return NoAnimationMaterialPageRoute(
         builder: (context) => RemoteImageDisplayPage(settings.arguments)
       );
+      case AppRoute.Capture: return NoAnimationMaterialPageRoute(
+          builder: (context) => CapturePage()
+      );
       default: return null;
     }
   }
@@ -117,6 +121,7 @@ class SocialAlertApp extends StatelessWidget {
 class AppRoute {
   static const Login = 'login';
   static const Home = 'home';
+  static const Capture = 'capture';
   static const AnnotatePicture = 'annotatePicture';
   static const UploadManager = 'uploadManager';
   static const UserNetwork = 'userNetwork';

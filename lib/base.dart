@@ -122,6 +122,7 @@ abstract class BasePageState<T extends StatefulWidget> extends State<T> {
   }
 
   void _takePicture(BuildContext context) async {
+    /*
     final positionList = List<GeoPosition>();
     final subscription = GeoLocationService.current(context).positionStream.listen((position) {
       positionList.add(position);
@@ -136,6 +137,8 @@ abstract class BasePageState<T extends StatefulWidget> extends State<T> {
       await MediaUploadService.current(context).saveTask(task);
       await Navigator.of(context).pushNamed(AppRoute.AnnotatePicture, arguments: task);
     }
+     */
+    Navigator.of(context).pushNamed(AppRoute.Capture);
   }
 
   Widget buildNavBar(BuildContext context) => null;

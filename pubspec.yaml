@@ -17,6 +17,7 @@ dependencies:
   image_picker:
   flutter_uploader:
   path:
+  path_provider:
   geolocator:
   timeago_flutter:
   google_maps_flutter:
@@ -29,6 +30,7 @@ dependencies:
   fluster:
   device_info:
   photo_view:
+  camera:
 
 dev_dependencies:
   flutter_test:

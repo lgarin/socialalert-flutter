@@ -1,0 +1,285 @@
+
+import 'dart:io';
+
+import 'package:camera/camera.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:path/path.dart' show join;
+import 'package:path_provider/path_provider.dart';
+import 'package:provider/provider.dart';
+import 'package:social_alert_app/helper.dart';
+import 'package:social_alert_app/main.dart';
+import 'package:social_alert_app/service/cameradevice.dart';
+import 'package:social_alert_app/service/geolocation.dart';
+import 'package:social_alert_app/service/mediaupload.dart';
+
+class CapturePage extends StatefulWidget {
+
+  @override
+  _CapturePageState createState() => _CapturePageState();
+}
+
+class _CapturePageState extends State<CapturePage> {
+
+  final cameraNotifier = ValueNotifier<CameraValue>(null);
+  CameraController _cameraController;
+  CameraLensDirection _lensDirection = CameraLensDirection.back;
+  Future<GeoPosition> _asyncPosition;
+  Future<DeviceInfo> _asyncDevice;
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureProvider(
+      key: ValueKey(_lensDirection),
+      create: _createCameraController,
+      child: _buildContent(),
+    );
+  }
+
+  Scaffold _buildContent() {
+    return Scaffold(
+      appBar: AppBar(title: Text('Synpix')),
+      body: _CameraPreviewArea(),
+      bottomNavigationBar: _CaptureNavigationBar(cameraNotifier: cameraNotifier, onCameraSwitch: _onCameraSwitch, onVideoStart: _onVideoRecord, onVideoPause: _onVideoPause,),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButton: _CaptureButton(cameraNotifier: cameraNotifier, onPictureCapture: _onPictureCapture, onVideoStop: _onStopVideo),
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _asyncPosition = GeoLocationService.current(context).readPosition(50.0);
+    _asyncDevice = CameraDeviceService.current(context).device;
+  }
+
+
+  @override
+  void dispose() {
+    _cameraController?.dispose();
+    super.dispose();
+  }
+
+  CameraLensDirection _nextLensDirection(CameraLensDirection currentLensDirection) {
+    if (currentLensDirection == CameraLensDirection.back) {
+      return CameraLensDirection.front;
+    } else {
+      return CameraLensDirection.back;
+    }
+  }
+
+  void _onCameraSwitch() async {
+    cameraNotifier.value = null;
+    _cameraController?.dispose();
+    _cameraController = null;
+    setState(() {
+      _lensDirection = _nextLensDirection(_lensDirection);
+    });
+  }
+
+  void _onPictureCapture() async {
+    cameraNotifier.value = null;
+    try {
+      final tempDir = await getTemporaryDirectory();
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final path = join(tempDir.path, '$timestamp.jpg');
+      print(path);
+      await _cameraController.takePicture(path);
+      final device = await _asyncDevice;
+      final position = await _asyncPosition;
+      final task = MediaUploadTask(file: File(path), type: MediaUploadType.PICTURE, position: position, device: device);
+      await MediaUploadService.current(context).saveTask(task);
+      Navigator.of(context).pushReplacementNamed(AppRoute.AnnotatePicture, arguments: task);
+    } catch (e) {
+      print(e);
+      showSimpleDialog(context, 'Capture failed', e.toString());
+    }
+  }
+
+  void _onVideoRecord() async {
+    cameraNotifier.value = null;
+    try {
+      if (_cameraController.value.isRecordingPaused) {
+        await _cameraController.resumeVideoRecording();
+        cameraNotifier.value = _cameraController?.value;
+      } else {
+        final tempDir = await getTemporaryDirectory();
+        final timestamp = DateTime.now().millisecondsSinceEpoch;
+        final path = join(tempDir.path, '$timestamp.mp4');
+        print(path);
+        await _cameraController.startVideoRecording(path);
+        cameraNotifier.value = _cameraController?.value;
+      }
+    } catch (e) {
+      print(e);
+      showSimpleDialog(context, 'Capture failed', e.toString());
+    }
+  }
+
+  void _onStopVideo() async {
+    cameraNotifier.value = null;
+    try {
+      await _cameraController.stopVideoRecording();
+      cameraNotifier.value = _cameraController?.value;
+      final device = await _asyncDevice;
+      final position = await _asyncPosition;
+    } catch (e) {
+      print(e);
+      showSimpleDialog(context, 'Capture failed', e.toString());
+    }
+  }
+
+  void _onVideoPause() async {
+    cameraNotifier.value = null;
+    try {
+      await _cameraController.pauseVideoRecording();
+      cameraNotifier.value = _cameraController?.value;
+      print(_cameraController?.value?.isRecordingPaused);
+    } catch (e) {
+      print(e);
+      showSimpleDialog(context, 'Capture failed', e.toString());
+    }
+  }
+
+  Future<CameraController> _createCameraController(BuildContext context) async {
+    _cameraController = await CameraDeviceService.current(context).findCamera(_lensDirection, ResolutionPreset.ultraHigh);
+    cameraNotifier.value = _cameraController?.value;
+    return _cameraController;
+  }
+}
+
+class _CameraPreviewArea extends StatelessWidget {
+
+  @override
+  Widget build(BuildContext context) {
+    CameraController controller = Provider.of(context);
+    if (controller == null) {
+      return LoadingCircle();
+    }
+    return SafeArea(child: CameraPreview(controller));
+  }
+}
+
+class _CaptureButton extends StatelessWidget {
+  final VoidCallback onPictureCapture;
+  final VoidCallback onVideoStop;
+  final ValueNotifier<CameraValue> cameraNotifier;
+
+  _CaptureButton({@required this.cameraNotifier, @required this.onPictureCapture, @required this.onVideoStop});
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder(
+      valueListenable: cameraNotifier,
+      builder: _buildContent,
+    );
+  }
+
+  Widget _buildContent(BuildContext context, CameraValue camera, Widget child) {
+    final recording = camera != null && camera.isRecordingVideo;
+    return SizedBox(
+      width: 80,
+      height: 80,
+      child:  FloatingActionButton(
+        backgroundColor: Theme.of(context).primaryColor,
+        foregroundColor: Colors.white,
+        tooltip: recording ? 'Stop video' : 'Take picture',
+        child: recording
+          ? Icon(Icons.stop, size: 50,)
+          : Icon(Icons.camera_alt, size: 50,),
+        onPressed: camera == null ? null : (recording ? onVideoStop : onPictureCapture),
+      )
+    );
+  }
+}
+
+class _CaptureNavigationBar extends StatelessWidget {
+  static final spacing = 15.0;
+  final VoidCallback onVideoStart;
+  final VoidCallback onVideoPause;
+  final VoidCallback onCameraSwitch;
+  final ValueNotifier<CameraValue> cameraNotifier;
+
+  _CaptureNavigationBar({@required this.cameraNotifier, @required this.onVideoStart, @required this.onVideoPause, @required this.onCameraSwitch});
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder(
+      valueListenable: cameraNotifier,
+      builder: _buildContent,
+    );
+  }
+
+  Widget _buildContent(BuildContext context, CameraValue camera, Widget child) {
+    return BottomAppBar(
+      color: Colors.black,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+          Padding(padding: EdgeInsets.all(spacing), child: _buildSwitchCameraButton(context, camera)),
+          Padding(padding: EdgeInsets.all(spacing), child: _buildVideoButton(context, camera)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSwitchCameraButton(BuildContext context, CameraValue camera) {
+    final recording = camera?.isRecordingVideo ?? false;
+    return _buildRoundButton(
+        icon: Icon(Icons.switch_camera),
+        fillColor: Colors.white,
+        onPressed: camera == null ? null : (recording ? null : onCameraSwitch),
+        tooltip: 'Switch camera'
+    );
+  }
+
+  Widget _buildVideoButton(BuildContext context, CameraValue camera) {
+    if (camera?.isRecordingPaused ?? false) {
+      return _buildResumeVideoButton();
+    } else if (camera?.isRecordingVideo ?? false) {
+      return _buildPauseVideoButton();
+    } else {
+      return _buildStartVideoButton(camera != null);
+    }
+  }
+
+  Widget _buildStartVideoButton(bool enabled) {
+    return _buildRoundButton(
+      icon: Icon(Icons.videocam),
+      tooltip: 'Start recording',
+      fillColor: Color.fromARGB(255, 231, 40, 102),
+      onPressed: enabled ? onVideoStart : null,
+    );
+  }
+
+  Widget _buildPauseVideoButton() {
+    return _buildRoundButton(
+      icon:Icon(Icons.pause),
+      tooltip: 'Pause recording',
+      fillColor: Color.fromARGB(255, 231, 40, 102),
+      onPressed: onVideoPause,
+    );
+  }
+
+  Widget _buildResumeVideoButton() {
+    return _buildRoundButton(
+      icon:Icon(Icons.play_arrow),
+      tooltip: 'Resume recording',
+      fillColor: Color.fromARGB(255, 231, 40, 102),
+      onPressed: onVideoStart,
+    );
+  }
+
+  Widget _buildRoundButton({Icon icon, Color fillColor, VoidCallback onPressed, String tooltip}) {
+    return Tooltip(
+      message: tooltip,
+      child: RawMaterialButton(
+        child: icon,
+        padding: EdgeInsets.all(spacing),
+        shape: CircleBorder(),
+        fillColor: fillColor,
+        onPressed: onPressed
+      )
+    );
+  }
+}
