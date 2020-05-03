@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
-import 'package:social_alert_app/service/configuration.dart';
 import 'package:social_alert_app/service/geolocation.dart';
 
 class PagingParameter {
@@ -71,6 +70,8 @@ class UserInfo {
   final String username;
   final bool online;
   final String email;
+  final String firstname;
+  final String lastname;
   final String country;
   final String imageUri;
   final String birthdate;
@@ -83,6 +84,8 @@ class UserInfo {
         username = json['username'],
         online = json['online'],
         email = json['email'],
+        firstname = json['firstname'],
+        lastname = json['lastname'],
         country = json['country'],
         biography = json['biography'],
         birthdate = json['birthdate'],
@@ -126,6 +129,8 @@ class MediaDetail extends MediaInfo {
   final UserInfo creator;
   final String cameraMaker;
   final String cameraModel;
+  final int width;
+  final int height;
 
   MediaDetail.fromJson(Map<String, dynamic> json) :
         timestamp = DateTime.fromMillisecondsSinceEpoch(json['timestamp']),
@@ -138,6 +143,8 @@ class MediaDetail extends MediaInfo {
         creator = UserInfo.fromJson(json['creator']),
         cameraMaker = json['cameraMaker'],
         cameraModel = json['cameraModel'],
+        width = json['width'],
+        height = json['height'],
         super.fromJson(json);
 
   GeoLocation get location {
@@ -152,8 +159,13 @@ class MediaDetail extends MediaInfo {
     }
   }
 
-  // TODO this information should be delivered by the server
-  String get format => numberFormat.format(previewHeight * previewWidth / oneMega) + 'MP - $previewWidth x $previewHeight';
+  String get format {
+    if (height != null && width != null) {
+      return numberFormat.format(height * width / oneMega) + 'MP - $height x $width';
+    } else {
+      return null;
+    }
+  }
 
   String get camera {
     if (cameraModel != null && cameraMaker != null) {
@@ -247,6 +259,7 @@ const Map<String, FeedActivity> _feedActivityMap = {
 };
 
 class FeedItem {
+  final String id;
   final FeedActivity activity;
   final DateTime creation;
   final UserInfo creator;
@@ -254,6 +267,7 @@ class FeedItem {
   final MediaCommentInfo comment;
 
   FeedItem.fromJson(Map<String, dynamic> json) :
+        id = json['id'],
         activity = _feedActivityMap[json['activity']],
         creation = DateTime.fromMillisecondsSinceEpoch(json['creation']),
         creator = UserInfo.fromJson(json['creator']),

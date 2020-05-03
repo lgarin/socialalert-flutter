@@ -84,6 +84,8 @@ class _ProfileTabSelectionModel with ChangeNotifier {
 }
 
 class _ProfileFormModel {
+  String _firstname;
+  String _lastname;
   Gender _gender;
   Country _country;
   String _biography;
@@ -92,6 +94,8 @@ class _ProfileFormModel {
   int _birthdateYear;
 
   _ProfileFormModel(UserProfile profile) {
+    _firstname = profile.firstname;
+    _lastname = profile.lastname;
     _country = profile.country != null ? Country(profile.country, null) : null;
     _biography = profile.biography;
     final birthdate = profile.birthdate != null ? DateTime.parse(profile.birthdate) : null;
@@ -156,6 +160,12 @@ class _ProfileFormModel {
     return null;
   }
 
+  String get firstname => _firstname;
+  void setFirstname(String newFirstname) => _firstname = newFirstname;
+
+  String get lastname => _lastname;
+  void setLastname(String newLastname) => _lastname = newLastname;
+
   Gender get gender => _gender;
   void setGender(Gender newGender) => _gender = newGender;
 
@@ -165,7 +175,14 @@ class _ProfileFormModel {
   String get biography => _biography;
   void setBiography(String newBiography) => _biography = newBiography;
 
-  ProfileUpdateRequest toUpdateRequest() => ProfileUpdateRequest(biography: biography, birthdate: DateTime.utc(birthdateYear, birthdateMonth, birthdateDay), country: country, gender: gender);
+  ProfileUpdateRequest toUpdateRequest() => ProfileUpdateRequest(
+      firstname: firstname,
+      lastname: lastname,
+      biography: biography,
+      birthdate: DateTime.utc(birthdateYear, birthdateMonth, birthdateDay),
+      country: country,
+      gender: gender
+  );
 }
 
 class _ProfileForm extends StatefulWidget {
@@ -229,6 +246,10 @@ class _ProfileFormState extends State<_ProfileForm> {
         onWillPop: _allowPop,
         child: Column(
           children: <Widget>[
+            _FirstnameFormField(),
+            SizedBox(height: 5),
+            _LastnameFormField(),
+            SizedBox(height: 5),
             _GenderFormField(),
             SizedBox(height: 5),
             _BirthdateFormField(),
@@ -403,6 +424,51 @@ class _CountryFormField extends StatelessWidget {
       child: _CountryWidget(country, expandName: expandName)
   );
 }
+
+class _FirstnameFormField extends StatelessWidget {
+
+  @override
+  Widget build(BuildContext context) {
+    _ProfileFormModel model = Provider.of(context);
+    return Container(
+      decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.all(Radius.circular(10))),
+      padding: EdgeInsets.all(10),
+      child: TextFormField(
+        initialValue: model.firstname,
+        onSaved: model.setFirstname,
+        decoration: InputDecoration(
+            hintText: 'Firstname',
+            icon: Icon(Icons.perm_identity)),
+        validator: MaxLengthValidator(50, errorText: "Maximum 50 characters allowed"),
+      ),
+    );
+  }
+}
+
+class _LastnameFormField extends StatelessWidget {
+
+  @override
+  Widget build(BuildContext context) {
+    _ProfileFormModel model = Provider.of(context);
+    return Container(
+      decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.all(Radius.circular(10))),
+      padding: EdgeInsets.all(10),
+      child: TextFormField(
+        initialValue: model.lastname,
+        onSaved: model.setLastname,
+        decoration: InputDecoration(
+            hintText: 'Lastname',
+            icon: Icon(Icons.person)),
+        validator: MaxLengthValidator(50, errorText: "Maximum 50 characters allowed"),
+      ),
+    );
+  }
+}
+
 
 class _BiographyFormField extends StatelessWidget {
 
@@ -747,6 +813,16 @@ class _ProfileInformationPanel extends StatelessWidget {
 
     return Column(
       children: <Widget>[
+        ListTile(leading: Icon(Icons.perm_identity),
+            title: Text('Firstname'),
+            subtitle: _profile.firstname != null ? _buildFirstname() : null,
+            dense: true),
+        Divider(height: 5.0),
+        ListTile(leading: Icon(Icons.person),
+            title: Text('Lastname'),
+            subtitle: _profile.lastname != null ? _buildLastname() : null,
+            dense: true),
+        Divider(height: 5.0),
         ListTile(leading: Icon(Icons.wc),
             title: Text('Gender'),
             subtitle: _profile.gender != null ? _buildGender() : null,
@@ -769,6 +845,10 @@ class _ProfileInformationPanel extends StatelessWidget {
       ],
     );
   }
+
+  Text _buildFirstname() => Text(_profile.firstname, style: TextStyle(fontSize: 16), overflow: TextOverflow.ellipsis);
+
+  Text _buildLastname() => Text(_profile.lastname, style: TextStyle(fontSize: 16), overflow: TextOverflow.ellipsis);
 
   Text _buildBiography() => Text(_profile.biography, style: TextStyle(fontSize: 16), maxLines: 50);
 

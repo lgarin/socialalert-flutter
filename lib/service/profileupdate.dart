@@ -62,15 +62,19 @@ class Country {
 class ProfileUpdateRequest {
   static final dateFormat = DateFormat('yyyy-MM-dd');
 
+  final String firstname;
+  final String lastname;
   final String biography;
   final DateTime birthdate;
   final Country country;
   final Gender gender;
   final String language;
 
-  ProfileUpdateRequest({this.biography, this.birthdate, this.country, this.gender, this.language});
+  ProfileUpdateRequest({this.firstname, this.lastname, this.biography, this.birthdate, this.country, this.gender, this.language});
 
   Map<String, dynamic> toJson() => {
+    'firstname': firstname,
+    'lastname': lastname,
     'biography': biography,
     'birthdate': birthdate != null ? dateFormat.format(birthdate) : null,
     'country': country?.code,

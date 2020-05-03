@@ -110,7 +110,7 @@ class _FeedDisplayState extends BasePagingState<FeedDisplay, FeedItem> {
 
   Widget _buildLargeItem(BuildContext context, FeedItem item) {
     return Column(
-      key: ValueKey(item.creation), // TODO use a better id
+      key: ValueKey(item.id),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         _buildFeedBanner(context, item, _buildActivityText(context, item)),
@@ -122,7 +122,7 @@ class _FeedDisplayState extends BasePagingState<FeedDisplay, FeedItem> {
 
   Widget _buildFeedBanner(BuildContext context, FeedItem item, Widget subtitle) {
     return ListTile(
-        key: ValueKey(item.creation), // TODO use a better id
+        key: ValueKey(item.id),
         onTap: () => _showPictureDetail(item.media),
         contentPadding: EdgeInsets.zero,
         leading: ProfileAvatar(radius: 50.0,

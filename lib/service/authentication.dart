@@ -20,8 +20,9 @@ class _LoginTokenResponse {
 class _LoginResponse extends _LoginTokenResponse {
   final String userId;
   final String username;
-
   final String email;
+  final String firstname;
+  final String lastname;
   final String country;
   final String biography;
   final String birthdate;
@@ -33,6 +34,8 @@ class _LoginResponse extends _LoginTokenResponse {
     userId = json['id'],
     username = json['username'],
     email = json['email'],
+    firstname = json['firstname'],
+    lastname = json['lastname'],
     country = json['country'],
     biography = json['biography'],
     birthdate = json['birthdate'],
@@ -110,6 +113,8 @@ class UserProfile {
   final String username;
   final bool online;
   final String email;
+  final String firstname;
+  final String lastname;
   final String country;
   final String imageUri;
   final String birthdate;
@@ -123,6 +128,8 @@ class UserProfile {
       username = login.username,
       online = true,
       email = login.email,
+      firstname = login.firstname,
+      lastname = login.lastname,
       imageUri = login.imageUri,
       country = login.country,
       birthdate = login.birthdate,
@@ -136,6 +143,8 @@ class UserProfile {
         username = info.username,
         online = info.online,
         email = info.email,
+        firstname = info.firstname,
+        lastname = info.lastname,
         imageUri = info.imageUri,
         country = info.country,
         birthdate = info.birthdate,
@@ -144,13 +153,28 @@ class UserProfile {
         statistic = info.statistic,
         followedSince = null;
 
-  UserProfile.anonym() : userId = null, username = null, online = false, email = null, country = null, imageUri = null, birthdate = null, biography = null, gender = null, statistic = null, followedSince = null;
+  UserProfile.anonym() :
+        userId = null,
+        username = null,
+        online = false,
+        email = null,
+        firstname = null,
+        lastname = null,
+        country = null,
+        imageUri = null,
+        birthdate = null,
+        biography = null,
+        gender = null,
+        statistic = null,
+        followedSince = null;
 
   UserProfile.fromJson(Map<String, dynamic> json) :
         userId = json['id'],
         username = json['username'],
         online = json['online'],
         email = json['email'],
+        firstname = json['firstname'],
+        lastname =  json['lastname'],
         country = json['country'],
         biography = json['biography'],
         birthdate = json['birthdate'],

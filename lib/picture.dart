@@ -193,15 +193,19 @@ class PictureInfoPanel extends StatelessWidget {
         ])
       ]);
     }
-    if (format != null && camera != null) {
+    if (format != null) {
       children.addAll([
         SizedBox(height: 10),
         Row(children: <Widget>[
           Icon(Icons.image),
           SizedBox(width: 5),
           Text(format)
-        ]),
-        SizedBox(height: 5),
+        ])
+      ]);
+    }
+    if (camera != null) {
+      children.addAll([
+        SizedBox(height: 10),
         Row(children: <Widget>[
           Icon(Icons.camera),
           SizedBox(width: 5),
