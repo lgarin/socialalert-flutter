@@ -26,6 +26,7 @@ class _CapturePageState extends State<CapturePage> {
   CameraLensDirection _lensDirection = CameraLensDirection.back;
   Future<GeoPosition> _asyncPosition;
   Future<DeviceInfo> _asyncDevice;
+  String _videoPath;
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +50,7 @@ class _CapturePageState extends State<CapturePage> {
   @override
   void initState() {
     super.initState();
-    _asyncPosition = GeoLocationService.current(context).readPosition(50.0);
+    _asyncPosition = GeoLocationService.current(context).readPosition(20.0);
     _asyncDevice = CameraDeviceService.current(context).device;
   }
 
@@ -80,10 +81,7 @@ class _CapturePageState extends State<CapturePage> {
   void _onPictureCapture() async {
     cameraNotifier.value = null;
     try {
-      final tempDir = await getTemporaryDirectory();
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final path = join(tempDir.path, '$timestamp.jpg');
-      print(path);
+      String path = await _defineOutputFile('jpg');
       await _cameraController.takePicture(path);
       final device = await _asyncDevice;
       final position = await _asyncPosition;
@@ -96,21 +94,25 @@ class _CapturePageState extends State<CapturePage> {
     }
   }
 
+  Future<String> _defineOutputFile(String extension) async {
+    final outputDir = await getApplicationDocumentsDirectory();
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    return join(outputDir.path, '$timestamp.$extension');
+  }
+
   void _onVideoRecord() async {
     cameraNotifier.value = null;
     try {
-      if (_cameraController.value.isRecordingPaused) {
+      if (_videoPath != null) {
         await _cameraController.resumeVideoRecording();
         cameraNotifier.value = _cameraController?.value;
       } else {
-        final tempDir = await getTemporaryDirectory();
-        final timestamp = DateTime.now().millisecondsSinceEpoch;
-        final path = join(tempDir.path, '$timestamp.mp4');
-        print(path);
-        await _cameraController.startVideoRecording(path);
+        _videoPath = await _defineOutputFile('mp4');
+        await _cameraController.startVideoRecording(_videoPath);
         cameraNotifier.value = _cameraController?.value;
       }
     } catch (e) {
+      _videoPath = null;
       print(e);
       showSimpleDialog(context, 'Capture failed', e.toString());
     }
@@ -123,7 +125,15 @@ class _CapturePageState extends State<CapturePage> {
       cameraNotifier.value = _cameraController?.value;
       final device = await _asyncDevice;
       final position = await _asyncPosition;
+      final task = MediaUploadTask(file: File(_videoPath), type: MediaUploadType.VIDEO, position: position, device: device);
+      await MediaUploadService.current(context).saveTask(task);
+      Navigator.of(context).pushReplacementNamed(AppRoute.AnnotatePicture, arguments: task);
+      /*
+      File(_videoPath).deleteSync();
+      _videoPath = null;
+       */
     } catch (e) {
+      _videoPath = null;
       print(e);
       showSimpleDialog(context, 'Capture failed', e.toString());
     }
@@ -134,7 +144,6 @@ class _CapturePageState extends State<CapturePage> {
     try {
       await _cameraController.pauseVideoRecording();
       cameraNotifier.value = _cameraController?.value;
-      print(_cameraController?.value?.isRecordingPaused);
     } catch (e) {
       print(e);
       showSimpleDialog(context, 'Capture failed', e.toString());

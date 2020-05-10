@@ -29,7 +29,8 @@ enum MediaUploadStatus {
 }
 
 enum MediaUploadType {
-  PICTURE
+  PICTURE,
+  VIDEO
 }
 
 class MediaUploadTask with ChangeNotifier {
@@ -57,6 +58,8 @@ class MediaUploadTask with ChangeNotifier {
         timestamp = DateTime.now(), cameraMaker = device?.maker, cameraModel = device?.model, _latitude = position?.latitude, _longitude = position?.longitude {
     _changeStatus(MediaUploadStatus.CREATED);
   }
+
+  bool isVideo() => type == MediaUploadType.VIDEO;
 
   bool isNew() {
     return status == MediaUploadStatus.CREATED;
@@ -332,6 +335,10 @@ class _MediaUploadApi {
     return httpService.queueImageUpload(uri: '/file/upload/picture', file: file, title: title, accessToken: accessToken, showNotification: true);
   }
 
+  Future<String> enqueueVideo({@required String title, @required File file, @required String accessToken}) {
+    return httpService.queueImageUpload(uri: '/file/upload/video', file: file, title: title, accessToken: accessToken, showNotification: true);
+  }
+
   _UploadTaskResult _mapResponse(UploadTaskResponse response) {
     if (response.status == UploadTaskStatus.complete) {
       final baseLocationUrl = baseServerUrl + '/file/download/';
@@ -501,7 +508,9 @@ class MediaUploadService extends Service {
   Future<void> _startUploading(MediaUploadTask task) async {
     try {
       final accessToken = await _authService.accessToken;
-      final taskId = await _uploadApi.enqueueImage(title: task.title, file: task.file, accessToken: accessToken);
+      final taskId = task.isVideo()
+          ? await _uploadApi.enqueueVideo(title: task.title, file: task.file, accessToken: accessToken)
+          : await _uploadApi.enqueueImage(title: task.title, file: task.file, accessToken: accessToken);
       task._markUploading(taskId);
     } catch (e) {
       task._markUploadError(e);

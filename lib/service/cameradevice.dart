@@ -47,11 +47,13 @@ class CameraDeviceService extends Service {
 
   Future<CameraController> findCamera(CameraLensDirection lensDirection, ResolutionPreset resolutionPreset) async {
     WidgetsFlutterBinding.ensureInitialized();
+
+    final camera = await _findCamera(lensDirection);
+    if (camera == null) {
+      return null;
+    }
+
     try {
-      final camera = await _findCamera(lensDirection);
-      if (camera == null) {
-        return null;
-      }
       final controller = CameraController(camera, resolutionPreset);
       await controller.initialize();
       return controller;
@@ -65,6 +67,4 @@ class CameraDeviceService extends Service {
   void dispose() {
 
   }
-
-
 }
