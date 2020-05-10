@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
@@ -14,14 +13,13 @@ import 'package:social_alert_app/service/mediaupload.dart';
 
 class _CaptureModel {
   final DateTime timestamp;
-  final File media;
   final tags = Set<String>();
   final title = TextEditingController();
   final currentTag = TextEditingController();
   String selectedCategory;
   bool autovalidate = false;
 
-  _CaptureModel(this.media)
+  _CaptureModel()
       : timestamp = DateTime.now();
 
   String get titleInput => title.text.trim();
@@ -48,10 +46,10 @@ class _AnnotatePicturePageState extends State<AnnotatePicturePage> {
   static const backgroundColor = Color.fromARGB(255, 240, 240, 240);
   final _formKey = GlobalKey<FormState>();
   final MediaUploadTask _upload;
-  final _CaptureModel _model;
+  final _model = _CaptureModel();
   bool _fullImage = false;
 
-  _AnnotatePicturePageState(this._upload) : _model = _CaptureModel(_upload.file);
+  _AnnotatePicturePageState(this._upload);
 
   void _switchFullImage() {
     setState(() {

@@ -128,10 +128,6 @@ class _CapturePageState extends State<CapturePage> {
       final task = MediaUploadTask(file: File(_videoPath), type: MediaUploadType.VIDEO, position: position, device: device);
       await MediaUploadService.current(context).saveTask(task);
       Navigator.of(context).pushReplacementNamed(AppRoute.AnnotatePicture, arguments: task);
-      /*
-      File(_videoPath).deleteSync();
-      _videoPath = null;
-       */
     } catch (e) {
       _videoPath = null;
       print(e);

@@ -4,8 +4,10 @@ import 'package:exifdart/exifdart_io.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:photo_view/photo_view.dart';
 import 'package:provider/provider.dart';
 import 'package:social_alert_app/helper.dart';
+import 'package:social_alert_app/service/cameradevice.dart';
 import 'package:social_alert_app/service/geolocation.dart';
 import 'package:social_alert_app/service/mediaupload.dart';
 
@@ -15,7 +17,7 @@ class LocalPicturePreview extends StatelessWidget {
   final Color backgroundColor;
   final bool fullScreen;
   final VoidCallback fullScreenSwitch;
-  final int childHeight;
+  final double childHeight;
 
   LocalPicturePreview({Key key, this.child, this.image, this.backgroundColor, this.fullScreen, this.fullScreenSwitch, this.childHeight}) : super(key: key);
 
@@ -39,7 +41,7 @@ class LocalPicturePreview extends StatelessWidget {
 
   Container _buildChildContainer(BuildContext context) {
     return Container(
-      height: childHeight.ceilToDouble(),
+      height: childHeight,
       decoration: BoxDecoration(
           color: backgroundColor,
           borderRadius: BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20))
@@ -50,17 +52,36 @@ class LocalPicturePreview extends StatelessWidget {
   }
 
   Container _buildImageContainer(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
+    final screen = MediaQuery.of(context);
+    final constraints = !fullScreen ?
+      BoxConstraints.tightFor(height: screen.size.height - childHeight) :
+      BoxConstraints.expand(height: screen.size.height);
     return Container(
+        constraints: constraints,
         color: Colors.black,
         child: GestureDetector(
             onTap: fullScreenSwitch,
-            child: Hero(tag: image.path, child: fullScreen ?
-              Image.file(image, fit: BoxFit.contain, height: screenHeight) :
-              Image.file(image, fit: BoxFit.cover, height: childHeight != null ? screenHeight - childHeight : screenHeight / 3)
-            )
+            child: _buildPhotoView(context)
         )
     );
+  }
+
+  Widget _buildPhotoView(BuildContext context) {
+    final preview = !fullScreen;
+    return ClipRect(child: PhotoView(
+      minScale: PhotoViewComputedScale.contained,
+      maxScale: PhotoViewComputedScale.covered * (preview ? 2.0 : 8.0),
+      initialScale: preview ? PhotoViewComputedScale.covered : PhotoViewComputedScale.contained,
+      scaleStateCycle: preview ? (c) => c : defaultScaleStateCycle,
+      tightMode: preview,
+      onTapUp: preview ? _onTap : null,
+      imageProvider: FileImage(image),
+      heroAttributes: PhotoViewHeroAttributes(tag: image.path),
+    ));
+  }
+
+  void _onTap(BuildContext context, TapUpDetails details, PhotoViewControllerValue controllerValue) {
+    fullScreenSwitch();
   }
 }
 
@@ -111,11 +132,12 @@ class _LocalPictureInfoPageState extends State<LocalPictureInfoPage> {
 
   Future<_ExifData> _buildExifData(BuildContext context) async {
     Map<String, dynamic> tags = await readExif(FileReader(widget.upload.file));
+    final device = await CameraDeviceService.current(context).device;
     return _ExifData(
       mediaHeight: tags['ImageHeight'] ?? tags['ExifImageHeight'] ?? tags['PixelYDimension'] as int,
       mediaWidth: tags['ImageWidth'] ?? tags['ExifImageWidth'] ?? tags['PixelXDimension'] as int,
-      cameraMaker: tags['Make'] as String,
-      cameraModel: tags['Model'] as String,
+      cameraMaker: tags['Make'] as String ?? device.maker,
+      cameraModel: tags['Model'] as String ?? device.model,
     );
   }
 
