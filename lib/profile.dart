@@ -973,7 +973,7 @@ class _ProfileGalleryPanelState extends BasePagingState<_ProfileGalleryPanel, Me
   }
 
   void _onGridTileSelection(MediaInfo media) async {
-    final newValue = await Navigator.of(context).pushNamed<MediaDetail>(AppRoute.RemotePictureDetail, arguments: media);
+    final newValue = await Navigator.of(context).pushNamed<MediaDetail>(AppRoute.RemoteMediaDetail, arguments: media);
     if (newValue != null) {
       replaceItem((item) => item.mediaUri == media.mediaUri, newValue);
     }
@@ -1045,7 +1045,7 @@ class _UserCommentListState extends BasePagingState<_UserCommentList, MediaComme
   }
 
   void _onThumbnailSelection(MediaInfo media) async {
-    await Navigator.of(context).pushNamed<MediaDetail>(AppRoute.RemotePictureDetail, arguments: media);
+    await Navigator.of(context).pushNamed<MediaDetail>(AppRoute.RemoteMediaDetail, arguments: media);
   }
 
   Widget _buildContent(MediaCommentInfo commentInfo) {

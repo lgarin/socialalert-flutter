@@ -179,7 +179,7 @@ class _UploadManagerPageState extends BasePageState<UploadManagerPage> {
 
   void _onItemSelected(MediaUploadTask task) {
     if (task.status == MediaUploadStatus.CREATED) {
-      Navigator.of(context).pushNamed(AppRoute.AnnotatePicture, arguments: task);
+      Navigator.of(context).pushNamed(AppRoute.AnnotateMedia, arguments: task);
     } else {
       Navigator.of(context).pushNamed(AppRoute.LocalPictureInfo, arguments: task);
     }

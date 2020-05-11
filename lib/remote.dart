@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:chewie/chewie.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:form_field_validator/form_field_validator.dart';
@@ -8,7 +9,7 @@ import 'package:social_alert_app/base.dart';
 import 'package:social_alert_app/profile.dart';
 import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/main.dart';
-import 'package:social_alert_app/picture.dart';
+import 'package:social_alert_app/local.dart';
 import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/commentquery.dart';
 import 'package:social_alert_app/service/configuration.dart';
@@ -17,6 +18,7 @@ import 'package:social_alert_app/service/mediaquery.dart';
 import 'package:social_alert_app/service/mediaupdate.dart';
 import 'package:social_alert_app/service/profilequery.dart';
 import 'package:timeago_flutter/timeago_flutter.dart';
+import 'package:video_player/video_player.dart';
 
 class _MediaInfoModel with ChangeNotifier {
   MediaDetail _detail;
@@ -33,27 +35,27 @@ class _MediaInfoModel with ChangeNotifier {
   }
 }
 
-class RemotePictureDetailPage extends StatefulWidget {
+class RemoteMediaDetailPage extends StatefulWidget {
 
   final MediaInfo media;
 
-  RemotePictureDetailPage(this.media);
+  RemoteMediaDetailPage(this.media);
 
   String get mediaUri => media.mediaUri;
 
   String get mediaTitle => media.title;
 
   @override
-  _RemotePictureDetailPageState createState() => _RemotePictureDetailPageState();
+  _RemoteMediaDetailPageState createState() => _RemoteMediaDetailPageState();
 }
 
-class _RemotePictureDetailPageState extends BasePageState<RemotePictureDetailPage> {
+class _RemoteMediaDetailPageState extends BasePageState<RemoteMediaDetailPage> {
   static const spacing = 5.0;
 
   final _tabSelectionModel = _MediaTabSelectionModel();
   final _scrollController = ScrollController();
 
-  _RemotePictureDetailPageState() : super(AppRoute.RemotePictureDetail);
+  _RemoteMediaDetailPageState() : super(AppRoute.RemoteMediaDetail);
 
   @override
   void initState() {
@@ -85,7 +87,9 @@ class _RemotePictureDetailPageState extends BasePageState<RemotePictureDetailPag
         },
         child: Consumer<_MediaInfoModel>(
           builder: _buildContent,
-          child: RemotePictureDisplay(media: widget.media, preview: true)
+          child: widget.media.hasVideoPreview
+              ? RemoteVideoDisplay(media: widget.media, preview: true)
+              : RemotePictureDisplay(media: widget.media, preview: true)
         )
     );
   }
@@ -205,7 +209,7 @@ class _MediaDetailPanel extends StatelessWidget {
       children: <Widget>[
         _buildInteractionBar(media),
         Divider(),
-        PictureInfoPanel(timestamp: media.timestamp, location: media.location, camera: media.camera, format: media.format)
+        MediaInfoPanel(timestamp: media.timestamp, location: media.location, camera: media.camera, format: media.format)
       ],
     );
   }
@@ -689,7 +693,7 @@ class RemotePictureDisplay extends StatelessWidget {
   }
 
   void _onTap(BuildContext context, TapUpDetails details, PhotoViewControllerValue controllerValue) {
-    Navigator.of(context).pushNamed(AppRoute.RemotePictureDisplay, arguments: media);
+    Navigator.of(context).pushNamed(AppRoute.RemoteMediaDisplay, arguments: media);
   }
 
   Widget _buildErrorWidget(BuildContext context) {
@@ -724,17 +728,68 @@ class RemotePictureDisplay extends StatelessWidget {
   }
 }
 
-class RemoteImageDisplayPage extends StatelessWidget {
+class RemoteVideoDisplay extends StatefulWidget {
+  RemoteVideoDisplay({@required this.media, this.preview = false});
+
+  final MediaInfo media;
+  final bool preview;
+
+  @override
+  _RemoteVideoDisplayState createState() => _RemoteVideoDisplayState();
+}
+
+class _RemoteVideoDisplayState extends State<RemoteVideoDisplay> {
+
+  VideoPlayerController videoPlayerController;
+  ChewieController chewieController;
+
+  @override
+  void dispose() {
+    videoPlayerController?.dispose();
+    chewieController?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final screen = MediaQuery.of(context);
+    final constraints = widget.preview ?
+    BoxConstraints.tightFor(height: previewHeight.roundToDouble() / screen.devicePixelRatio) :
+    BoxConstraints.expand(height: screen.size.height);
+    return Container(
+        color: Colors.black,
+        constraints: constraints,
+        child: _buildVideo(context)
+    );
+  }
+
+
+  Widget _buildVideo(BuildContext context) {
+    final url = MediaQueryService.toPreviewUrl(widget.media.mediaUri);
+    videoPlayerController = VideoPlayerController.network(url);
+    chewieController = ChewieController(
+      videoPlayerController: videoPlayerController,
+      fullScreenByDefault: !widget.preview,
+      allowFullScreen: widget.preview,
+      aspectRatio: 16 / 9,
+      autoPlay: true,
+      looping: true,
+    );
+    return Chewie(controller: chewieController);
+  }
+}
+
+class RemoteMediaDisplayPage extends StatelessWidget {
 
   final MediaInfo mediaInfo;
 
-  RemoteImageDisplayPage(this.mediaInfo);
+  RemoteMediaDisplayPage(this.mediaInfo);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(mediaInfo.title, overflow: TextOverflow.ellipsis)),
-      body: RemotePictureDisplay(media: mediaInfo)
+      body: mediaInfo.hasVideoPreview ? RemoteVideoDisplay(media: mediaInfo) : RemotePictureDisplay(media: mediaInfo)
     );
   }
 }

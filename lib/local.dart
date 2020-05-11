@@ -139,7 +139,7 @@ class LocalPictureInfoPage extends StatelessWidget {
   }
 
   Widget _buildInfoPanel(BuildContext context, _ExifData exifData) {
-    return PictureInfoPanel(timestamp: upload.timestamp,
+    return MediaInfoPanel(timestamp: upload.timestamp,
       location: upload.hasPosition ? upload.location : null,
       format: exifData?.format,
       camera: upload.camera ?? exifData?.camera,
@@ -172,14 +172,14 @@ class _ExifData {
   }
 }
 
-class PictureInfoPanel extends StatelessWidget {
+class MediaInfoPanel extends StatelessWidget {
 
   final DateTime timestamp;
   final GeoLocation location;
   final String format;
   final String camera;
 
-  const PictureInfoPanel({Key key, this.timestamp, this.location, this.format, this.camera}) : super(key: key);
+  const MediaInfoPanel({Key key, this.timestamp, this.location, this.format, this.camera}) : super(key: key);
 
   Widget build(BuildContext context) {
     final children = List<Widget>();

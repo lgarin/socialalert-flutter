@@ -240,7 +240,7 @@ class _MapDisplayState extends State<MapDisplay> {
   }
 
   void _onThumbnailSelection(MediaInfo media) {
-    Navigator.of(context).pushNamed(AppRoute.RemotePictureDetail, arguments: media);
+    Navigator.of(context).pushNamed(AppRoute.RemoteMediaDetail, arguments: media);
   }
 
   void _onMarkerSelection(MediaInfo media) {

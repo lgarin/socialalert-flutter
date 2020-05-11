@@ -40,6 +40,19 @@ const Map<String, ApprovalModifier> _approvalModifierMap = {
   'DISLIKE': ApprovalModifier.DISLIKE,
 };
 
+enum MediaFormat {
+  MEDIA_JPG, MEDIA_MOV, MEDIA_MP4, PREVIEW_JPG, PREVIEW_MP4, THUMBNAIL_JPG
+}
+
+const Map<String, MediaFormat> _mediaFormatMap = {
+  'MEDIA_JPG': MediaFormat.MEDIA_JPG,
+  'MEDIA_MOV': MediaFormat.MEDIA_MOV,
+  'MEDIA_MP4': MediaFormat.MEDIA_MP4,
+  'PREVIEW_JPG': MediaFormat.PREVIEW_JPG,
+  'PREVIEW_MP4': MediaFormat.PREVIEW_MP4,
+  'THUMBNAIL_JPG': MediaFormat.THUMBNAIL_JPG
+};
+
 class MediaInfo {
   final String title;
   final String mediaUri;
@@ -49,6 +62,7 @@ class MediaInfo {
   final int commentCount;
   final double latitude;
   final double longitude;
+  final MediaFormat previewFormat;
 
   MediaInfo.fromJson(Map<String, dynamic> json) :
         title = json['title'],
@@ -58,7 +72,10 @@ class MediaInfo {
         dislikeCount = json['dislikeCount'],
         commentCount = json['commentCount'],
         latitude = json['latitude'],
-        longitude = json['longitude'];
+        longitude = json['longitude'],
+        previewFormat = _mediaFormatMap[json['previewFormat']];
+
+  bool get hasVideoPreview => previewFormat == MediaFormat.PREVIEW_MP4;
 
   static List<MediaInfo> fromJsonList(List<dynamic> json) {
     return json.map((e) => MediaInfo.fromJson(e)).toList();

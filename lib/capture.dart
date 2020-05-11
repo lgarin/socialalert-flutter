@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:native_device_orientation/native_device_orientation.dart';
 import 'package:path/path.dart' show join;
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
@@ -13,13 +14,13 @@ import 'package:social_alert_app/service/cameradevice.dart';
 import 'package:social_alert_app/service/geolocation.dart';
 import 'package:social_alert_app/service/mediaupload.dart';
 
-class CapturePage extends StatefulWidget {
+class CaptureMediaPage extends StatefulWidget {
 
   @override
-  _CapturePageState createState() => _CapturePageState();
+  _CaptureMediaPageState createState() => _CaptureMediaPageState();
 }
 
-class _CapturePageState extends State<CapturePage> {
+class _CaptureMediaPageState extends State<CaptureMediaPage> {
 
   final cameraNotifier = ValueNotifier<CameraValue>(null);
   CameraController _cameraController;
@@ -87,7 +88,7 @@ class _CapturePageState extends State<CapturePage> {
       final position = await _asyncPosition;
       final task = MediaUploadTask(file: File(path), type: MediaUploadType.PICTURE, position: position, device: device);
       await MediaUploadService.current(context).saveTask(task);
-      Navigator.of(context).pushReplacementNamed(AppRoute.AnnotatePicture, arguments: task);
+      Navigator.of(context).pushReplacementNamed(AppRoute.AnnotateMedia, arguments: task);
     } catch (e) {
       print(e);
       showSimpleDialog(context, 'Capture failed', e.toString());
@@ -127,7 +128,7 @@ class _CapturePageState extends State<CapturePage> {
       final position = await _asyncPosition;
       final task = MediaUploadTask(file: File(_videoPath), type: MediaUploadType.VIDEO, position: position, device: device);
       await MediaUploadService.current(context).saveTask(task);
-      Navigator.of(context).pushReplacementNamed(AppRoute.AnnotatePicture, arguments: task);
+      Navigator.of(context).pushReplacementNamed(AppRoute.AnnotateMedia, arguments: task);
     } catch (e) {
       _videoPath = null;
       print(e);
@@ -147,7 +148,7 @@ class _CapturePageState extends State<CapturePage> {
   }
 
   Future<CameraController> _createCameraController(BuildContext context) async {
-    _cameraController = await CameraDeviceService.current(context).findCamera(_lensDirection, ResolutionPreset.ultraHigh);
+    _cameraController = await CameraDeviceService.current(context).findCamera(_lensDirection, ResolutionPreset.veryHigh);
     cameraNotifier.value = _cameraController?.value;
     return _cameraController;
   }
@@ -161,7 +162,28 @@ class _CameraPreviewArea extends StatelessWidget {
     if (controller == null) {
       return LoadingCircle();
     }
-    return SafeArea(child: CameraPreview(controller));
+
+    return NativeDeviceOrientationReader(useSensor: true, builder: _buildCameraPreview);
+  }
+
+  Widget _buildCameraPreview(BuildContext context) {
+    CameraController controller = Provider.of(context);
+    int turns = _determineRotationCount(context);
+    // TODO improve aspect ratio
+    return RotatedBox(
+      quarterTurns: turns,
+      child: SafeArea(child: CameraPreview(controller)),
+    );
+  }
+
+  int _determineRotationCount(BuildContext context) {
+    NativeDeviceOrientation orientation = NativeDeviceOrientationReader.orientation(context);
+    switch (orientation) {
+      case NativeDeviceOrientation.landscapeLeft: return -1;
+      case NativeDeviceOrientation.landscapeRight: return 1;
+      case NativeDeviceOrientation.portraitDown: return 2;
+      default: return 0;
+    }
   }
 }
 

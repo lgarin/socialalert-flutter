@@ -54,7 +54,7 @@ abstract class BasePageState<T extends StatefulWidget> extends State<T> {
   void _showUploadSnackBar(MediaUploadTask task) {
     if (task.title == null) {
       showWarningSnackBar('Title for media is missing',
-          action: SnackBarAction(label: 'Edit', onPressed: () => Navigator.pushNamed(context, AppRoute.AnnotatePicture, arguments: task))
+          action: SnackBarAction(label: 'Edit', onPressed: () => Navigator.pushNamed(context, AppRoute.AnnotateMedia, arguments: task))
       );
     } else if (task.isCompleted) {
       showSuccessSnackBar('Upload of "${task.title}" has completed');
@@ -119,7 +119,7 @@ abstract class BasePageState<T extends StatefulWidget> extends State<T> {
   }
 
   void _takePicture(BuildContext context) async {
-    Navigator.of(context).pushNamed(AppRoute.Capture);
+    Navigator.of(context).pushNamed(AppRoute.CaptureMedia);
   }
 
   Widget buildNavBar(BuildContext context) => null;

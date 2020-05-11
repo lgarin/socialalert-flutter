@@ -4,9 +4,9 @@ import 'package:social_alert_app/annotate.dart';
 import 'package:social_alert_app/capture.dart';
 import 'package:social_alert_app/home.dart';
 import 'package:social_alert_app/login.dart';
-import 'package:social_alert_app/media.dart';
+import 'package:social_alert_app/remote.dart';
 import 'package:social_alert_app/network.dart';
-import 'package:social_alert_app/picture.dart';
+import 'package:social_alert_app/local.dart';
 import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/cameradevice.dart';
 import 'package:social_alert_app/service/commentquery.dart';
@@ -86,17 +86,17 @@ class SocialAlertApp extends StatelessWidget {
       case AppRoute.UploadManager: return MaterialPageRoute(
           builder: (context) => UploadManagerPage()
       );
-      case AppRoute.AnnotatePicture: return MaterialPageRoute(
-          builder: (context) => AnnotatePicturePage(settings.arguments)
+      case AppRoute.AnnotateMedia: return MaterialPageRoute(
+          builder: (context) => AnnotateMediaPage(settings.arguments)
       );
       case AppRoute.UserNetwork: return MaterialPageRoute(
-          builder: (context) => NetworkPage()
+          builder: (context) => UserNetworkPage()
       );
       case AppRoute.LocalPictureInfo: return MaterialPageRoute(
           builder: (context) => LocalPictureInfoPage(settings.arguments)
       );
-      case AppRoute.RemotePictureDetail: return MaterialPageRoute<MediaDetail>(
-        builder: (context) => RemotePictureDetailPage(settings.arguments)
+      case AppRoute.RemoteMediaDetail: return MaterialPageRoute<MediaDetail>(
+        builder: (context) => RemoteMediaDetailPage(settings.arguments)
       );
       case AppRoute.ProfileViewer: return MaterialPageRoute<UserProfile>(
         builder: (context) => ProfileViewerPage(settings.arguments)
@@ -110,11 +110,11 @@ class SocialAlertApp extends StatelessWidget {
       case AppRoute.LocalPictureDisplay: return NoAnimationMaterialPageRoute(
           builder: (context) => LocalImageDisplayPage(settings.arguments)
       );
-      case AppRoute.RemotePictureDisplay: return NoAnimationMaterialPageRoute(
-        builder: (context) => RemoteImageDisplayPage(settings.arguments)
+      case AppRoute.RemoteMediaDisplay: return NoAnimationMaterialPageRoute(
+        builder: (context) => RemoteMediaDisplayPage(settings.arguments)
       );
-      case AppRoute.Capture: return NoAnimationMaterialPageRoute(
-          builder: (context) => CapturePage()
+      case AppRoute.CaptureMedia: return NoAnimationMaterialPageRoute(
+          builder: (context) => CaptureMediaPage()
       );
       default: return null;
     }
@@ -124,14 +124,14 @@ class SocialAlertApp extends StatelessWidget {
 class AppRoute {
   static const Login = 'login';
   static const Home = 'home';
-  static const Capture = 'capture';
-  static const AnnotatePicture = 'annotatePicture';
+  static const CaptureMedia = 'captureMedia';
+  static const AnnotateMedia = 'annotateMedia';
   static const UploadManager = 'uploadManager';
   static const UserNetwork = 'userNetwork';
   static const LocalPictureInfo = 'localPictureInfo';
   static const LocalPictureDisplay = 'localPictureDisplay';
-  static const RemotePictureDetail ='pictureDetail';
-  static const RemotePictureDisplay = 'pictureDisplay';
+  static const RemoteMediaDetail = 'remoteMediaDetail';
+  static const RemoteMediaDisplay = 'remoteMediaDisplay';
   static const ProfileEditor = 'profileEditor';
   static const ProfileViewer = 'profileViewer';
   static const SettingsEditor = 'settingsEditor';

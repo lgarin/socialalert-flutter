@@ -46,7 +46,7 @@ class _GalleryDisplayState extends BasePagingState<GalleryDisplay, MediaInfo> {
   }
 
   void _onGridTileSelection(MediaInfo media) async {
-    final newValue = await Navigator.of(context).pushNamed<MediaDetail>(AppRoute.RemotePictureDetail, arguments: media);
+    final newValue = await Navigator.of(context).pushNamed<MediaDetail>(AppRoute.RemoteMediaDetail, arguments: media);
     if (newValue != null) {
       replaceItem((item) => item.mediaUri == media.mediaUri, newValue);
     }

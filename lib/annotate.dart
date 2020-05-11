@@ -7,7 +7,7 @@ import 'package:form_field_validator/form_field_validator.dart';
 import 'package:provider/provider.dart';
 import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/main.dart';
-import 'package:social_alert_app/picture.dart';
+import 'package:social_alert_app/local.dart';
 import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/configuration.dart';
 import 'package:social_alert_app/service/eventbus.dart';
@@ -31,24 +31,28 @@ class _CaptureModel {
   void setTitle(String newTitle) => _title = newTitle;
 }
 
-class AnnotatePicturePage extends StatelessWidget {
+class AnnotateMediaPage extends StatelessWidget {
   static const defaultTitle = 'New Snype';
   static const backgroundColor = Color.fromARGB(255, 240, 240, 240);
   final MediaUploadTask upload;
 
-  AnnotatePicturePage(this.upload);
+  AnnotateMediaPage(this.upload);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         backgroundColor: backgroundColor,
         appBar: _buildAppBar(context),
-        body: LocalPicturePreview(
-            backgroundColor: backgroundColor,
-            image: LocalImage(file: upload.file, title: defaultTitle),
-            child: _MetadataForm(upload)
-        )
+        body: _buildBody()
     );
+  }
+
+  LocalPicturePreview _buildBody() {
+    return LocalPicturePreview(
+          backgroundColor: backgroundColor,
+          image: LocalImage(file: upload.file, title: defaultTitle),
+          child: _MetadataForm(upload)
+      );
   }
 
   AppBar _buildAppBar(BuildContext context) {

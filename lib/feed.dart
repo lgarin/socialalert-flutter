@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:social_alert_app/base.dart';
 import 'package:social_alert_app/main.dart';
-import 'package:social_alert_app/media.dart';
+import 'package:social_alert_app/remote.dart';
 import 'package:social_alert_app/profile.dart';
 import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/configuration.dart';
@@ -105,7 +105,7 @@ class _FeedDisplayState extends BasePagingState<FeedDisplay, FeedItem> {
   }
 
   void _onThumbnailSelection(MediaInfo media) async {
-    await Navigator.of(context).pushNamed(AppRoute.RemotePictureDisplay, arguments: media);
+    await Navigator.of(context).pushNamed(AppRoute.RemoteMediaDisplay, arguments: media);
   }
 
   Widget _buildLargeItem(BuildContext context, FeedItem item) {
@@ -150,7 +150,7 @@ class _FeedDisplayState extends BasePagingState<FeedDisplay, FeedItem> {
   }
 
   void _showPictureDetail(MediaInfo media) async {
-    await Navigator.of(context).pushNamed(AppRoute.RemotePictureDetail, arguments: media);
+    await Navigator.of(context).pushNamed(AppRoute.RemoteMediaDetail, arguments: media);
   }
 
   void _showUserProfile(String userId) async {

@@ -8,18 +8,18 @@ import 'package:social_alert_app/service/profilequery.dart';
 import 'package:social_alert_app/service/profileupdate.dart';
 import 'package:timeago_flutter/timeago_flutter.dart';
 
-class NetworkPage extends StatefulWidget {
+class UserNetworkPage extends StatefulWidget {
   @override
-  _NetworkPageState createState() => _NetworkPageState();
+  _UserNetworkPageState createState() => _UserNetworkPageState();
 }
 
-class _NetworkPageState extends BasePageState<NetworkPage> {
+class _UserNetworkPageState extends BasePageState<UserNetworkPage> {
   static final itemMargin = EdgeInsets.only(left: 10, right: 10, top: 10);
 
   List<UserProfile> followedProfiles;
   final scrollController = ScrollController();
 
-  _NetworkPageState() : super(AppRoute.UserNetwork);
+  _UserNetworkPageState() : super(AppRoute.UserNetwork);
 
   @override
   AppBar buildAppBar() {
