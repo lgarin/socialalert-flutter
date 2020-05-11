@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
@@ -8,13 +10,14 @@ import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/picture.dart';
 import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/configuration.dart';
+import 'package:social_alert_app/service/eventbus.dart';
 import 'package:social_alert_app/service/mediaquery.dart';
 import 'package:social_alert_app/service/mediaupload.dart';
 
 class _CaptureModel {
   final DateTime timestamp;
   final tags = Set<String>();
-  final title = TextEditingController();
+  String _title;
   final currentTag = TextEditingController();
   String selectedCategory;
   bool autovalidate = false;
@@ -22,108 +25,172 @@ class _CaptureModel {
   _CaptureModel()
       : timestamp = DateTime.now();
 
-  String get titleInput => title.text.trim();
+  bool hasTitleInput() => _title != null && _title.isNotEmpty;
 
-  bool hasTitleInput() => titleInput != '';
+  String get title => _title;
+  void setTitle(String newTitle) => _title = newTitle;
 }
 
-class AnnotatePicturePage extends StatefulWidget {
-
-  final MediaUploadTask _upload;
-
-  AnnotatePicturePage(this._upload);
-
-  @override
-  _AnnotatePicturePageState createState() => _AnnotatePicturePageState(_upload);
-}
-
-enum _PopupAction {
-  DELETE,
-  INFO
-}
-
-class _AnnotatePicturePageState extends State<AnnotatePicturePage> {
+class AnnotatePicturePage extends StatelessWidget {
+  static const defaultTitle = 'New Snype';
   static const backgroundColor = Color.fromARGB(255, 240, 240, 240);
-  final _formKey = GlobalKey<FormState>();
-  final MediaUploadTask _upload;
-  final _model = _CaptureModel();
-  bool _fullImage = false;
+  final MediaUploadTask upload;
 
-  _AnnotatePicturePageState(this._upload);
-
-  void _switchFullImage() {
-    setState(() {
-      _fullImage = !_fullImage;
-    });
-  }
+  AnnotatePicturePage(this.upload);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-          backgroundColor: backgroundColor,
-          appBar: _buildAppBar(context),
-          body: LocalPicturePreview(
-              backgroundColor: backgroundColor,
-              image: _upload.file,
-              fullScreen: _fullImage,
-              fullScreenSwitch: _switchFullImage,
-              child: _MetadataForm(model: _model, formKey: _formKey, onPublish: _onPublish),
-              childHeight: 440)
-        );
+        backgroundColor: backgroundColor,
+        appBar: _buildAppBar(context),
+        body: LocalPicturePreview(
+            backgroundColor: backgroundColor,
+            image: LocalImage(file: upload.file, title: defaultTitle),
+            child: _MetadataForm(upload)
+        )
+    );
   }
 
   AppBar _buildAppBar(BuildContext context) {
     return AppBar(
-      title: Text("Describe your Snype"),
+        title: Text("Describe your Snype"),
         actions: <Widget>[
-          _PublishIconButton(onPublish: _onPublish),
-          PopupMenuButton<_PopupAction>(
-            itemBuilder: _buildPopupMenuItems,
-            onSelected: _onPopupMenuItemSelection,
-          ),
+          _PublishIconButton(),
+          _AppBarPopupMenu(upload),
         ]
     );
   }
+}
 
-  List<PopupMenuEntry<_PopupAction>> _buildPopupMenuItems(BuildContext context) {
+enum _MediaAction {
+  PUBLISH,
+  DELETE,
+  INFO
+}
+
+class _AppBarPopupMenu extends StatelessWidget {
+
+  final MediaUploadTask upload;
+
+  _AppBarPopupMenu(this.upload);
+
+  @override
+  Widget build(BuildContext context) {
+    return PopupMenuButton<_MediaAction>(
+      itemBuilder: _buildPopupMenuItems,
+      onSelected: (action) => EventBus.current(context).fire(action),
+    );
+  }
+  List<PopupMenuEntry<_MediaAction>> _buildPopupMenuItems(BuildContext context) {
     return [
-      PopupMenuItem(value: _PopupAction.DELETE,
-        enabled: _upload.canBeDeleted(),
-        child: ListTile(title: Text('Delete'), leading: Icon(Icons.delete))),
-      PopupMenuItem(value: _PopupAction.INFO,
-        child: ListTile(title: Text('Info'), leading: Icon(Icons.info)))
+      PopupMenuItem(value: _MediaAction.DELETE,
+          enabled: upload.canBeDeleted(),
+          child: ListTile(title: Text('Delete'), leading: Icon(Icons.delete))),
+      PopupMenuItem(value: _MediaAction.INFO,
+          child: ListTile(title: Text('Info'), leading: Icon(Icons.info)))
     ];
   }
+}
 
-  void _onPopupMenuItemSelection(_PopupAction selectedItem) async {
-    if (selectedItem == _PopupAction.DELETE) {
-      final confirmed = await showConfirmDialog(context, 'Delete Snype', 'Do you really want to delete this upload?');
-      if (confirmed) {
-        _onConfirmUploadDeletion();
+class _PublishIconButton extends StatelessWidget {
+
+  @override
+  Widget build(BuildContext context) {
+    final userProfile = Provider.of<UserProfile>(context, listen: false);
+    return IconButton(
+        icon: Icon(userProfile.anonym ? Icons.save_alt : Icons.cloud_upload),
+        tooltip: userProfile.anonym ? 'Save' : 'Publish',
+        onPressed: () => EventBus.current(context).fire(_MediaAction.PUBLISH)
+    );
+  }
+}
+
+class _MetadataForm extends StatefulWidget {
+
+  final MediaUploadTask upload;
+
+  _MetadataForm(this.upload);
+
+  @override
+  _MetadataFormState createState() => _MetadataFormState();
+}
+
+class _MetadataFormState extends State<_MetadataForm> {
+
+  final _CaptureModel _model = _CaptureModel();
+  final _formKey = GlobalKey<FormState>();
+
+  StreamSubscription<_MediaAction> _actionSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _model.setTitle(widget.upload.title);
+    _model.tags.addAll(widget.upload.tags);
+    _model.selectedCategory = widget.upload.category;
+    _actionSubscription = EventBus.current(context).on<_MediaAction>().listen((action) {
+      if (action == _MediaAction.PUBLISH) {
+        _onPublish();
+      } else if (action == _MediaAction.DELETE) {
+        _onDelete();
+      } else if (action == _MediaAction.INFO) {
+        _onInfo();
       }
-    } else if (selectedItem == _PopupAction.INFO) {
-      Navigator.of(context).pushNamed(AppRoute.LocalPictureInfo, arguments: _upload);
-    }
+    });
   }
 
-  void _onConfirmUploadDeletion() {
-    MediaUploadService.current(context).deleteTask(_upload);
-    Navigator.pop(context);
+  @override
+  void dispose() {
+    _actionSubscription.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Form(
+        onWillPop: _allowPop,
+        key: _formKey,
+        autovalidate: _model.autovalidate,
+        child: Column(
+          children: <Widget>[
+            _TitleWidget(_model),
+            SizedBox(height: 10),
+            _CategoryWidget(_model),
+            SizedBox(height: 10),
+            _TagsWidget(_model),
+            SizedBox(height: 10),
+            _PublishButton()
+          ],
+        ));
+  }
+
+  Future<bool> _allowPop() async {
+    final form = _formKey.currentState;
+    if (form != null && form.validate()) {
+      form.save();
+      widget.upload.save(
+        title: _model.title,
+        category: _model.selectedCategory,
+        tags: List.from(_model.tags),
+      );
+    }
+    return true;
   }
 
   void _onPublish() async {
     final form = _formKey.currentState;
     if (form != null && form.validate()) {
-      _upload.annotate(
-        title: _model.titleInput,
+      form.save();
+      widget.upload.annotate(
+        title: _model.title,
         category: _model.selectedCategory,
         tags: List.from(_model.tags),
       );
       try {
         final userProfile = Provider.of<UserProfile>(context, listen: false);
-        await MediaUploadService.current(context).saveTask(_upload);
+        await MediaUploadService.current(context).saveTask(widget.upload);
         if (!userProfile.anonym) {
-          MediaUploadService.current(context).restartTask(_upload);
+          MediaUploadService.current(context).restartTask(widget.upload);
         }
         Navigator.pop(context);
       } catch (e) {
@@ -132,67 +199,31 @@ class _AnnotatePicturePageState extends State<AnnotatePicturePage> {
     } else {
       setState(() {
         _model.autovalidate = true;
-        _fullImage = false;
       });
     }
   }
-}
 
-class _PublishIconButton extends StatelessWidget {
-  final VoidCallback onPublish;
-
-  _PublishIconButton({Key key, this.onPublish}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    final userProfile = Provider.of<UserProfile>(context, listen: false);
-    return IconButton(
-        icon: Icon(userProfile.anonym ? Icons.save_alt : Icons.cloud_upload),
-        tooltip: userProfile.anonym ? 'Save' : 'Publish',
-        onPressed: onPublish
-    );
+  void _onDelete() async {
+    final confirmed = await showConfirmDialog(context, 'Delete Snype', 'Do you really want to delete this upload?');
+    if (confirmed) {
+      _onConfirmUploadDeletion();
+    }
   }
-}
 
-class _MetadataForm extends StatelessWidget {
+  void _onInfo() {
+    Navigator.of(context).pushNamed(AppRoute.LocalPictureInfo, arguments: widget.upload);
+  }
 
-  _MetadataForm({
-    Key key,
-    @required this.model,
-    @required this.formKey,
-    @required this.onPublish
-  }) : super(key: key);
-
-  final _CaptureModel model;
-  final GlobalKey<FormState> formKey;
-  final VoidCallback onPublish;
-
-  @override
-  Widget build(BuildContext context) {
-    return Form(
-        key: formKey,
-        autovalidate: model.autovalidate,
-        child: Column(
-          children: <Widget>[
-            _TitleWidget(model: model),
-            SizedBox(height: 10),
-            _CategoryWidget(model: model),
-            SizedBox(height: 10),
-            _TagsWidget(model: model),
-            SizedBox(height: 10),
-            _PublishButton(onPublish: onPublish)
-          ],
-        ));
+  void _onConfirmUploadDeletion() {
+    MediaUploadService.current(context).deleteTask(widget.upload);
+    Navigator.pop(context);
   }
 }
 
 class _TitleWidget extends StatelessWidget {
   static const label = 'Title';
 
-  _TitleWidget({
-    Key key,
-    @required this.model,
-  }) : super(key: key);
+  _TitleWidget(this.model);
 
   final _CaptureModel model;
 
@@ -205,7 +236,8 @@ class _TitleWidget extends StatelessWidget {
       padding: EdgeInsets.all(10),
       child: TextFormField(
         autofocus: !model.hasTitleInput(),
-        controller: model.title,
+        initialValue: model.title,
+        onSaved: model.setTitle,
         keyboardType: TextInputType.text,
         decoration: InputDecoration(
             hintText: label,
@@ -220,7 +252,7 @@ class _TagsWidget extends StatelessWidget {
   static const label = 'Tags';
   static const maxTags = 4;
 
-  _TagsWidget({@required this.model});
+  _TagsWidget(this.model);
 
   final _CaptureModel model;
 
@@ -311,7 +343,7 @@ class _CategoryWidget extends StatefulWidget {
 
   final _CaptureModel model;
 
-  _CategoryWidget({Key key, this.model}) : super(key: key);
+  _CategoryWidget(this.model);
 
   @override
   _CategoryWidgetState createState() => _CategoryWidgetState();
@@ -319,6 +351,15 @@ class _CategoryWidget extends StatefulWidget {
 
 class _CategoryWidgetState extends State<_CategoryWidget> {
   int _selectedIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedIndex = categoryTokens.indexOf(widget.model.selectedCategory);
+    if (_selectedIndex < 0) {
+      _selectedIndex = null;
+    }
+  }
 
   void _onSelected(int index) {
     setState(() {
@@ -346,12 +387,6 @@ class _CategoryWidgetState extends State<_CategoryWidget> {
 }
 
 class _PublishButton extends StatelessWidget {
-  _PublishButton({
-    Key key,
-    @required this.onPublish
-  }) : super(key: key);
-
-  final VoidCallback onPublish;
 
   @override
   Widget build(BuildContext context) {
@@ -362,7 +397,7 @@ class _PublishButton extends StatelessWidget {
         RaisedButton(
           child: Text(userProfile.anonym ? 'Save' : 'Publish',
               style: Theme.of(context).textTheme.button),
-          onPressed: onPublish,
+          onPressed: () => EventBus.current(context).fire(_MediaAction.PUBLISH),
           color: Theme.of(context).buttonColor,
           shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.all(

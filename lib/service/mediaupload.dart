@@ -164,7 +164,17 @@ class MediaUploadTask with ChangeNotifier {
     'lastUpdate': _lastUpdate.toIso8601String(),
   };
 
-  void annotate({@required String title, String description, String category, List<String> tags}) {
+  void save({@required String title, String description, String category, List<String> tags}) {
+    assert(status == MediaUploadStatus.CREATED);
+    _title = title;
+    _description = description;
+    _category = category;
+    _tags = tags;
+
+    _changeStatus(MediaUploadStatus.CREATED);
+  }
+
+    void annotate({@required String title, String description, String category, List<String> tags}) {
     assert(status == MediaUploadStatus.CREATED);
     _title = title;
     _description = description;

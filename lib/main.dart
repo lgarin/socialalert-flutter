@@ -107,6 +107,9 @@ class SocialAlertApp extends StatelessWidget {
       case AppRoute.SettingsEditor: return MaterialPageRoute(
         builder: (context) => SettingsEditorPage()
       );
+      case AppRoute.LocalPictureDisplay: return NoAnimationMaterialPageRoute(
+          builder: (context) => LocalImageDisplayPage(settings.arguments)
+      );
       case AppRoute.RemotePictureDisplay: return NoAnimationMaterialPageRoute(
         builder: (context) => RemoteImageDisplayPage(settings.arguments)
       );
@@ -125,7 +128,8 @@ class AppRoute {
   static const AnnotatePicture = 'annotatePicture';
   static const UploadManager = 'uploadManager';
   static const UserNetwork = 'userNetwork';
-  static const LocalPictureInfo = 'pictureInfo';
+  static const LocalPictureInfo = 'localPictureInfo';
+  static const LocalPictureDisplay = 'localPictureDisplay';
   static const RemotePictureDetail ='pictureDetail';
   static const RemotePictureDisplay = 'pictureDisplay';
   static const ProfileEditor = 'profileEditor';

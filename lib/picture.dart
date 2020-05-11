@@ -7,30 +7,71 @@ import 'package:intl/intl.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:provider/provider.dart';
 import 'package:social_alert_app/helper.dart';
+import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/service/cameradevice.dart';
 import 'package:social_alert_app/service/geolocation.dart';
 import 'package:social_alert_app/service/mediaupload.dart';
 
-class LocalPicturePreview extends StatelessWidget {
-  final Widget child;
-  final File image;
-  final Color backgroundColor;
-  final bool fullScreen;
-  final VoidCallback fullScreenSwitch;
-  final double childHeight;
+class LocalImage {
+  final File file;
+  final String title;
 
-  LocalPicturePreview({Key key, this.child, this.image, this.backgroundColor, this.fullScreen, this.fullScreenSwitch, this.childHeight}) : super(key: key);
+  LocalImage({this.file, this.title});
+
+  String get path => file.path;
+}
+
+class _LocalPictureDisplay extends StatelessWidget {
+
+  _LocalPictureDisplay({@required this.image, this.preview = false});
+
+  final LocalImage image;
+  final bool preview;
 
   @override
   Widget build(BuildContext context) {
+    final screen = MediaQuery.of(context);
+    final constraints = preview ?
+      BoxConstraints.tightFor(height: screen.size.height / 2) :
+      BoxConstraints.expand(height: screen.size.height);
+    return Container(
+        color: Colors.black,
+        constraints: constraints,
+        child: _buildImage(context)
+    );
+  }
 
-    if (fullScreen) {
-      return _buildImageContainer(context);
-    }
+  Widget _buildImage(BuildContext context) {
 
+    return ClipRect(child: PhotoView(
+      minScale: PhotoViewComputedScale.contained,
+      maxScale: PhotoViewComputedScale.covered * (preview ? 2.0 : 8.0),
+      initialScale: preview ? PhotoViewComputedScale.covered : PhotoViewComputedScale.contained,
+      scaleStateCycle: preview ? (c) => c : defaultScaleStateCycle,
+      tightMode: preview,
+      onTapUp: preview ? _onTap : null,
+      imageProvider: FileImage(image.file),
+      heroAttributes: PhotoViewHeroAttributes(tag: image.path),
+    ));
+  }
+
+  void _onTap(BuildContext context, TapUpDetails details, PhotoViewControllerValue controllerValue) {
+    Navigator.of(context).pushNamed(AppRoute.LocalPictureDisplay, arguments: image);
+  }
+}
+
+class LocalPicturePreview extends StatelessWidget {
+  final Widget child;
+  final LocalImage image;
+  final Color backgroundColor;
+
+  LocalPicturePreview({Key key, @required this.child, @required this.image, this.backgroundColor}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
     return ListView(
       children: <Widget>[
-        _buildImageContainer(context),
+        _LocalPictureDisplay(image: image, preview: true),
         Transform.translate(
             offset: Offset(0, -20),
             child: _buildChildContainer(context)
@@ -41,7 +82,6 @@ class LocalPicturePreview extends StatelessWidget {
 
   Container _buildChildContainer(BuildContext context) {
     return Container(
-      height: childHeight,
       decoration: BoxDecoration(
           color: backgroundColor,
           borderRadius: BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20))
@@ -50,49 +90,61 @@ class LocalPicturePreview extends StatelessWidget {
       child: child,
     );
   }
-
-  Container _buildImageContainer(BuildContext context) {
-    final screen = MediaQuery.of(context);
-    final constraints = !fullScreen ?
-      BoxConstraints.tightFor(height: screen.size.height - childHeight) :
-      BoxConstraints.expand(height: screen.size.height);
-    return Container(
-        constraints: constraints,
-        color: Colors.black,
-        child: GestureDetector(
-            onTap: fullScreenSwitch,
-            child: _buildPhotoView(context)
-        )
-    );
-  }
-
-  Widget _buildPhotoView(BuildContext context) {
-    final preview = !fullScreen;
-    return ClipRect(child: PhotoView(
-      minScale: PhotoViewComputedScale.contained,
-      maxScale: PhotoViewComputedScale.covered * (preview ? 2.0 : 8.0),
-      initialScale: preview ? PhotoViewComputedScale.covered : PhotoViewComputedScale.contained,
-      scaleStateCycle: preview ? (c) => c : defaultScaleStateCycle,
-      tightMode: preview,
-      onTapUp: preview ? _onTap : null,
-      imageProvider: FileImage(image),
-      heroAttributes: PhotoViewHeroAttributes(tag: image.path),
-    ));
-  }
-
-  void _onTap(BuildContext context, TapUpDetails details, PhotoViewControllerValue controllerValue) {
-    fullScreenSwitch();
-  }
 }
 
-class LocalPictureInfoPage extends StatefulWidget {
-
+class LocalPictureInfoPage extends StatelessWidget {
+  static const defaultTitle = 'New Snype';
+  static const backgroundColor = Color.fromARGB(255, 240, 240, 240);
   final MediaUploadTask upload;
 
   LocalPictureInfoPage(this.upload);
 
+  LocalImage _buildLocalMedia() => LocalImage(file: upload.file, title: upload.title ?? defaultTitle);
+
+  Future<_ExifData> _buildExifData(BuildContext context) async {
+    Map<String, dynamic> tags = await readExif(FileReader(upload.file));
+    final device = await CameraDeviceService.current(context).device;
+    return _ExifData(
+      mediaHeight: tags['ImageHeight'] ?? tags['ExifImageHeight'] ?? tags['PixelYDimension'] as int,
+      mediaWidth: tags['ImageWidth'] ?? tags['ExifImageWidth'] ?? tags['PixelXDimension'] as int,
+      cameraMaker: tags['Make'] as String ?? device.maker,
+      cameraModel: tags['Model'] as String ?? device.model,
+    );
+  }
+
   @override
-  _LocalPictureInfoPageState createState() => _LocalPictureInfoPageState();
+  Widget build(BuildContext context) {
+    return FutureProvider(
+        create: _buildExifData,
+        child: Scaffold(
+            backgroundColor: backgroundColor,
+            appBar: _buildAppBar(context),
+            body: _buildPicturePreview()
+        )
+    );
+  }
+
+  Widget _buildPicturePreview() {
+    return LocalPicturePreview(
+        backgroundColor: backgroundColor,
+        image: _buildLocalMedia(),
+        child: Consumer<_ExifData>(
+            builder: (context, exifData, _) => _buildInfoPanel(context, exifData)
+        )
+    );
+  }
+
+  AppBar _buildAppBar(BuildContext context) {
+    return AppBar(title: Text(upload.title ?? defaultTitle, overflow: TextOverflow.ellipsis));
+  }
+
+  Widget _buildInfoPanel(BuildContext context, _ExifData exifData) {
+    return PictureInfoPanel(timestamp: upload.timestamp,
+      location: upload.hasPosition ? upload.location : null,
+      format: exifData?.format,
+      camera: upload.camera ?? exifData?.camera,
+    );
+  }
 }
 
 class _ExifData {
@@ -117,65 +169,6 @@ class _ExifData {
       return null;
     }
     return cameraMaker + " " + cameraModel;
-  }
-}
-
-class _LocalPictureInfoPageState extends State<LocalPictureInfoPage> {
-  static const backgroundColor = Color.fromARGB(255, 240, 240, 240);
-  bool _fullImage = false;
-
-  void _switchFullImage() {
-    setState(() {
-      _fullImage = !_fullImage;
-    });
-  }
-
-  Future<_ExifData> _buildExifData(BuildContext context) async {
-    Map<String, dynamic> tags = await readExif(FileReader(widget.upload.file));
-    final device = await CameraDeviceService.current(context).device;
-    return _ExifData(
-      mediaHeight: tags['ImageHeight'] ?? tags['ExifImageHeight'] ?? tags['PixelYDimension'] as int,
-      mediaWidth: tags['ImageWidth'] ?? tags['ExifImageWidth'] ?? tags['PixelXDimension'] as int,
-      cameraMaker: tags['Make'] as String ?? device.maker,
-      cameraModel: tags['Model'] as String ?? device.model,
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FutureProvider(
-        create: _buildExifData,
-        child: Scaffold(
-            backgroundColor: backgroundColor,
-            appBar: _buildAppBar(context),
-            body: _buildPicturePreview()
-        )
-    );
-  }
-
-  Widget _buildPicturePreview() {
-    return LocalPicturePreview(
-              backgroundColor: backgroundColor,
-              image: widget.upload.file,
-              fullScreen: _fullImage,
-              fullScreenSwitch: _switchFullImage,
-              childHeight: 460,
-              child: Consumer<_ExifData>(
-                builder: (context, exifData, _) => _buildInfoPanel(context, exifData)
-              )
-    );
-  }
-
-  AppBar _buildAppBar(BuildContext context) {
-    return AppBar(title: Text(widget.upload.title ?? 'New Snype', overflow: TextOverflow.ellipsis));
-  }
-  
-  Widget _buildInfoPanel(BuildContext context, _ExifData exifData) {
-    return PictureInfoPanel(timestamp: widget.upload.timestamp,
-      location: widget.upload.hasPosition ? widget.upload.location : null,
-      format: exifData?.format,
-      camera: widget.upload.camera ?? exifData?.camera,
-    );
   }
 }
 
@@ -270,6 +263,21 @@ class PictureInfoPanel extends StatelessWidget {
           rotateGesturesEnabled: false,
           scrollGesturesEnabled: false,
           tiltGesturesEnabled: false,
+    );
+  }
+}
+
+class LocalImageDisplayPage extends StatelessWidget {
+
+  final LocalImage image;
+
+  LocalImageDisplayPage(this.image);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        appBar: AppBar(title: Text(image.title, overflow: TextOverflow.ellipsis)),
+        body: _LocalPictureDisplay(image: image)
     );
   }
 }
