@@ -63,6 +63,7 @@ class MediaInfo {
   final double latitude;
   final double longitude;
   final MediaFormat previewFormat;
+  final MediaFormat fileFormat;
 
   MediaInfo.fromJson(Map<String, dynamic> json) :
         title = json['title'],
@@ -73,9 +74,11 @@ class MediaInfo {
         commentCount = json['commentCount'],
         latitude = json['latitude'],
         longitude = json['longitude'],
-        previewFormat = _mediaFormatMap[json['previewFormat']];
+        previewFormat = _mediaFormatMap[json['previewFormat']],
+        fileFormat = _mediaFormatMap[json['fileFormat']];
 
   bool get hasVideoPreview => previewFormat == MediaFormat.PREVIEW_MP4;
+  bool get isVideo => fileFormat == MediaFormat.MEDIA_MOV || fileFormat == MediaFormat.MEDIA_MP4;
 
   static List<MediaInfo> fromJsonList(List<dynamic> json) {
     return json.map((e) => MediaInfo.fromJson(e)).toList();

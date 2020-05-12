@@ -684,7 +684,7 @@ class RemotePictureDisplay extends StatelessWidget {
       initialScale: preview ? PhotoViewComputedScale.covered : PhotoViewComputedScale.contained,
       scaleStateCycle: preview ? (c) => c : defaultScaleStateCycle,
       tightMode: preview,
-      onTapUp: preview ? _onTap : null,
+      onTapUp: preview && (!media.isVideo || media.hasVideoPreview) ? _onTap : null,
       imageProvider: NetworkImage(url, headers: snapshot.data),
       loadingBuilder: _loadingBuilder,
       loadFailedChild: _buildErrorWidget(context),
@@ -745,6 +745,7 @@ class _RemoteVideoDisplayState extends State<RemoteVideoDisplay> {
 
   @override
   void dispose() {
+    chewieController?.pause();
     videoPlayerController?.dispose();
     chewieController?.dispose();
     super.dispose();
@@ -772,8 +773,9 @@ class _RemoteVideoDisplayState extends State<RemoteVideoDisplay> {
       fullScreenByDefault: !widget.preview,
       allowFullScreen: widget.preview,
       aspectRatio: 16 / 9,
-      autoPlay: true,
-      looping: true,
+      autoInitialize: true,
+      autoPlay: !widget.preview,
+      looping: false,
     );
     return Chewie(controller: chewieController);
   }
@@ -789,7 +791,9 @@ class RemoteMediaDisplayPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(mediaInfo.title, overflow: TextOverflow.ellipsis)),
-      body: mediaInfo.hasVideoPreview ? RemoteVideoDisplay(media: mediaInfo) : RemotePictureDisplay(media: mediaInfo)
+      body: mediaInfo.hasVideoPreview
+          ? RemoteVideoDisplay(media: mediaInfo)
+          : RemotePictureDisplay(media: mediaInfo)
     );
   }
 }

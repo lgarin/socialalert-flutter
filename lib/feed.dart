@@ -114,7 +114,9 @@ class _FeedDisplayState extends BasePagingState<FeedDisplay, FeedItem> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         _buildFeedBanner(context, item, _buildActivityText(context, item)),
-        RemotePictureDisplay(media: item.media, preview: true),
+        item.media.hasVideoPreview
+            ? RemoteVideoDisplay(media: item.media, preview: true)
+            : RemotePictureDisplay(media: item.media, preview: true),
         SizedBox(height: spacing)
       ],
     );
