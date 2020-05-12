@@ -34,13 +34,14 @@ class _CaptureMediaPageState extends State<CaptureMediaPage> {
     return FutureProvider(
       key: ValueKey(_lensDirection),
       create: _createCameraController,
-      child: _buildContent(),
+      child: _buildContent(context),
     );
   }
 
-  Scaffold _buildContent() {
+  Scaffold _buildContent(BuildContext context) {
+    final portrait = MediaQuery.of(context).orientation == Orientation.portrait;
     return Scaffold(
-      appBar: AppBar(title: Text('Synpix')),
+      appBar: portrait ? AppBar(title: Text('Synpix')) : null,
       body: _CameraPreviewArea(),
       bottomNavigationBar: _CaptureNavigationBar(cameraNotifier: cameraNotifier, onCameraSwitch: _onCameraSwitch, onVideoStart: _onVideoRecord, onVideoPause: _onVideoPause,),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
@@ -169,10 +170,9 @@ class _CameraPreviewArea extends StatelessWidget {
   Widget _buildCameraPreview(BuildContext context) {
     CameraController controller = Provider.of(context);
     int turns = _determineRotationCount(context);
-    // TODO improve aspect ratio
     return RotatedBox(
       quarterTurns: turns,
-      child: SafeArea(child: CameraPreview(controller)),
+      child: CameraPreview(controller),
     );
   }
 

@@ -764,7 +764,6 @@ class _RemoteVideoDisplayState extends State<RemoteVideoDisplay> {
     );
   }
 
-
   Widget _buildVideo(BuildContext context) {
     final url = MediaQueryService.toPreviewUrl(widget.media.mediaUri);
     videoPlayerController = VideoPlayerController.network(url);
