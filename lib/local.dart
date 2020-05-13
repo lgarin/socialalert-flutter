@@ -1,4 +1,6 @@
 import 'dart:io';
+
+import 'package:chewie/chewie.dart';
 import 'package:exifdart/exifdart.dart';
 import 'package:exifdart/exifdart_io.dart';
 import 'package:flutter/material.dart';
@@ -11,21 +13,27 @@ import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/service/cameradevice.dart';
 import 'package:social_alert_app/service/geolocation.dart';
 import 'package:social_alert_app/service/mediaupload.dart';
+import 'package:video_player/video_player.dart';
 
-class LocalImage {
+abstract class LocalMedia {
   final File file;
   final String title;
 
-  LocalImage({this.file, this.title});
+  LocalMedia(this.file, this.title);
 
   String get path => file.path;
 }
 
-class _LocalPictureDisplay extends StatelessWidget {
+class LocalPicture extends LocalMedia {
+  LocalPicture(File file, String title) : super(file, title);
+}
 
-  _LocalPictureDisplay({@required this.image, this.preview = false});
+class LocalPictureDisplay extends StatelessWidget {
 
-  final LocalImage image;
+  LocalPictureDisplay({@required this.file, @required this.title, this.preview = false});
+
+  final File file;
+  final String title;
   final bool preview;
 
   @override
@@ -50,56 +58,108 @@ class _LocalPictureDisplay extends StatelessWidget {
       scaleStateCycle: preview ? (c) => c : defaultScaleStateCycle,
       tightMode: preview,
       onTapUp: preview ? _onTap : null,
-      imageProvider: FileImage(image.file),
-      heroAttributes: PhotoViewHeroAttributes(tag: image.path),
+      imageProvider: FileImage(file),
+      heroAttributes: PhotoViewHeroAttributes(tag: file.path),
     ));
   }
 
   void _onTap(BuildContext context, TapUpDetails details, PhotoViewControllerValue controllerValue) {
-    Navigator.of(context).pushNamed(AppRoute.LocalPictureDisplay, arguments: image);
+    Navigator.of(context).pushNamed(AppRoute.LocalMediaDisplay, arguments: LocalPicture(file, title));
   }
 }
 
-class LocalPicturePreview extends StatelessWidget {
-  final Widget child;
-  final LocalImage image;
+class LocalVideoDisplay extends StatefulWidget {
+  LocalVideoDisplay({@required this.file, @required this.title, this.preview = false});
+
+  final File file;
+  final String title;
+  final bool preview;
+
+  @override
+  _LocalVideoDisplayState createState() => _LocalVideoDisplayState();
+}
+
+class _LocalVideoDisplayState extends State<LocalVideoDisplay> {
+
+  VideoPlayerController videoPlayerController;
+  ChewieController chewieController;
+
+  @override
+  void dispose() {
+    chewieController?.pause();
+    videoPlayerController?.dispose();
+    chewieController?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final screen = MediaQuery.of(context);
+    final constraints = widget.preview ?
+      BoxConstraints.tightFor(height: screen.size.height / 2) :
+      BoxConstraints.expand(height: screen.size.height);
+    return Container(
+        color: Colors.black,
+        constraints: constraints,
+        child: _buildVideo(context)
+    );
+  }
+
+  Widget _buildVideo(BuildContext context) {
+    videoPlayerController = VideoPlayerController.file(widget.file);
+    chewieController = ChewieController(
+      videoPlayerController: videoPlayerController,
+      fullScreenByDefault: !widget.preview,
+      allowFullScreen: widget.preview,
+      aspectRatio: 16 / 9,
+      autoInitialize: true,
+      autoPlay: !widget.preview,
+      looping: false,
+    );
+    return Chewie(controller: chewieController);
+  }
+}
+
+class MediaPresentationPanel extends StatelessWidget {
+  static final spacing = 20.0;
+
+  final Widget info;
+  final Widget media;
   final Color backgroundColor;
 
-  LocalPicturePreview({Key key, @required this.child, @required this.image, this.backgroundColor}) : super(key: key);
+  MediaPresentationPanel({@required this.media, @required this.info, this.backgroundColor});
 
   @override
   Widget build(BuildContext context) {
     return ListView(
       children: <Widget>[
-        _LocalPictureDisplay(image: image, preview: true),
+        media,
         Transform.translate(
-            offset: Offset(0, -20),
-            child: _buildChildContainer(context)
+            offset: Offset(0, -spacing),
+            child: _buildInfoContainer(context)
         )
       ],
     );
   }
 
-  Container _buildChildContainer(BuildContext context) {
+  Container _buildInfoContainer(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
           color: backgroundColor,
-          borderRadius: BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20))
+          borderRadius: BorderRadius.only(topLeft: Radius.circular(spacing), topRight: Radius.circular(spacing))
       ),
-      padding: EdgeInsets.only(left: 20, right: 20, top: 20),
-      child: child,
+      padding: EdgeInsets.only(left: spacing, right: spacing, top: spacing),
+      child: info,
     );
   }
 }
 
-class LocalPictureInfoPage extends StatelessWidget {
+class LocalMediaInfoPage extends StatelessWidget {
   static const defaultTitle = 'New Snype';
   static const backgroundColor = Color.fromARGB(255, 240, 240, 240);
   final MediaUploadTask upload;
 
-  LocalPictureInfoPage(this.upload);
-
-  LocalImage _buildLocalMedia() => LocalImage(file: upload.file, title: upload.title ?? defaultTitle);
+  LocalMediaInfoPage(this.upload);
 
   Future<_ExifData> _buildExifData(BuildContext context) async {
     Map<String, dynamic> tags = await readExif(FileReader(upload.file));
@@ -119,16 +179,18 @@ class LocalPictureInfoPage extends StatelessWidget {
         child: Scaffold(
             backgroundColor: backgroundColor,
             appBar: _buildAppBar(context),
-            body: _buildPicturePreview()
+            body: _buildBody()
         )
     );
   }
 
-  Widget _buildPicturePreview() {
-    return LocalPicturePreview(
+  Widget _buildBody() {
+    return MediaPresentationPanel(
         backgroundColor: backgroundColor,
-        image: _buildLocalMedia(),
-        child: Consumer<_ExifData>(
+        media: upload.isVideo()
+            ? LocalVideoDisplay(file: upload.file, title: upload.title ?? defaultTitle, preview: true)
+            : LocalPictureDisplay(file: upload.file, title: upload.title ?? defaultTitle, preview: true),
+        info: Consumer<_ExifData>(
             builder: (context, exifData, _) => _buildInfoPanel(context, exifData)
         )
     );
@@ -267,17 +329,19 @@ class MediaInfoPanel extends StatelessWidget {
   }
 }
 
-class LocalImageDisplayPage extends StatelessWidget {
+class LocalMediaDisplayPage extends StatelessWidget {
 
-  final LocalImage image;
+  final LocalMedia media;
 
-  LocalImageDisplayPage(this.image);
+  LocalMediaDisplayPage(this.media);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(title: Text(image.title, overflow: TextOverflow.ellipsis)),
-        body: _LocalPictureDisplay(image: image)
+        appBar: AppBar(title: Text(media.title, overflow: TextOverflow.ellipsis)),
+        body: media is LocalPicture
+          ? LocalPictureDisplay(file: media.file, title: media.title)
+          : LocalVideoDisplay(file: media.file, title: media.title)
     );
   }
 }

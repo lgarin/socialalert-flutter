@@ -61,17 +61,11 @@ class MediaUploadTask with ChangeNotifier {
 
   bool isVideo() => type == MediaUploadType.VIDEO;
 
-  bool isNew() {
-    return status == MediaUploadStatus.CREATED;
-  }
+  bool isNew() => status == MediaUploadStatus.CREATED;
 
-  bool canBeDeleted() {
-    return status == MediaUploadStatus.CREATED || status == MediaUploadStatus.ANNOTATED || status == MediaUploadStatus.CLAIM_ERROR || status == MediaUploadStatus.CLAIM_ERROR || status == MediaUploadStatus.CLAIMED;
-  }
+  bool canBeDeleted() => _status == MediaUploadStatus.CREATED || _status == MediaUploadStatus.ANNOTATED || _status == MediaUploadStatus.CLAIMED || hasError;
 
-  Future<bool> isFileValid() {
-    return file.exists();
-  }
+  Future<bool> isFileValid() => file.exists();
 
   String get id => file.path;
 

@@ -765,7 +765,7 @@ class _RemoteVideoDisplayState extends State<RemoteVideoDisplay> {
   }
 
   Widget _buildVideo(BuildContext context) {
-    final url = MediaQueryService.toPreviewUrl(widget.media.mediaUri);
+    final url = MediaQueryService.toVideoUrl(widget.media.mediaUri);
     videoPlayerController = VideoPlayerController.network(url);
     chewieController = ChewieController(
       videoPlayerController: videoPlayerController,

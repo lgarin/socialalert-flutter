@@ -4,6 +4,7 @@ import 'package:social_alert_app/base.dart';
 import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/service/mediaupload.dart';
+import 'package:social_alert_app/service/videoservice.dart';
 import 'package:timeago_flutter/timeago_flutter.dart';
 
 class UploadManagerPage extends StatefulWidget {
@@ -102,7 +103,7 @@ class _UploadManagerPageState extends BasePageState<UploadManagerPage> {
 
   Widget _buildListTile(BuildContext context, MediaUploadTask task) {
     return Consumer<MediaUploadTask>(
-      child: Hero(tag: task.id, child: Image.file(task.file, height: 160, width: 90, fit: BoxFit.cover)),
+      child: Hero(tag: task.id, child: _buildThumbnail(context, task)),
       builder: (context, task, child) => ListTile(
             leading: child,
             title: Text(task.title ?? '?'),
@@ -111,6 +112,23 @@ class _UploadManagerPageState extends BasePageState<UploadManagerPage> {
             trailing: _buildIcon(context, task),
             onTap: () => _onItemSelected(task),
           )
+    );
+  }
+
+  Widget _buildThumbnail(BuildContext context, MediaUploadTask task) {
+    if (!task.isVideo()) {
+      return Image.file(task.file, height: 160, width: 90, fit: BoxFit.cover);
+    }
+
+    return FutureBuilder(
+      key: ValueKey(task.id),
+      future: VideoService.current(context).createThumbnail(task.file),
+      builder: (context, snapshot) {
+        if (snapshot.data == null) {
+          return LoadingCircle();
+        }
+        return Image.file(snapshot.data, height: 160, width: 90, fit: BoxFit.cover);
+      }
     );
   }
 
@@ -181,7 +199,7 @@ class _UploadManagerPageState extends BasePageState<UploadManagerPage> {
     if (task.status == MediaUploadStatus.CREATED) {
       Navigator.of(context).pushNamed(AppRoute.AnnotateMedia, arguments: task);
     } else {
-      Navigator.of(context).pushNamed(AppRoute.LocalPictureInfo, arguments: task);
+      Navigator.of(context).pushNamed(AppRoute.LocalMediaInfo, arguments: task);
     }
   }
 }

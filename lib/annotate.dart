@@ -6,8 +6,8 @@ import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:form_field_validator/form_field_validator.dart';
 import 'package:provider/provider.dart';
 import 'package:social_alert_app/helper.dart';
-import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/local.dart';
+import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/configuration.dart';
 import 'package:social_alert_app/service/eventbus.dart';
@@ -47,11 +47,13 @@ class AnnotateMediaPage extends StatelessWidget {
     );
   }
 
-  LocalPicturePreview _buildBody() {
-    return LocalPicturePreview(
+  Widget _buildBody() {
+    return MediaPresentationPanel(
           backgroundColor: backgroundColor,
-          image: LocalImage(file: upload.file, title: defaultTitle),
-          child: _MetadataForm(upload)
+          media: upload.isVideo()
+            ? LocalVideoDisplay(file: upload.file, title: defaultTitle, preview: true)
+            : LocalPictureDisplay(file: upload.file, title: defaultTitle, preview: true),
+          info: _MetadataForm(upload)
       );
   }
 
@@ -215,7 +217,7 @@ class _MetadataFormState extends State<_MetadataForm> {
   }
 
   void _onInfo() {
-    Navigator.of(context).pushNamed(AppRoute.LocalPictureInfo, arguments: widget.upload);
+    Navigator.of(context).pushNamed(AppRoute.LocalMediaInfo, arguments: widget.upload);
   }
 
   void _onConfirmUploadDeletion() {

@@ -3,27 +3,28 @@ import 'package:provider/provider.dart';
 import 'package:social_alert_app/annotate.dart';
 import 'package:social_alert_app/capture.dart';
 import 'package:social_alert_app/home.dart';
-import 'package:social_alert_app/login.dart';
-import 'package:social_alert_app/remote.dart';
-import 'package:social_alert_app/network.dart';
 import 'package:social_alert_app/local.dart';
+import 'package:social_alert_app/login.dart';
+import 'package:social_alert_app/network.dart';
+import 'package:social_alert_app/profile.dart';
+import 'package:social_alert_app/remote.dart';
 import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/cameradevice.dart';
 import 'package:social_alert_app/service/commentquery.dart';
+import 'package:social_alert_app/service/dataobjet.dart';
 import 'package:social_alert_app/service/eventbus.dart';
 import 'package:social_alert_app/service/feedquery.dart';
 import 'package:social_alert_app/service/geolocation.dart';
 import 'package:social_alert_app/service/httpservice.dart';
-import 'package:social_alert_app/service/dataobjet.dart';
 import 'package:social_alert_app/service/mediaquery.dart';
 import 'package:social_alert_app/service/mediaupdate.dart';
 import 'package:social_alert_app/service/mediaupload.dart';
 import 'package:social_alert_app/service/profilequery.dart';
 import 'package:social_alert_app/service/profileupdate.dart';
 import 'package:social_alert_app/service/serviceprodiver.dart';
+import 'package:social_alert_app/service/videoservice.dart';
 import 'package:social_alert_app/settings.dart';
 import 'package:social_alert_app/upload.dart';
-import 'package:social_alert_app/profile.dart';
 
 import 'helper.dart';
 
@@ -49,6 +50,7 @@ class SocialAlertApp extends StatelessWidget {
           ServiceProvider<MediaUpdateService>(create: (context) => MediaUpdateService(context)),
           ServiceProvider<CommentQueryService>(create: (context) => CommentQueryService(context)),
           ServiceProvider<FeedQueryService>(create: (context) => FeedQueryService(context)),
+          ServiceProvider<VideoService>(create: (context) => VideoService(context)),
           ServiceProvider<EventBus>(create: (context) => EventBus(context)),
         ],
         child: _buildApp()
@@ -92,8 +94,8 @@ class SocialAlertApp extends StatelessWidget {
       case AppRoute.UserNetwork: return MaterialPageRoute(
           builder: (context) => UserNetworkPage()
       );
-      case AppRoute.LocalPictureInfo: return MaterialPageRoute(
-          builder: (context) => LocalPictureInfoPage(settings.arguments)
+      case AppRoute.LocalMediaInfo: return MaterialPageRoute(
+          builder: (context) => LocalMediaInfoPage(settings.arguments)
       );
       case AppRoute.RemoteMediaDetail: return MaterialPageRoute<MediaDetail>(
         builder: (context) => RemoteMediaDetailPage(settings.arguments)
@@ -107,8 +109,8 @@ class SocialAlertApp extends StatelessWidget {
       case AppRoute.SettingsEditor: return MaterialPageRoute(
         builder: (context) => SettingsEditorPage()
       );
-      case AppRoute.LocalPictureDisplay: return NoAnimationMaterialPageRoute(
-          builder: (context) => LocalImageDisplayPage(settings.arguments)
+      case AppRoute.LocalMediaDisplay: return NoAnimationMaterialPageRoute(
+          builder: (context) => LocalMediaDisplayPage(settings.arguments)
       );
       case AppRoute.RemoteMediaDisplay: return NoAnimationMaterialPageRoute(
         builder: (context) => RemoteMediaDisplayPage(settings.arguments)
@@ -128,8 +130,8 @@ class AppRoute {
   static const AnnotateMedia = 'annotateMedia';
   static const UploadManager = 'uploadManager';
   static const UserNetwork = 'userNetwork';
-  static const LocalPictureInfo = 'localPictureInfo';
-  static const LocalPictureDisplay = 'localPictureDisplay';
+  static const LocalMediaInfo = 'localMediaInfo';
+  static const LocalMediaDisplay = 'localMediaDisplay';
   static const RemoteMediaDetail = 'remoteMediaDetail';
   static const RemoteMediaDisplay = 'remoteMediaDisplay';
   static const ProfileEditor = 'profileEditor';
