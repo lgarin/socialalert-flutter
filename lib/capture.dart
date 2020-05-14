@@ -1,4 +1,5 @@
 
+import 'dart:async';
 import 'dart:io';
 
 import 'package:camera/camera.dart';
@@ -28,6 +29,7 @@ class _CaptureMediaPageState extends State<CaptureMediaPage> {
   Future<GeoPosition> _asyncPosition;
   Future<DeviceInfo> _asyncDevice;
   String _videoPath;
+  Timer _videoTimer;
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +47,7 @@ class _CaptureMediaPageState extends State<CaptureMediaPage> {
       body: _CameraPreviewArea(),
       bottomNavigationBar: _CaptureNavigationBar(cameraNotifier: cameraNotifier, onCameraSwitch: _onCameraSwitch, onVideoStart: _onVideoRecord, onVideoPause: _onVideoPause,),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: _CaptureButton(cameraNotifier: cameraNotifier, onPictureCapture: _onPictureCapture, onVideoStop: _onStopVideo),
+      floatingActionButton: _CaptureButton(cameraNotifier: cameraNotifier, onPictureCapture: _onPictureCapture, onVideoStop: _onVideoStop),
     );
   }
 
@@ -102,8 +104,17 @@ class _CaptureMediaPageState extends State<CaptureMediaPage> {
     return join(outputDir.path, '$timestamp.$extension');
   }
 
+  void _monitorVideoSize(Timer timer) async {
+    if (await File(_videoPath).length() > MediaUploadTask.maximumFileSize) {
+      timer.cancel();
+      _onVideoStop();
+      showWarningSnackBar(context, 'Maximum video size reached');
+    }
+  }
+
   void _onVideoRecord() async {
     cameraNotifier.value = null;
+    _videoTimer = Timer.periodic(Duration(seconds: 1), _monitorVideoSize);
     try {
       if (_videoPath != null) {
         await _cameraController.resumeVideoRecording();
@@ -120,7 +131,8 @@ class _CaptureMediaPageState extends State<CaptureMediaPage> {
     }
   }
 
-  void _onStopVideo() async {
+  void _onVideoStop() async {
+    _videoTimer.cancel();
     cameraNotifier.value = null;
     try {
       await _cameraController.stopVideoRecording();

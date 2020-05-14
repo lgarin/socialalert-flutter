@@ -125,7 +125,7 @@ class _UploadManagerPageState extends BasePageState<UploadManagerPage> {
       future: VideoService.current(context).createThumbnail(task.file),
       builder: (context, snapshot) {
         if (snapshot.data == null) {
-          return LoadingCircle();
+          return SizedBox(height: 160, width: 90, child: LoadingCircle());
         }
         return Image.file(snapshot.data, height: 160, width: 90, fit: BoxFit.cover);
       }

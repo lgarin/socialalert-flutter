@@ -143,6 +143,12 @@ class _MetadataFormState extends State<_MetadataForm> {
         _onInfo();
       }
     });
+
+    widget.upload.file.length().then((value) {
+      if (value > MediaUploadTask.maximumFileSize) {
+        showWarningSnackBar(context, 'Maximum video size reached');
+      }
+    });
   }
 
   @override

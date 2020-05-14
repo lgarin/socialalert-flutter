@@ -34,6 +34,8 @@ enum MediaUploadType {
 }
 
 class MediaUploadTask with ChangeNotifier {
+  static const maximumFileSize = 49000000;
+
   final DateTime timestamp;
   final MediaUploadType type;
   final String cameraMaker;
