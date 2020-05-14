@@ -34,7 +34,7 @@ enum MediaUploadType {
 }
 
 class MediaUploadTask with ChangeNotifier {
-  static const maximumFileSize = 49000000;
+  static const maximumFileSize = 45000000;
 
   final DateTime timestamp;
   final MediaUploadType type;
@@ -61,11 +61,11 @@ class MediaUploadTask with ChangeNotifier {
     _changeStatus(MediaUploadStatus.CREATED);
   }
 
-  bool isVideo() => type == MediaUploadType.VIDEO;
+  bool get isVideo => type == MediaUploadType.VIDEO;
 
-  bool isNew() => status == MediaUploadStatus.CREATED;
+  bool get isNew => status == MediaUploadStatus.CREATED;
 
-  bool canBeDeleted() => _status == MediaUploadStatus.CREATED || _status == MediaUploadStatus.ANNOTATED || _status == MediaUploadStatus.CLAIMED || hasError;
+  bool get canBeDeleted => _status == MediaUploadStatus.CREATED || _status == MediaUploadStatus.ANNOTATED || _status == MediaUploadStatus.CLAIMED || hasError;
 
   Future<bool> isFileValid() => file.exists();
 
@@ -237,7 +237,7 @@ class MediaUploadTask with ChangeNotifier {
   }
 
   Future<void> _deleteFile() async {
-    assert(canBeDeleted());
+    assert(canBeDeleted);
     await file.delete();
   }
 
@@ -488,7 +488,7 @@ class MediaUploadService extends Service {
   }
 
   Future<void> deleteTask(MediaUploadTask task) async {
-    if (!task.canBeDeleted()) {
+    if (!task.canBeDeleted) {
       throw 'Invalid task state';
     }
     final uploads = await currentUploads();
@@ -514,7 +514,7 @@ class MediaUploadService extends Service {
   Future<void> _startUploading(MediaUploadTask task) async {
     try {
       final accessToken = await _authService.accessToken;
-      final taskId = task.isVideo()
+      final taskId = task.isVideo
           ? await _uploadApi.enqueueVideo(title: task.title, file: task.file, accessToken: accessToken)
           : await _uploadApi.enqueueImage(title: task.title, file: task.file, accessToken: accessToken);
       task._markUploading(taskId);

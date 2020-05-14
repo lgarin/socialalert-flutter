@@ -50,7 +50,7 @@ class AnnotateMediaPage extends StatelessWidget {
   Widget _buildBody() {
     return MediaPresentationPanel(
           backgroundColor: backgroundColor,
-          media: upload.isVideo()
+          media: upload.isVideo
             ? LocalVideoDisplay(file: upload.file, title: defaultTitle, preview: true)
             : LocalPictureDisplay(file: upload.file, title: defaultTitle, preview: true),
           info: _MetadataForm(upload)
@@ -90,7 +90,7 @@ class _AppBarPopupMenu extends StatelessWidget {
   List<PopupMenuEntry<_MediaAction>> _buildPopupMenuItems(BuildContext context) {
     return [
       PopupMenuItem(value: _MediaAction.DELETE,
-          enabled: upload.canBeDeleted(),
+          enabled: upload.canBeDeleted,
           child: ListTile(title: Text('Delete'), leading: Icon(Icons.delete))),
       PopupMenuItem(value: _MediaAction.INFO,
           child: ListTile(title: Text('Info'), leading: Icon(Icons.info)))

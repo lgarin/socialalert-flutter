@@ -116,7 +116,7 @@ class _UploadManagerPageState extends BasePageState<UploadManagerPage> {
   }
 
   Widget _buildThumbnail(BuildContext context, MediaUploadTask task) {
-    if (!task.isVideo()) {
+    if (!task.isVideo) {
       return Image.file(task.file, height: 160, width: 90, fit: BoxFit.cover);
     }
 

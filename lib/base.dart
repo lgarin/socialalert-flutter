@@ -54,14 +54,26 @@ abstract class BasePageState<T extends StatefulWidget> extends State<T> {
   void _showUploadSnackBar(MediaUploadTask task) {
     if (task.title == null) {
       showWarningSnackBar('Title for media is missing',
-          action: SnackBarAction(label: 'Edit', onPressed: () => Navigator.pushNamed(context, AppRoute.AnnotateMedia, arguments: task))
+          action: SnackBarAction(label: 'Edit', onPressed: () => _onEditUpload(task))
       );
     } else if (task.isCompleted) {
       showSuccessSnackBar('Upload of "${task.title}" has completed');
     } else if (task.hasError) {
       showErrorSnackBar('Upload of "${task.title}" has failed',
-        action: SnackBarAction(label: 'Retry', onPressed: () => MediaUploadService.current(context).restartTask(task)),
+        action: SnackBarAction(label: 'Retry', onPressed: () => _onRestartUpload(task)),
       );
+    }
+  }
+
+  void _onEditUpload(MediaUploadTask task) {
+    if (task.isNew) {
+      Navigator.pushNamed(context, AppRoute.AnnotateMedia, arguments: task);
+    }
+  }
+
+  void _onRestartUpload(MediaUploadTask task) {
+    if (task.hasError) {
+      MediaUploadService.current(context).restartTask(task);
     }
   }
 

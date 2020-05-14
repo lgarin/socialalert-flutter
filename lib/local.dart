@@ -202,7 +202,7 @@ class LocalMediaInfoPage extends StatelessWidget {
   Widget _buildBody() {
     return MediaPresentationPanel(
         backgroundColor: backgroundColor,
-        media: upload.isVideo()
+        media: upload.isVideo
             ? LocalVideoDisplay(file: upload.file, title: upload.title ?? defaultTitle, preview: true)
             : LocalPictureDisplay(file: upload.file, title: upload.title ?? defaultTitle, preview: true),
         info: Consumer<_ExifData>(
