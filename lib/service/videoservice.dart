@@ -1,8 +1,7 @@
-
 import 'dart:io';
 
 import 'package:flutter/widgets.dart';
-import 'package:path/path.dart';
+import 'package:social_alert_app/service/fileservice.dart';
 import 'package:social_alert_app/service/serviceprodiver.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
@@ -12,9 +11,11 @@ class VideoService extends Service {
 
   VideoService(BuildContext context) : super(context);
 
+  FileService get _fileService => lookup();
+
   Future<File> createThumbnail(File videoFile) async {
-    final filename =  basenameWithoutExtension(videoFile.path);
-    final thumbnailFile = File(join(videoFile.parent.path, '$filename.jpg'));
+    final thumbnailFile = _fileService.replaceExtension(videoFile, 'jpg');
+    print(thumbnailFile);
     if (await thumbnailFile.exists()) {
       return thumbnailFile;
     }

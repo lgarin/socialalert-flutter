@@ -14,6 +14,7 @@ import 'package:social_alert_app/service/commentquery.dart';
 import 'package:social_alert_app/service/dataobjet.dart';
 import 'package:social_alert_app/service/eventbus.dart';
 import 'package:social_alert_app/service/feedquery.dart';
+import 'package:social_alert_app/service/fileservice.dart';
 import 'package:social_alert_app/service/geolocation.dart';
 import 'package:social_alert_app/service/httpservice.dart';
 import 'package:social_alert_app/service/mediaquery.dart';
@@ -50,6 +51,7 @@ class SocialAlertApp extends StatelessWidget {
           ServiceProvider<MediaUpdateService>(create: (context) => MediaUpdateService(context)),
           ServiceProvider<CommentQueryService>(create: (context) => CommentQueryService(context)),
           ServiceProvider<FeedQueryService>(create: (context) => FeedQueryService(context)),
+          ServiceProvider<FileService>(create: (context) => FileService(context)),
           ServiceProvider<VideoService>(create: (context) => VideoService(context)),
           ServiceProvider<EventBus>(create: (context) => EventBus(context)),
         ],

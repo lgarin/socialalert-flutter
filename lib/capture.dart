@@ -1,4 +1,3 @@
-
 import 'dart:async';
 import 'dart:io';
 
@@ -6,12 +5,11 @@ import 'package:camera/camera.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:native_device_orientation/native_device_orientation.dart';
-import 'package:path/path.dart' show join;
-import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/service/cameradevice.dart';
+import 'package:social_alert_app/service/fileservice.dart';
 import 'package:social_alert_app/service/geolocation.dart';
 import 'package:social_alert_app/service/mediaupload.dart';
 
@@ -29,8 +27,8 @@ class _CaptureMediaPageState extends State<CaptureMediaPage> {
   Future<GeoPosition> _asyncPosition;
   Future<DeviceInfo> _asyncDevice;
   bool _videoMode = false;
-  String _videoPath;
-  Timer _videoTimer;
+  File _videoFile;
+  Timer _videoMonitor;
 
   @override
   Widget build(BuildContext context) {
@@ -62,6 +60,7 @@ class _CaptureMediaPageState extends State<CaptureMediaPage> {
 
   @override
   void dispose() {
+    _videoMonitor?.cancel();
     _cameraController?.dispose();
     super.dispose();
   }
@@ -95,11 +94,11 @@ class _CaptureMediaPageState extends State<CaptureMediaPage> {
   void _onPictureCapture() async {
     cameraNotifier.value = null;
     try {
-      String path = await _defineOutputFile('jpg');
-      await _cameraController.takePicture(path);
+      File outputFile = await FileService.current(context).defineOutputFile('jpg');
+      await _cameraController.takePicture(outputFile.path);
       final device = await _asyncDevice;
       final position = await _asyncPosition;
-      final task = MediaUploadTask(file: File(path), type: MediaUploadType.PICTURE, position: position, device: device);
+      final task = MediaUploadTask(file: outputFile, type: MediaUploadType.PICTURE, position: position, device: device);
       await MediaUploadService.current(context).saveTask(task);
       Navigator.of(context).pushReplacementNamed(AppRoute.AnnotateMedia, arguments: task);
     } catch (e) {
@@ -108,52 +107,44 @@ class _CaptureMediaPageState extends State<CaptureMediaPage> {
     }
   }
 
-  Future<String> _defineOutputFile(String extension) async {
-    final outputDir = await getApplicationDocumentsDirectory();
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    return join(outputDir.path, '$timestamp.$extension');
-  }
-
-  void _monitorVideoSize(Timer timer) async {
-    if (await File(_videoPath).length() > MediaUploadTask.maximumFileSize) {
-      timer.cancel();
-      _onVideoStop();
-      showWarningSnackBar(context, 'Maximum video size reached');
-    }
+  void _onMaximumVideoSize() async {
+    _videoMonitor.cancel();
+    _onVideoStop();
+    showWarningSnackBar(context, 'Maximum video size reached');
   }
 
   void _onVideoStart() async {
     cameraNotifier.value = null;
     try {
-      if (_videoPath != null) {
+      if (_videoFile != null) {
         await _cameraController.resumeVideoRecording();
         cameraNotifier.value = _cameraController?.value;
       } else {
-        _videoPath = await _defineOutputFile('mp4');
-        _videoTimer = Timer.periodic(Duration(seconds: 1), _monitorVideoSize);
-        await _cameraController.startVideoRecording(_videoPath);
+        _videoFile = await FileService.current(context).defineOutputFile('mp4');
+        _videoMonitor = FileService.current(context).createFileSizeMonitor(_videoFile, MediaUploadTask.maximumFileSize, _onMaximumVideoSize);
+        await _cameraController.startVideoRecording(_videoFile.path);
         cameraNotifier.value = _cameraController?.value;
       }
     } catch (e) {
-      _videoPath = null;
+      _videoFile = null;
       print(e);
       showSimpleDialog(context, 'Capture failed', e.toString());
     }
   }
 
   void _onVideoStop() async {
-    _videoTimer.cancel();
+    _videoMonitor.cancel();
     cameraNotifier.value = null;
     try {
       await _cameraController.stopVideoRecording();
       cameraNotifier.value = _cameraController?.value;
       final device = await _asyncDevice;
       final position = await _asyncPosition;
-      final task = MediaUploadTask(file: File(_videoPath), type: MediaUploadType.VIDEO, position: position, device: device);
+      final task = MediaUploadTask(file: _videoFile, type: MediaUploadType.VIDEO, position: position, device: device);
       await MediaUploadService.current(context).saveTask(task);
       Navigator.of(context).pushReplacementNamed(AppRoute.AnnotateMedia, arguments: task);
     } catch (e) {
-      _videoPath = null;
+      _videoFile = null;
       print(e);
       showSimpleDialog(context, 'Capture failed', e.toString());
     }
@@ -309,7 +300,7 @@ class _CaptureNavigationBar extends StatelessWidget {
     final recording = camera?.isRecordingVideo ?? false;
     return _buildRoundButton(
         icon: Icon(Icons.switch_camera),
-        fillColor: Colors.white,
+        fillColor:  recording ? Colors.grey : Colors.white,
         onPressed: camera == null ? null : (recording ? null : onCameraSwitch),
         tooltip: 'Switch camera'
     );
