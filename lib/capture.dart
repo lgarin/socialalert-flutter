@@ -28,13 +28,14 @@ class _CaptureMediaPageState extends State<CaptureMediaPage> {
   CameraLensDirection _lensDirection = CameraLensDirection.back;
   Future<GeoPosition> _asyncPosition;
   Future<DeviceInfo> _asyncDevice;
+  bool _videoMode = false;
   String _videoPath;
   Timer _videoTimer;
 
   @override
   Widget build(BuildContext context) {
     return FutureProvider(
-      key: ValueKey(_lensDirection),
+      key: ValueKey('$_lensDirection/$_videoMode'),
       create: _createCameraController,
       child: _buildContent(context),
     );
@@ -45,9 +46,9 @@ class _CaptureMediaPageState extends State<CaptureMediaPage> {
     return Scaffold(
       appBar: portrait ? AppBar(title: Text('Synpix')) : null,
       body: _CameraPreviewArea(),
-      bottomNavigationBar: _CaptureNavigationBar(cameraNotifier: cameraNotifier, onCameraSwitch: _onCameraSwitch, onVideoStart: _onVideoRecord, onVideoPause: _onVideoPause,),
+      bottomNavigationBar: _CaptureNavigationBar(videoMode: _videoMode, cameraNotifier: cameraNotifier, onCameraSwitch: _onCameraSwitch, onVideoResume: _onVideoStart, onVideoPause: _onVideoPause, onModeSwitch: _onModeSwitch,),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: _CaptureButton(cameraNotifier: cameraNotifier, onPictureCapture: _onPictureCapture, onVideoStop: _onVideoStop),
+      floatingActionButton: _CaptureButton(videoMode: _videoMode, cameraNotifier: cameraNotifier, onPictureCapture: _onPictureCapture, onVideoStart: _onVideoStart, onVideoStop: _onVideoStop),
     );
   }
 
@@ -71,6 +72,15 @@ class _CaptureMediaPageState extends State<CaptureMediaPage> {
     } else {
       return CameraLensDirection.back;
     }
+  }
+
+  void _onModeSwitch() async {
+    cameraNotifier.value = null;
+    _cameraController?.dispose();
+    _cameraController = null;
+    setState(() {
+      _videoMode = !_videoMode;
+    });
   }
 
   void _onCameraSwitch() async {
@@ -112,15 +122,15 @@ class _CaptureMediaPageState extends State<CaptureMediaPage> {
     }
   }
 
-  void _onVideoRecord() async {
+  void _onVideoStart() async {
     cameraNotifier.value = null;
-    _videoTimer = Timer.periodic(Duration(seconds: 1), _monitorVideoSize);
     try {
       if (_videoPath != null) {
         await _cameraController.resumeVideoRecording();
         cameraNotifier.value = _cameraController?.value;
       } else {
         _videoPath = await _defineOutputFile('mp4');
+        _videoTimer = Timer.periodic(Duration(seconds: 1), _monitorVideoSize);
         await _cameraController.startVideoRecording(_videoPath);
         cameraNotifier.value = _cameraController?.value;
       }
@@ -161,7 +171,7 @@ class _CaptureMediaPageState extends State<CaptureMediaPage> {
   }
 
   Future<CameraController> _createCameraController(BuildContext context) async {
-    _cameraController = await CameraDeviceService.current(context).findCamera(_lensDirection, ResolutionPreset.veryHigh);
+    _cameraController = await CameraDeviceService.current(context).findCamera(_lensDirection, _videoMode ? ResolutionPreset.high : ResolutionPreset.max);
     cameraNotifier.value = _cameraController?.value;
     return _cameraController;
   }
@@ -200,11 +210,13 @@ class _CameraPreviewArea extends StatelessWidget {
 }
 
 class _CaptureButton extends StatelessWidget {
+  final bool videoMode;
   final VoidCallback onPictureCapture;
+  final VoidCallback onVideoStart;
   final VoidCallback onVideoStop;
   final ValueNotifier<CameraValue> cameraNotifier;
 
-  _CaptureButton({@required this.cameraNotifier, @required this.onPictureCapture, @required this.onVideoStop});
+  _CaptureButton({@required this.videoMode, @required this.cameraNotifier, @required this.onPictureCapture, @required this.onVideoStart, @required this.onVideoStop});
 
   @override
   Widget build(BuildContext context) {
@@ -222,24 +234,55 @@ class _CaptureButton extends StatelessWidget {
       child:  FloatingActionButton(
         backgroundColor: Theme.of(context).primaryColor,
         foregroundColor: Colors.white,
-        tooltip: recording ? 'Stop video' : 'Take picture',
-        child: recording
-          ? Icon(Icons.stop, size: 50,)
-          : Icon(Icons.camera_alt, size: 50,),
-        onPressed: camera == null ? null : (recording ? onVideoStop : onPictureCapture),
+        tooltip: _defineTooltip(recording),
+        child: Icon(_defineIcon(recording), size: 50),
+        onPressed: camera == null ? null : _defineTrigger(recording),
       )
     );
+  }
+
+  String _defineTooltip(bool recording) {
+    if (recording) {
+      return 'Stop video';
+    } else if (videoMode) {
+      return 'Start video';
+    } else {
+      return 'Take picture';
+    }
+  }
+
+  IconData _defineIcon(bool recording) {
+    if (recording) {
+      return Icons.stop;
+    } else if (videoMode) {
+      return Icons.fiber_manual_record;
+    } else {
+      return Icons.camera;
+    }
+  }
+
+  VoidCallback _defineTrigger(bool recording) {
+    if (recording) {
+      return onVideoStop;
+    } else if (videoMode) {
+      return onVideoStart;
+    } else {
+      return onPictureCapture;
+    }
   }
 }
 
 class _CaptureNavigationBar extends StatelessWidget {
+  static final buttonColor = Color.fromARGB(255, 231, 40, 102);
   static final spacing = 15.0;
-  final VoidCallback onVideoStart;
+  final bool videoMode;
+  final VoidCallback onModeSwitch;
   final VoidCallback onVideoPause;
+  final VoidCallback onVideoResume;
   final VoidCallback onCameraSwitch;
   final ValueNotifier<CameraValue> cameraNotifier;
 
-  _CaptureNavigationBar({@required this.cameraNotifier, @required this.onVideoStart, @required this.onVideoPause, @required this.onCameraSwitch});
+  _CaptureNavigationBar({@required this.videoMode, @required this.cameraNotifier, @required this.onModeSwitch, @required this.onVideoPause, @required this.onVideoResume, @required this.onCameraSwitch});
 
   @override
   Widget build(BuildContext context) {
@@ -277,17 +320,28 @@ class _CaptureNavigationBar extends StatelessWidget {
       return _buildResumeVideoButton();
     } else if (camera?.isRecordingVideo ?? false) {
       return _buildPauseVideoButton();
+    } else if (videoMode) {
+      return _buildPictureModeButton(camera != null);
     } else {
-      return _buildStartVideoButton(camera != null);
+      return _buildVideoModeButton(camera != null);
     }
   }
 
-  Widget _buildStartVideoButton(bool enabled) {
+  Widget _buildPictureModeButton(bool enabled) {
+    return _buildRoundButton(
+      icon: Icon(Icons.camera_alt),
+      tooltip: 'Take a picture',
+      fillColor: buttonColor,
+      onPressed: enabled ? onModeSwitch : null,
+    );
+  }
+
+  Widget _buildVideoModeButton(bool enabled) {
     return _buildRoundButton(
       icon: Icon(Icons.videocam),
-      tooltip: 'Start recording',
-      fillColor: Color.fromARGB(255, 231, 40, 102),
-      onPressed: enabled ? onVideoStart : null,
+      tooltip: 'Make a video',
+      fillColor: buttonColor,
+      onPressed: enabled ? onModeSwitch : null,
     );
   }
 
@@ -295,17 +349,17 @@ class _CaptureNavigationBar extends StatelessWidget {
     return _buildRoundButton(
       icon:Icon(Icons.pause),
       tooltip: 'Pause recording',
-      fillColor: Color.fromARGB(255, 231, 40, 102),
+      fillColor: buttonColor,
       onPressed: onVideoPause,
     );
   }
 
   Widget _buildResumeVideoButton() {
     return _buildRoundButton(
-      icon:Icon(Icons.play_arrow),
+      icon:Icon(Icons.fiber_manual_record),
       tooltip: 'Resume recording',
-      fillColor: Color.fromARGB(255, 231, 40, 102),
-      onPressed: onVideoStart,
+      fillColor: buttonColor,
+      onPressed: onVideoResume,
     );
   }
 
