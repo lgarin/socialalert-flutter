@@ -6,14 +6,15 @@ import 'package:form_field_validator/form_field_validator.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:provider/provider.dart';
 import 'package:social_alert_app/base.dart';
+import 'package:social_alert_app/local.dart';
 import 'package:social_alert_app/profile.dart';
 import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/main.dart';
-import 'package:social_alert_app/local.dart';
 import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/commentquery.dart';
 import 'package:social_alert_app/service/configuration.dart';
 import 'package:social_alert_app/service/dataobjet.dart';
+import 'package:social_alert_app/service/eventbus.dart';
 import 'package:social_alert_app/service/mediaquery.dart';
 import 'package:social_alert_app/service/mediaupdate.dart';
 import 'package:social_alert_app/service/profilequery.dart';
@@ -740,14 +741,23 @@ class RemoteVideoDisplay extends StatefulWidget {
 
 class _RemoteVideoDisplayState extends State<RemoteVideoDisplay> {
 
-  VideoPlayerController videoPlayerController;
-  ChewieController chewieController;
+  VideoPlayerController _videoPlayerController;
+  ChewieController _chewieController;
+  StreamSubscription<VideoAction> _actionSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _actionSubscription = EventBus.current(context).on<VideoAction>().listen((event) {
+      _chewieController?.pause();
+    });
+  }
 
   @override
   void dispose() {
-    chewieController?.pause();
-    videoPlayerController?.dispose();
-    chewieController?.dispose();
+    _actionSubscription?.cancel();
+    _videoPlayerController?.dispose();
+    _chewieController?.dispose();
     super.dispose();
   }
 
@@ -766,9 +776,9 @@ class _RemoteVideoDisplayState extends State<RemoteVideoDisplay> {
 
   Widget _buildVideo(BuildContext context) {
     final url = MediaQueryService.toVideoUrl(widget.media.mediaUri);
-    videoPlayerController = VideoPlayerController.network(url);
-    chewieController = ChewieController(
-      videoPlayerController: videoPlayerController,
+    _videoPlayerController = VideoPlayerController.network(url);
+    _chewieController = ChewieController(
+      videoPlayerController: _videoPlayerController,
       fullScreenByDefault: !widget.preview,
       allowFullScreen: widget.preview,
       aspectRatio: 16 / 9,
@@ -776,7 +786,7 @@ class _RemoteVideoDisplayState extends State<RemoteVideoDisplay> {
       autoPlay: !widget.preview,
       looping: false,
     );
-    return Chewie(controller: chewieController);
+    return Chewie(controller: _chewieController);
   }
 }
 

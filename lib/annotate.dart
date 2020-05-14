@@ -223,6 +223,7 @@ class _MetadataFormState extends State<_MetadataForm> {
   }
 
   void _onInfo() {
+    EventBus.current(context).fire(VideoAction.PAUSE);
     Navigator.of(context).pushNamed(AppRoute.LocalMediaInfo, arguments: widget.upload);
   }
 

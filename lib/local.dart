@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:chewie/chewie.dart';
@@ -11,6 +12,7 @@ import 'package:provider/provider.dart';
 import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/service/cameradevice.dart';
+import 'package:social_alert_app/service/eventbus.dart';
 import 'package:social_alert_app/service/geolocation.dart';
 import 'package:social_alert_app/service/mediaupload.dart';
 import 'package:video_player/video_player.dart';
@@ -79,16 +81,29 @@ class LocalVideoDisplay extends StatefulWidget {
   _LocalVideoDisplayState createState() => _LocalVideoDisplayState();
 }
 
+enum VideoAction {
+  PAUSE
+}
+
 class _LocalVideoDisplayState extends State<LocalVideoDisplay> {
 
-  VideoPlayerController videoPlayerController;
-  ChewieController chewieController;
+  VideoPlayerController _videoPlayerController;
+  ChewieController _chewieController;
+  StreamSubscription<VideoAction> _actionSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _actionSubscription = EventBus.current(context).on<VideoAction>().listen((event) {
+      _chewieController?.pause();
+    });
+  }
 
   @override
   void dispose() {
-    chewieController?.pause();
-    videoPlayerController?.dispose();
-    chewieController?.dispose();
+    _actionSubscription?.cancel();
+    _videoPlayerController?.dispose();
+    _chewieController?.dispose();
     super.dispose();
   }
 
@@ -106,9 +121,9 @@ class _LocalVideoDisplayState extends State<LocalVideoDisplay> {
   }
 
   Widget _buildVideo(BuildContext context) {
-    videoPlayerController = VideoPlayerController.file(widget.file);
-    chewieController = ChewieController(
-      videoPlayerController: videoPlayerController,
+    _videoPlayerController = VideoPlayerController.file(widget.file);
+    _chewieController = ChewieController(
+      videoPlayerController: _videoPlayerController,
       fullScreenByDefault: !widget.preview,
       allowFullScreen: widget.preview,
       aspectRatio: 16 / 9,
@@ -116,7 +131,7 @@ class _LocalVideoDisplayState extends State<LocalVideoDisplay> {
       autoPlay: !widget.preview,
       looping: false,
     );
-    return Chewie(controller: chewieController);
+    return Chewie(controller: _chewieController);
   }
 }
 

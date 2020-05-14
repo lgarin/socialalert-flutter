@@ -3,12 +3,14 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:social_alert_app/base.dart';
+import 'package:social_alert_app/local.dart';
 import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/remote.dart';
 import 'package:social_alert_app/profile.dart';
 import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/configuration.dart';
 import 'package:social_alert_app/service/dataobjet.dart';
+import 'package:social_alert_app/service/eventbus.dart';
 import 'package:social_alert_app/service/feedquery.dart';
 import 'package:social_alert_app/service/mediaquery.dart';
 import 'package:social_alert_app/service/profilequery.dart';
@@ -125,7 +127,7 @@ class _FeedDisplayState extends BasePagingState<FeedDisplay, FeedItem> {
   Widget _buildFeedBanner(BuildContext context, FeedItem item, Widget subtitle) {
     return ListTile(
         key: ValueKey(item.id),
-        onTap: () => _showPictureDetail(item.media),
+        onTap: () => _showMediaDetail(item.media),
         contentPadding: EdgeInsets.zero,
         leading: ProfileAvatar(radius: 50.0,
           imageUri: item.creator.imageUri,
@@ -151,7 +153,8 @@ class _FeedDisplayState extends BasePagingState<FeedDisplay, FeedItem> {
     );
   }
 
-  void _showPictureDetail(MediaInfo media) async {
+  void _showMediaDetail(MediaInfo media) async {
+    EventBus.current(context).fire(VideoAction.PAUSE);
     await Navigator.of(context).pushNamed(AppRoute.RemoteMediaDetail, arguments: media);
   }
 
