@@ -20,6 +20,7 @@ import 'package:social_alert_app/service/httpservice.dart';
 import 'package:social_alert_app/service/mediaquery.dart';
 import 'package:social_alert_app/service/mediaupdate.dart';
 import 'package:social_alert_app/service/mediaupload.dart';
+import 'package:social_alert_app/service/pagemanager.dart';
 import 'package:social_alert_app/service/profilequery.dart';
 import 'package:social_alert_app/service/profileupdate.dart';
 import 'package:social_alert_app/service/serviceprodiver.dart';
@@ -47,6 +48,7 @@ class SocialAlertApp extends StatelessWidget {
           StreamProvider<UserProfile>(create: (context) => ProfileUpdateService.current(context).profileStream, lazy: false),
           StreamProvider<AvatarUploadProgress>(create: (context) => ProfileUpdateService.current(context).uploadProgressStream, lazy: false),
           ServiceProvider<MediaUploadService>(create: (context) => MediaUploadService(context)),
+          FutureProvider<MediaUploadList>(create: (context) => MediaUploadService.current(context).currentUploads(), lazy: false),
           ServiceProvider<MediaQueryService>(create: (context) => MediaQueryService(context)),
           ServiceProvider<MediaUpdateService>(create: (context) => MediaUpdateService(context)),
           ServiceProvider<CommentQueryService>(create: (context) => CommentQueryService(context)),
@@ -54,6 +56,7 @@ class SocialAlertApp extends StatelessWidget {
           ServiceProvider<FileService>(create: (context) => FileService(context)),
           ServiceProvider<VideoService>(create: (context) => VideoService(context)),
           ServiceProvider<EventBus>(create: (context) => EventBus(context)),
+          ServiceProvider<PageManager>(create: (context) => PageManager(context)),
         ],
         child: _buildApp()
     );

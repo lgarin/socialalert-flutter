@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
-import 'package:async/async.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_uploader/flutter_uploader.dart';
@@ -97,7 +96,7 @@ class _ProfileUpdateApi {
     );
   }
 
-  Stream<UploadTaskResponse> get resultStream {
+  Stream<UploadTaskResponse> get avatarUploadStream {
     return httpService.uploadResultStream;
   }
 
@@ -105,7 +104,7 @@ class _ProfileUpdateApi {
     return AvatarUploadProgress(taskId: event.taskId, progress: event.progress, status: event.status);
   }
 
-  Stream<AvatarUploadProgress> get progressStream => httpService.uploadProgressStream.map(_mapProgress);
+  Stream<AvatarUploadProgress> get avatarUploadProgressStream => httpService.uploadProgressStream.map(_mapProgress);
 
   Future<Iterable<Country>> loadValidCountries() async {
     final uri = '/user/countries';
@@ -146,14 +145,17 @@ class _ProfileUpdateApi {
 
 class ProfileUpdateService extends Service {
 
-  final _progressStreamController = StreamController<AvatarUploadProgress>.broadcast();
-  final _profileController = StreamController<UserProfile>();
-  StreamSubscription _progressSubscription;
-
+  final _uploadProgressStreamController = StreamController<AvatarUploadProgress>.broadcast();
+  final _profileStreamController = StreamController<UserProfile>.broadcast();
+  StreamSubscription<AvatarUploadProgress> _uploadProgressSubscription;
+  StreamSubscription<UserProfile> _avatarUploadSubscription;
+  StreamSubscription<UserProfile> _userLoginSubscription;
   List<Country> _validCountries;
 
   ProfileUpdateService(BuildContext context) : super(context) {
-    _progressSubscription = _updateApi.progressStream.listen(_progressStreamController.add, onError: _progressStreamController.addError, onDone: _progressStreamController.close);
+    _uploadProgressSubscription = _updateApi.avatarUploadProgressStream.listen(_uploadProgressStreamController.add, onError: _uploadProgressStreamController.addError, onDone: _uploadProgressStreamController.close);
+    _userLoginSubscription = _authService.profileStream.listen(_profileStreamController.add, onError: _profileStreamController.addError, onDone: _profileStreamController.close);
+    _userLoginSubscription = _updateApi.avatarUploadStream.map(_mapResponse).skipWhile((element) => element == null).listen(_profileStreamController.add, onError: _profileStreamController.addError, onDone: _profileStreamController.close);
   }
 
   static ProfileUpdateService current(BuildContext context) => ServiceProvider.of(context);
@@ -163,9 +165,11 @@ class ProfileUpdateService extends Service {
 
   @override
   void dispose() {
-    _progressSubscription.cancel();
-    _progressStreamController.close();
-    _profileController.close();
+    _uploadProgressSubscription.cancel();
+    _avatarUploadSubscription.cancel();
+    _userLoginSubscription.cancel();
+    _uploadProgressStreamController.close();
+    _profileStreamController.close();
   }
 
   Future<String> beginAvatarUpload(String title, File file) async {
@@ -180,11 +184,11 @@ class ProfileUpdateService extends Service {
 
   UserProfile _mapResponse(UploadTaskResponse response) {
     if (response.status == UploadTaskStatus.complete) {
-      _progressStreamController.add(
+      _uploadProgressStreamController.add(
           AvatarUploadProgress(taskId: response.taskId, progress: 100, status: UploadTaskStatus.complete));
       return UserProfile.fromJson(json.decode(response.response));
     } else if (response.status == UploadTaskStatus.failed) {
-      _progressStreamController.add(AvatarUploadProgress(
+      _uploadProgressStreamController.add(AvatarUploadProgress(
           taskId: response.taskId, progress: 0, status: UploadTaskStatus.failed, error: response.response));
       return null;
     } else {
@@ -192,13 +196,9 @@ class ProfileUpdateService extends Service {
     }
   }
 
-  Stream<UserProfile> get profileStream => StreamGroup.merge([
-    _updateApi.resultStream.map(_mapResponse).skipWhile((element) => element == null),
-    _authService.profileStream,
-    _profileController.stream
-  ]);
+  Stream<UserProfile> get profileStream => _profileStreamController.stream;
 
-  Stream<AvatarUploadProgress> get uploadProgressStream => _progressStreamController.stream;
+  Stream<AvatarUploadProgress> get uploadProgressStream => _uploadProgressStreamController.stream;
 
   Future<List<Country>> readValidCountries() async {
     if (_validCountries == null) {
@@ -223,7 +223,7 @@ class ProfileUpdateService extends Service {
     final accessToken = await _authService.accessToken;
     try {
       final profile = await _updateApi.updateProfile(request, accessToken);
-      _profileController.add(profile);
+      _profileStreamController.add(profile);
       return profile;
     } catch (e) {
       print(e);

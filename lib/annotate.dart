@@ -178,7 +178,7 @@ class _MetadataFormState extends State<_MetadataForm> {
 
   Future<bool> _allowPop() async {
     final form = _formKey.currentState;
-    if (form != null && form.validate()) {
+    if (form != null) {
       form.save();
       widget.upload.save(
         title: _model.title,

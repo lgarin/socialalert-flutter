@@ -495,6 +495,7 @@ class MediaUploadService extends Service {
     uploads._remove(task);
     await _uploadTaskStore.store(uploads);
     await task._deleteFile();
+    task._abort();
   }
 
   void _startLocating(MediaUploadTask task) {

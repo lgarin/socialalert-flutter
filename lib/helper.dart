@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:form_field_validator/form_field_validator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:social_alert_app/service/pagemanager.dart';
 
 Future showSimpleDialog(BuildContext context, String title, String message) {
   return showDialog(
@@ -49,7 +50,10 @@ Future<bool> showConfirmDialog(BuildContext context, String title, String messag
 }
 
 void _showSnackBar(BuildContext context, String message, Color color, SnackBarAction action) {
-  final scaffoldState = Scaffold.of(context, nullOk: true);
+  var scaffoldState = Scaffold.of(context, nullOk: true);
+  if (scaffoldState == null) {
+    scaffoldState = PageManager.current(context).currentPageState;
+  }
   if (scaffoldState != null) {
     scaffoldState.showSnackBar(SnackBar(content: Text(message, style: TextStyle(color: color)), action: action));
   }

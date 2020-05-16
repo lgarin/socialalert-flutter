@@ -70,7 +70,7 @@ class _RemoteMediaDetailPageState extends BasePageState<RemoteMediaDetailPage> {
     );
   }
 
-  Widget buildNavBar(BuildContext context) {
+  Widget buildNavBar() {
     return ChangeNotifierProvider.value(
       value: _tabSelectionModel,
       child: _MediaBottomNavigationBar(),

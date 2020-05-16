@@ -6,53 +6,88 @@ import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/menu.dart';
+import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/dataobjet.dart';
+import 'package:social_alert_app/service/eventbus.dart';
 import 'package:social_alert_app/service/mediaupload.dart';
+import 'package:social_alert_app/service/pagemanager.dart';
+import 'package:social_alert_app/service/profileupdate.dart';
 
-abstract class BasePageState<T extends StatefulWidget> extends State<T> {
-  final appName = 'Snypix';
+class _NotificationHook extends StatefulWidget {
   final String pageName;
-  final _scaffoldKey = GlobalKey<ScaffoldState>();
-  StreamSubscription<MediaUploadTask> uploadResultListener;
+  final GlobalKey<ScaffoldState> scaffoldKey;
+  final Widget child;
 
-  BasePageState(this.pageName);
+  const _NotificationHook({@required this.pageName, @required this.scaffoldKey, @required this.child});
+
+  @override
+  _NotificationHookState createState() => _NotificationHookState();
+}
+
+class _NotificationHookState extends State<_NotificationHook> {
+
+  StreamSubscription<PageEvent> _pageListener;
+  StreamSubscription<MediaUploadTask> _uploadResultListener;
+  StreamSubscription<UserProfile> _userProfileListener;
+  UserProfile _currentUserProfile;
 
   @override
   void initState() {
     super.initState();
-    uploadResultListener = MediaUploadService.current(context).uploadResultStream.listen(_showUploadSnackBar);
+    _uploadResultListener = MediaUploadService.current(context).uploadResultStream.listen(_showUploadSnackBar);
+    _userProfileListener = ProfileUpdateService.current(context).profileStream.listen(_showUserProfileSnackBar);
+    _pageListener = EventBus.current(context).on<PageEvent>().listen(_onPageEvent);
+  }
+
+  void _onPageEvent(PageEvent event) {
+    if (event.type != PageEventType.SHOW || event.pageName != widget.pageName) {
+      return;
+    }
+
+    _currentUserProfile = Provider.of(context, listen: false);
+    _showUserProfileSnackBar(_currentUserProfile);
+
+    MediaUploadList uploadList = Provider.of(context, listen: false);
+    _showAllUploadSnackBars(uploadList);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.child;
   }
 
   @override
   void dispose() {
-    uploadResultListener.cancel();
+    _pageListener.cancel();
+    _uploadResultListener.cancel();
+    _userProfileListener.cancel();
     super.dispose();
   }
 
   void _showSnackBar(String message, Color color, SnackBarAction action) {
-    if (_scaffoldKey.currentState == null) {
+    if (!mounted) {
       return;
     }
-    _scaffoldKey.currentState.showSnackBar(SnackBar(content: Text(message, style: TextStyle(color: color)), action: action));
+    var scaffoldState = widget.scaffoldKey.currentState;
+    if (scaffoldState != null) {
+      scaffoldState.showSnackBar(SnackBar(content: Text(message, style: TextStyle(color: color)), action: action));
+    }
   }
 
-  @protected
   void showSuccessSnackBar(String message, {SnackBarAction action}) {
     _showSnackBar(message, Colors.green, action);
   }
 
-  @protected
   void showWarningSnackBar(String message, {SnackBarAction action}) {
     _showSnackBar(message, Colors.orange, action);
   }
 
-  @protected
   void showErrorSnackBar(String message, {SnackBarAction action}) {
     _showSnackBar(message, Colors.red, action);
   }
 
   void _showUploadSnackBar(MediaUploadTask task) {
-    if (task.title == null) {
+    if (task.title == null || task.title.isEmpty) {
       showWarningSnackBar('Title for media is missing',
           action: SnackBarAction(label: 'Edit', onPressed: () => _onEditUpload(task))
       );
@@ -77,34 +112,66 @@ abstract class BasePageState<T extends StatefulWidget> extends State<T> {
     }
   }
 
-  Future<MediaUploadList> _loadUploadList(BuildContext context) async {
-    final uploadList = await MediaUploadService.current(context).currentUploads();
-    for (final upload in uploadList) {
-      if (upload.title == null) {
-        _showUploadSnackBar(upload);
-      }
+  void _showUserProfileSnackBar(UserProfile profile) {
+    if (profile == null) {
+      return;
     }
-    return uploadList;
+    if (_currentUserProfile != null && !_currentUserProfile.same(profile)) {
+      showSuccessSnackBar('Your profile has been saved');
+      _currentUserProfile = profile;
+    }
+
+    if (!profile.anonym && profile.incomplete && PageManager.current(context).currentPageName != AppRoute.ProfileEditor) {
+      showWarningSnackBar('Your profile is missing some information',
+          action: SnackBarAction(label: 'Edit', onPressed: _onEditProfile));
+    }
+  }
+
+  void _onEditProfile() {
+    Navigator.pushNamed(context, AppRoute.ProfileEditor);
+  }
+
+  void _showAllUploadSnackBars(MediaUploadList uploadList) {
+    for (final upload in uploadList) {
+      _showUploadSnackBar(upload);
+    }
+  }
+}
+
+abstract class BasePageState<T extends StatefulWidget> extends State<T> {
+  final appName = 'Snypix';
+  final String pageName;
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
+  PageManager _pageManager;
+
+  BasePageState(this.pageName);
+
+
+  @override
+  void initState() {
+    super.initState();
+
+    _pageManager = PageManager.current(context);
+    _pageManager.pushPage(_scaffoldKey, pageName);
+  }
+
+
+  @override
+  void dispose() {
+    _pageManager?.popPage(_scaffoldKey);
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureProvider<MediaUploadList>(
-        create: _loadUploadList,
-        lazy: false,
-        child: _buildScaffold(context)
-    );
-  }
-
-  Scaffold _buildScaffold(BuildContext context) {
     return Scaffold(
           key: _scaffoldKey,
           appBar: buildAppBar(),
           drawer: buildDrawer(),
-          body: buildBody(context),
+          body: _NotificationHook(pageName: pageName, scaffoldKey: _scaffoldKey, child: Builder(builder: buildBody)),
           floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-          floatingActionButton: buildCaptureButton(context),
-          bottomNavigationBar: buildNavBar(context)
+          floatingActionButton: buildCaptureButton(),
+          bottomNavigationBar: buildNavBar()
       );
   }
 
@@ -121,20 +188,20 @@ abstract class BasePageState<T extends StatefulWidget> extends State<T> {
     return UserMenu(currentPage: pageName);
   }
 
-  FloatingActionButton buildCaptureButton(BuildContext context) {
+  FloatingActionButton buildCaptureButton() {
     return FloatingActionButton(
-      onPressed: () => _takePicture(context),
-      tooltip: 'Take picture',
+      onPressed: () => _captureMedia(context),
+      tooltip: 'Capture a Snype',
       backgroundColor: Theme.of(context).primaryColor,
       child: Icon(Icons.add_a_photo, color: Colors.white,),
     );
   }
 
-  void _takePicture(BuildContext context) async {
+  void _captureMedia(BuildContext context) async {
     Navigator.of(context).pushNamed(AppRoute.CaptureMedia);
   }
 
-  Widget buildNavBar(BuildContext context) => null;
+  Widget buildNavBar() => null;
 
   Widget buildBody(BuildContext context);
 }
@@ -233,7 +300,8 @@ abstract class BasePagingState<T extends StatefulWidget, E> extends State<T> {
             loadStyle: LoadStyle.ShowWhenLoading,
             builder: _buildFooter
         ),
-        child: _buildBody(context));
+        child: Builder(builder: _buildBody)
+    );
   }
 
   Widget _buildFooter(BuildContext context, LoadStatus mode) {

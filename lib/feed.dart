@@ -40,8 +40,6 @@ class _FeedDisplayState extends BasePagingState<FeedDisplay, FeedItem> {
     FeedActivity.WATCH_MEDIA: 'Watched this picture',
   };
 
-  final scrollController = ScrollController();
-
   @override
   Future<FeedItemPage> loadNextPage(PagingParameter parameter) {
     return FeedQueryService.current(context).getFeed(widget.categoryToken, widget.keywords, parameter);
@@ -53,7 +51,6 @@ class _FeedDisplayState extends BasePagingState<FeedDisplay, FeedItem> {
       return Center(child: _buildNoContent(context));
     }
     return ListView.separated(
-        controller: scrollController,
         padding: EdgeInsets.symmetric(horizontal: spacing),
         itemBuilder: (context, index) => _buildItem(context, data[index]),
         separatorBuilder: (context, index) => Divider(height: spacing, thickness: 1.5,),

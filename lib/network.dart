@@ -78,7 +78,7 @@ class _UserNetworkPageState extends BasePageState<UserNetworkPage> {
   void _unfollowUser(UserProfile profile) async {
     try {
       await ProfileUpdateService.current(context).unfollowUser(profile.userId);
-      super.showWarningSnackBar('User "${profile.username}" has been removed from your network');
+      showWarningSnackBar(context, 'User "${profile.username}" has been removed from your network');
       setState(() {
         followedProfiles.remove(profile);
       });

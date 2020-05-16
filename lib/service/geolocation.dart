@@ -66,10 +66,10 @@ class GeoLocationService extends Service {
 
   static const gpsReadInterval = Duration(milliseconds: 500);
 
-  final Geolocator _geolocator = Geolocator();
+  final _geolocator = Geolocator();
 
   final _positionController = StreamController<GeoPosition>.broadcast();
-  final _locationController = StreamController<GeoLocation>();
+  final _locationController = StreamController<GeoLocation>.broadcast();
 
   static GeoLocationService current(BuildContext context) => ServiceProvider.of(context);
 

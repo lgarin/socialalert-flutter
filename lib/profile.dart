@@ -656,7 +656,7 @@ class _ProfileViewerPageState extends _BaseProfilePageState<ProfileViewerPage> {
   void _followUser() async {
     try {
       final newProfile = await ProfileUpdateService.current(context).followUser(profileOverride.userId);
-      super.showSuccessSnackBar('User "${profileOverride.username}" has been added to your network');
+      showSuccessSnackBar(context, 'User "${profileOverride.username}" has been added to your network');
       setState(() {
         profileOverride = newProfile;
       });
@@ -668,7 +668,7 @@ class _ProfileViewerPageState extends _BaseProfilePageState<ProfileViewerPage> {
   void _unfollowUser() async {
     try {
       final newProfile = await ProfileUpdateService.current(context).unfollowUser(profileOverride.userId);
-      super.showWarningSnackBar('User "${profileOverride.username}" has been removed from your network');
+      showWarningSnackBar(context, 'User "${profileOverride.username}" has been removed from your network');
       setState(() {
         profileOverride = newProfile;
       });
@@ -678,7 +678,7 @@ class _ProfileViewerPageState extends _BaseProfilePageState<ProfileViewerPage> {
   }
 
   @override
-  Widget buildNavBar(BuildContext context) {
+  Widget buildNavBar() {
     return ChangeNotifierProvider.value(
       value: _tabSelectionModel,
       child: _ProfileBottomNavigationBar(),

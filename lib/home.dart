@@ -178,7 +178,8 @@ class _HomePageState extends BasePageState<HomePage> with SingleTickerProviderSt
     );
   }
 
-  BottomNavigationBar buildNavBar(BuildContext context) {
+  @override
+  BottomNavigationBar buildNavBar() {
     return BottomNavigationBar(
       currentIndex: _currentDisplayIndex,
         onTap: _tabSelected,

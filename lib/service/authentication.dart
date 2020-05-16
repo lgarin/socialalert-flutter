@@ -190,6 +190,21 @@ class UserProfile {
   bool get anonym => userId == null;
 
   bool get followed => followedSince != null;
+
+  bool get incomplete => (firstname?.isEmpty ?? true) || (lastname?.isEmpty ?? true) || country == null || (biography?.isEmpty ?? true) || birthdate == null || gender == null || imageUri == null;
+
+  bool same(UserProfile other) =>
+      userId == other.userId &&
+      username == other.username &&
+      email == other.email &&
+      firstname == other.firstname &&
+      lastname == other.lastname &&
+      country == other.country &&
+      imageUri == other.imageUri &&
+      birthdate == other.birthdate &&
+      biography == other.biography &&
+      gender == other.gender;
+
 }
 
 class AuthService extends Service {

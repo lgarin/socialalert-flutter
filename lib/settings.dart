@@ -60,7 +60,7 @@ class _SettingsEditorPageState extends BasePageState<SettingsEditorPage> {
   }
 
   @override
-  Widget buildNavBar(BuildContext context) {
+  Widget buildNavBar() {
     return ChangeNotifierProvider.value(
       value: _tabSelectionModel,
       child: _SettingsBottomNavigationBar(),
