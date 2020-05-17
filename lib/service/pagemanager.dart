@@ -58,5 +58,7 @@ class PageManager extends Service {
   @override
   void dispose() {
     _pageKeys.forEach((element) => element.currentState?.dispose());
+    _pageKeys.clear();
+    _pageNames.clear();
   }
 }

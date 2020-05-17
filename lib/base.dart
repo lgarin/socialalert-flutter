@@ -65,7 +65,7 @@ class _NotificationHookState extends State<_NotificationHook> {
   }
 
   void _showSnackBar(String message, Color color, SnackBarAction action) {
-    if (!mounted) {
+    if (PageManager.current(context).currentPageName != widget.pageName) {
       return;
     }
     var scaffoldState = widget.scaffoldKey.currentState;
