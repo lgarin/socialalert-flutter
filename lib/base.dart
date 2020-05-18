@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:social_alert_app/helper.dart';
@@ -66,6 +67,7 @@ class _NotificationHookState extends State<_NotificationHook> {
 
   void _showSnackBar(String message, Color color, SnackBarAction action) {
     if (PageManager.current(context).currentPageName != widget.pageName) {
+      // TODO keep the snackbar in a waiting list
       return;
     }
     var scaffoldState = widget.scaffoldKey.currentState;
@@ -198,7 +200,17 @@ abstract class BasePageState<T extends StatefulWidget> extends State<T> {
   }
 
   void _captureMedia(BuildContext context) async {
-    Navigator.of(context).pushNamed(AppRoute.CaptureMedia);
+    // TODO introduce a PermissionService
+    final permissionMap = await [
+      Permission.camera,
+      Permission.microphone,
+      Permission.locationWhenInUse,
+    ].request();
+    if (permissionMap.values.every((permission) => permission.isGranted)) {
+      Navigator.of(context).pushNamed(AppRoute.CaptureMedia);
+    } else if (permissionMap.values.any((permission) => permission.isPermanentlyDenied)) {
+      openAppSettings();
+    }
   }
 
   Widget buildNavBar() => null;
@@ -210,8 +222,8 @@ abstract class BasePagingState<T extends StatefulWidget, E> extends State<T> {
   static final pageSize = 20;
 
   List<E> _data;
-  PagingParameter _nextPage = PagingParameter(pageSize: pageSize, pageNumber: 0);
-  RefreshController _refreshController = RefreshController(initialRefresh: true);
+  var _nextPage = PagingParameter(pageSize: pageSize, pageNumber: 0);
+  final _refreshController = RefreshController(initialRefresh: true);
 
   @override
   void dispose() {
@@ -300,7 +312,7 @@ abstract class BasePagingState<T extends StatefulWidget, E> extends State<T> {
             loadStyle: LoadStyle.ShowWhenLoading,
             builder: _buildFooter
         ),
-        child: Builder(builder: _buildBody)
+        child: _buildBody(context)
     );
   }
 

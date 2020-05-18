@@ -35,6 +35,7 @@ dependencies:
   video_player:
   chewie:
   video_thumbnail:
+  permission_handler:
 
 dev_dependencies:
   flutter_test:

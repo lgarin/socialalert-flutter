@@ -1229,7 +1229,7 @@ class ProfileHeader extends StatelessWidget {
             ]),
             SizedBox(height: 4),
             Row(children: <Widget>[
-              Icon(Icons.mode_comment, size: 14, color: Colors.white),
+              Icon(Icons.edit, size: 14, color: Colors.white),
               SizedBox(width: 4),
               Text(profile.statistic.commentCount.toString(), style: TextStyle(fontSize: 12, color: Colors.white)),
             ])

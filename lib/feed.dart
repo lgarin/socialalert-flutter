@@ -30,7 +30,7 @@ class FeedDisplay extends StatefulWidget {
 class _FeedDisplayState extends BasePagingState<FeedDisplay, FeedItem> {
   static final spacing = 8.0;
 
-  static final activityText = {
+  static final pictureActivityText = {
     FeedActivity.NEW_MEDIA: 'Posted a new picture',
     FeedActivity.NEW_COMMENT: 'Posted a new comment:',
     FeedActivity.DISLIKE_MEDIA: 'Disliked this picture',
@@ -39,6 +39,23 @@ class _FeedDisplayState extends BasePagingState<FeedDisplay, FeedItem> {
     FeedActivity.LIKE_COMMENT: 'Liked this comment:',
     FeedActivity.WATCH_MEDIA: 'Watched this picture',
   };
+
+  static final videoActivityText = {
+    FeedActivity.NEW_MEDIA: 'Posted a new video',
+    FeedActivity.NEW_COMMENT: 'Posted a new comment:',
+    FeedActivity.DISLIKE_MEDIA: 'Disliked this video',
+    FeedActivity.LIKE_MEDIA: 'Liked this video',
+    FeedActivity.DISLIKE_COMMENT: 'Disliked this comment:',
+    FeedActivity.LIKE_COMMENT: 'Liked this comment:',
+    FeedActivity.WATCH_MEDIA: 'Watched this video',
+  };
+
+  static String getActivityText(FeedItem item) {
+    if (item.media.isVideo) {
+      return videoActivityText[item.activity];
+    }
+    return pictureActivityText[item.activity];
+  }
 
   @override
   Future<FeedItemPage> loadNextPage(PagingParameter parameter) {
@@ -80,7 +97,7 @@ class _FeedDisplayState extends BasePagingState<FeedDisplay, FeedItem> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text(activityText[item.activity], overflow: TextOverflow.ellipsis),
+          Text(getActivityText(item), overflow: TextOverflow.ellipsis),
           Text(item.comment.comment, softWrap: true, maxLines: 5, overflow: TextOverflow.fade, style: TextStyle(color: Colors.black),)
         ],
       );
@@ -88,7 +105,7 @@ class _FeedDisplayState extends BasePagingState<FeedDisplay, FeedItem> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Text(activityText[item.activity], overflow: TextOverflow.ellipsis),
+        Text(getActivityText(item), overflow: TextOverflow.ellipsis),
         Text(item.media.title, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.headline6)
       ],
     );
