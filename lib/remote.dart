@@ -719,8 +719,8 @@ class _MediaDownloadFailedMessage extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
           Icon(Icons.broken_image, size: 100, color: Colors.grey),
-          Text('Download failed', style: Theme.of(context).textTheme.headline6),
-          Text('Please retry later.')
+          Text('Download failed', style: Theme.of(context).textTheme.headline6.copyWith(color: Colors.white)),
+          Text('Please retry later.', style: TextStyle(color: Colors.white))
         ],
       ),
     );
@@ -749,6 +749,18 @@ class _RemoteVideoDisplayState extends State<RemoteVideoDisplay> {
     _actionSubscription = EventBus.current(context).on<VideoAction>().listen((event) {
       _chewieController?.pause();
     });
+    final url = MediaQueryService.toVideoUrl(widget.media.mediaUri);
+    _videoPlayerController = VideoPlayerController.network(url);
+    _chewieController = ChewieController(
+      videoPlayerController: _videoPlayerController,
+      fullScreenByDefault: !widget.preview,
+      allowFullScreen: widget.preview,
+      aspectRatio: 16 / 9,
+      autoInitialize: true,
+      autoPlay: !widget.preview,
+      looping: false,
+      errorBuilder: _buildVideoError,
+    );
   }
 
   @override
@@ -768,7 +780,7 @@ class _RemoteVideoDisplayState extends State<RemoteVideoDisplay> {
     return Container(
         color: Colors.black,
         constraints: constraints,
-        child: _buildVideo(context)
+        child: _buildVideo()
     );
   }
 
@@ -777,19 +789,7 @@ class _RemoteVideoDisplayState extends State<RemoteVideoDisplay> {
     return _MediaDownloadFailedMessage();
   }
 
-  Widget _buildVideo(BuildContext context) {
-    final url = MediaQueryService.toVideoUrl(widget.media.mediaUri);
-    _videoPlayerController = VideoPlayerController.network(url);
-    _chewieController = ChewieController(
-      videoPlayerController: _videoPlayerController,
-      fullScreenByDefault: !widget.preview,
-      allowFullScreen: widget.preview,
-      aspectRatio: 16 / 9,
-      autoInitialize: true,
-      autoPlay: !widget.preview,
-      looping: false,
-      errorBuilder: _buildVideoError,
-    );
+  Widget _buildVideo() {
     return Chewie(controller: _chewieController);
   }
 }
