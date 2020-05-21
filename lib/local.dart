@@ -189,7 +189,7 @@ class LocalMediaInfoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FutureProvider(
+    return FutureProvider<_ExifData>(
         create: _buildExifData,
         catchError: showUnexpectedError,
         child: Scaffold(

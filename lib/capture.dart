@@ -32,7 +32,7 @@ class _CaptureMediaPageState extends State<CaptureMediaPage> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureProvider(
+    return FutureProvider<CameraController>(
       key: ValueKey('$_lensDirection/$_videoMode'),
       create: _createCameraController,
       catchError: showUnexpectedError,

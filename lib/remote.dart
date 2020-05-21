@@ -79,7 +79,7 @@ class _RemoteMediaDetailPageState extends BasePageState<RemoteMediaDetailPage> {
 
   @override
   Widget buildBody(BuildContext context) {
-    return FutureProvider(
+    return FutureProvider<_MediaInfoModel>(
         create: _buildMediaModel,
         catchError: showUnexpectedError,
         child: Consumer<_MediaInfoModel>(
