@@ -7,10 +7,14 @@ import 'package:social_alert_app/service/mediaupload.dart';
 import 'package:social_alert_app/service/videoencoder.dart';
 import 'package:timeago_flutter/timeago_flutter.dart';
 
-class UploadManagerPage extends StatefulWidget {
+class UploadManagerPage extends StatefulWidget implements ScaffoldPage {
+
+  final GlobalKey<ScaffoldState> scaffoldKey;
+
+  UploadManagerPage(this.scaffoldKey);
 
   @override
-  _UploadManagerPageState createState() => _UploadManagerPageState();
+  _UploadManagerPageState createState() => _UploadManagerPageState(scaffoldKey);
 }
 
 enum _UploadErrorAction {
@@ -30,7 +34,7 @@ class _UploadManagerPageState extends BasePageState<UploadManagerPage> {
   static const iconSize = 50.0;
   static final itemMargin = EdgeInsets.only(left: 10, right: 10, top: 10);
 
-  _UploadManagerPageState() : super(AppRoute.UploadManager);
+  _UploadManagerPageState(GlobalKey<ScaffoldState> scaffoldKey) : super(scaffoldKey, AppRoute.UploadManager);
 
   @override
   AppBar buildAppBar() {

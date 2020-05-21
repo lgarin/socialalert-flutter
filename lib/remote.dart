@@ -36,18 +36,19 @@ class _MediaInfoModel with ChangeNotifier {
   }
 }
 
-class RemoteMediaDetailPage extends StatefulWidget {
+class RemoteMediaDetailPage extends StatefulWidget implements ScaffoldPage {
 
   final MediaInfo media;
+  final GlobalKey<ScaffoldState> scaffoldKey;
 
-  RemoteMediaDetailPage(this.media);
+  RemoteMediaDetailPage(this.scaffoldKey, this.media);
 
   String get mediaUri => media.mediaUri;
 
   String get mediaTitle => media.title;
 
   @override
-  _RemoteMediaDetailPageState createState() => _RemoteMediaDetailPageState();
+  _RemoteMediaDetailPageState createState() => _RemoteMediaDetailPageState(scaffoldKey);
 }
 
 class _RemoteMediaDetailPageState extends BasePageState<RemoteMediaDetailPage> {
@@ -56,7 +57,7 @@ class _RemoteMediaDetailPageState extends BasePageState<RemoteMediaDetailPage> {
   final _tabSelectionModel = _MediaTabSelectionModel();
   final _scrollController = ScrollController();
 
-  _RemoteMediaDetailPageState() : super(AppRoute.RemoteMediaDetail);
+  _RemoteMediaDetailPageState(GlobalKey<ScaffoldState> scaffoldKey) : super(scaffoldKey, AppRoute.RemoteMediaDetail);
 
   @override
   void initState() {
@@ -793,15 +794,17 @@ class _RemoteVideoDisplayState extends State<RemoteVideoDisplay> {
   }
 }
 
-class RemoteMediaDisplayPage extends StatelessWidget {
+class RemoteMediaDisplayPage extends StatelessWidget implements ScaffoldPage {
 
+  final GlobalKey<ScaffoldState> scaffoldKey;
   final MediaInfo mediaInfo;
 
-  RemoteMediaDisplayPage(this.mediaInfo);
+  RemoteMediaDisplayPage(this.scaffoldKey, this.mediaInfo);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: scaffoldKey,
       appBar: AppBar(title: Text(mediaInfo.title, overflow: TextOverflow.ellipsis)),
       body: mediaInfo.hasVideoPreview
           ? RemoteVideoDisplay(media: mediaInfo)

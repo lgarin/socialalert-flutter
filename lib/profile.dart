@@ -271,8 +271,7 @@ class _ProfileFormState extends State<_ProfileForm> {
       try {
         await ProfileUpdateService.current(context).updateProfile(_formModel.toUpdateRequest());
         _dirty = false;
-        Navigator.of(context).pop();
-        showSuccessSnackBar(context, 'Your profile has been updated');
+        await Navigator.of(context).maybePop();
       } catch (e) {
         showSimpleDialog(context, 'Update failed', e.toString());
       }
@@ -518,13 +517,19 @@ class _ProfileSaveButton extends StatelessWidget {
   }
 }
 
-class ProfileEditorPage extends StatefulWidget {
+class ProfileEditorPage extends StatefulWidget implements ScaffoldPage {
+
+  final GlobalKey<ScaffoldState> scaffoldKey;
+
+  ProfileEditorPage(this.scaffoldKey);
+
   @override
-  _ProfileEditorPageState createState() => _ProfileEditorPageState();
+  _ProfileEditorPageState createState() => _ProfileEditorPageState(scaffoldKey);
 }
 
 abstract class _BaseProfilePageState<T extends StatefulWidget> extends BasePageState<T> {
-  _BaseProfilePageState(String pageName) : super(pageName);
+
+  _BaseProfilePageState(GlobalKey<ScaffoldState> scaffoldKey, String pageName) : super(scaffoldKey, pageName);
 
   StreamSubscription<AvatarUploadProgress> uploadProgressSubscription;
   String _uploadTaskId;
@@ -571,7 +576,7 @@ abstract class _BaseProfilePageState<T extends StatefulWidget> extends BasePageS
 
 class _ProfileEditorPageState extends _BaseProfilePageState<ProfileEditorPage> {
 
-  _ProfileEditorPageState() : super(AppRoute.ProfileEditor);
+  _ProfileEditorPageState(GlobalKey<ScaffoldState> scaffoldKey) : super(scaffoldKey, AppRoute.ProfileEditor);
 
   void _onSave() {
     EventBus.current(context).fire(_ProfileAction.save);
@@ -599,13 +604,15 @@ class _ProfileEditorPageState extends _BaseProfilePageState<ProfileEditorPage> {
   }
 }
 
-class ProfileViewerPage extends StatefulWidget {
+class ProfileViewerPage extends StatefulWidget implements ScaffoldPage {
   final UserProfile profileOverride;
 
-  ProfileViewerPage(this.profileOverride);
+  final GlobalKey<ScaffoldState> scaffoldKey;
+
+  ProfileViewerPage(this.scaffoldKey, this.profileOverride);
 
   @override
-  _ProfileViewerPageState createState() => _ProfileViewerPageState(profileOverride);
+  _ProfileViewerPageState createState() => _ProfileViewerPageState(scaffoldKey, profileOverride);
 }
 
 class _ProfileViewerPageState extends _BaseProfilePageState<ProfileViewerPage> {
@@ -614,7 +621,7 @@ class _ProfileViewerPageState extends _BaseProfilePageState<ProfileViewerPage> {
   final _scrollController = ScrollController();
   UserProfile profileOverride;
 
-  _ProfileViewerPageState(this.profileOverride) : super(AppRoute.ProfileViewer);
+  _ProfileViewerPageState(GlobalKey<ScaffoldState> scaffoldKey, this.profileOverride) : super(scaffoldKey, AppRoute.ProfileViewer);
 
   @override
   void initState() {

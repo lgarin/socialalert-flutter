@@ -10,10 +10,14 @@ import 'package:social_alert_app/map.dart';
 import 'package:social_alert_app/service/configuration.dart';
 import 'package:social_alert_app/service/mediaquery.dart';
 
-class HomePage extends StatefulWidget {
+class HomePage extends StatefulWidget implements ScaffoldPage {
+
+  final GlobalKey<ScaffoldState> scaffoldKey;
+
+  HomePage(this.scaffoldKey);
 
   @override
-  _HomePageState createState() => _HomePageState();
+  _HomePageState createState() => _HomePageState(scaffoldKey);
 }
 
 class _KeywordSearchModel extends ChangeNotifier {
@@ -121,7 +125,7 @@ class _HomePageState extends BasePageState<HomePage> with SingleTickerProviderSt
   TabController _categoryController;
   String _keyword = '';
 
-  _HomePageState() : super(AppRoute.Home);
+  _HomePageState(GlobalKey<ScaffoldState> scaffoldKey) : super(scaffoldKey, AppRoute.Home);
 
   void _beginSearch(String keyword) {
     keyword = keyword ?? '';

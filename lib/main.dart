@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:social_alert_app/annotate.dart';
+import 'package:social_alert_app/base.dart';
 import 'package:social_alert_app/capture.dart';
 import 'package:social_alert_app/home.dart';
 import 'package:social_alert_app/local.dart';
@@ -84,46 +85,50 @@ class SocialAlertApp extends StatelessWidget {
       );
   }
 
+  static WidgetBuilder _createRouteBuilder(RouteSettings settings, ScaffoldPage pageWidget) {
+    return (context) => PageWrapper(page: pageWidget, pageKey: pageWidget.scaffoldKey, pageName: settings.name);
+  }
+
   MaterialPageRoute _buildRoute(RouteSettings settings) {
     switch (settings.name) {
       case AppRoute.Login: return MaterialPageRoute(
-        builder: (context) => LoginPage()
+        builder: _createRouteBuilder(settings, LoginPage(GlobalKey<ScaffoldState>()))
       );
       case AppRoute.Home: return MaterialPageRoute(
-          builder: (context) => HomePage()
+          builder: _createRouteBuilder(settings, HomePage(GlobalKey<ScaffoldState>()))
       );
       case AppRoute.UploadManager: return MaterialPageRoute(
-          builder: (context) => UploadManagerPage()
+          builder: _createRouteBuilder(settings, UploadManagerPage(GlobalKey<ScaffoldState>()))
       );
       case AppRoute.AnnotateMedia: return MaterialPageRoute(
-          builder: (context) => AnnotateMediaPage(settings.arguments)
+          builder: _createRouteBuilder(settings, AnnotateMediaPage(GlobalKey<ScaffoldState>(), settings.arguments))
       );
       case AppRoute.UserNetwork: return MaterialPageRoute(
-          builder: (context) => UserNetworkPage()
+          builder: _createRouteBuilder(settings, UserNetworkPage(GlobalKey<ScaffoldState>()))
       );
       case AppRoute.LocalMediaInfo: return MaterialPageRoute(
-          builder: (context) => LocalMediaInfoPage(settings.arguments)
+          builder: _createRouteBuilder(settings, LocalMediaInfoPage(GlobalKey<ScaffoldState>(), settings.arguments))
       );
       case AppRoute.RemoteMediaDetail: return MaterialPageRoute<MediaDetail>(
-        builder: (context) => RemoteMediaDetailPage(settings.arguments)
+        builder: _createRouteBuilder(settings, RemoteMediaDetailPage(GlobalKey<ScaffoldState>(), settings.arguments))
       );
       case AppRoute.ProfileViewer: return MaterialPageRoute<UserProfile>(
-        builder: (context) => ProfileViewerPage(settings.arguments)
+        builder: _createRouteBuilder(settings, ProfileViewerPage(GlobalKey<ScaffoldState>(), settings.arguments))
       );
       case AppRoute.ProfileEditor: return MaterialPageRoute(
-        builder: (context) => ProfileEditorPage()
+        builder: _createRouteBuilder(settings, ProfileEditorPage(GlobalKey<ScaffoldState>()))
       );
       case AppRoute.SettingsEditor: return MaterialPageRoute(
-        builder: (context) => SettingsEditorPage()
+        builder: _createRouteBuilder(settings, SettingsEditorPage(GlobalKey<ScaffoldState>()))
       );
       case AppRoute.LocalMediaDisplay: return NoAnimationMaterialPageRoute(
-          builder: (context) => LocalMediaDisplayPage(settings.arguments)
+          builder: _createRouteBuilder(settings, LocalMediaDisplayPage(GlobalKey<ScaffoldState>(), settings.arguments))
       );
       case AppRoute.RemoteMediaDisplay: return NoAnimationMaterialPageRoute(
-        builder: (context) => RemoteMediaDisplayPage(settings.arguments)
+        builder: _createRouteBuilder(settings, RemoteMediaDisplayPage(GlobalKey<ScaffoldState>(), settings.arguments))
       );
       case AppRoute.CaptureMedia: return NoAnimationMaterialPageRoute(
-          builder: (context) => CaptureMediaPage()
+          builder: _createRouteBuilder(settings, CaptureMediaPage(GlobalKey<ScaffoldState>()))
       );
       default: return null;
     }

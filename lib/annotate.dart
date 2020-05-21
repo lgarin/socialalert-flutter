@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:form_field_validator/form_field_validator.dart';
 import 'package:provider/provider.dart';
+import 'package:social_alert_app/base.dart';
 import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/local.dart';
 import 'package:social_alert_app/main.dart';
@@ -31,16 +32,18 @@ class _CaptureModel {
   void setTitle(String newTitle) => _title = newTitle;
 }
 
-class AnnotateMediaPage extends StatelessWidget {
+class AnnotateMediaPage extends StatelessWidget implements ScaffoldPage {
   static const defaultTitle = 'New Snype';
   static const backgroundColor = Color.fromARGB(255, 240, 240, 240);
   final MediaUploadTask upload;
+  final GlobalKey<ScaffoldState> scaffoldKey;
 
-  AnnotateMediaPage(this.upload);
+  AnnotateMediaPage(this.scaffoldKey, this.upload);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+        key: scaffoldKey,
         backgroundColor: backgroundColor,
         appBar: _buildAppBar(context),
         body: _buildBody()
@@ -185,6 +188,7 @@ class _MetadataFormState extends State<_MetadataForm> {
         category: _model.selectedCategory,
         tags: List.from(_model.tags),
       );
+      await MediaUploadService.current(context).saveTask(widget.upload);
     }
     return true;
   }

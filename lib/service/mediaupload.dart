@@ -63,7 +63,9 @@ class MediaUploadTask with ChangeNotifier {
 
   bool get isVideo => type == MediaUploadType.VIDEO;
 
-  bool get isNew => status == MediaUploadStatus.CREATED;
+  bool get isNew => _status == MediaUploadStatus.CREATED;
+
+  bool get isDeleted => _status == null;
 
   bool get canBeDeleted => _status == MediaUploadStatus.CREATED || _status == MediaUploadStatus.ANNOTATED || _status == MediaUploadStatus.CLAIMED || hasError;
 
@@ -74,6 +76,8 @@ class MediaUploadTask with ChangeNotifier {
   String get backgroundTaskId => _uploadTaskId;
 
   String get title => _title;
+
+  bool get isTitleMissing => _title == null || _title.isEmpty;
 
   String get category => _category;
 
@@ -260,7 +264,7 @@ class MediaUploadTask with ChangeNotifier {
   }
 
   void _abort() {
-    _status = null;
+    _changeStatus(null);
   }
 }
 
@@ -475,6 +479,7 @@ class MediaUploadService extends Service {
     }
 
     await _uploadTaskStore.store(uploads);
+    _uploadStreamController.add(task);
   }
 
   void restartTask(MediaUploadTask task) {
@@ -496,6 +501,7 @@ class MediaUploadService extends Service {
     await _uploadTaskStore.store(uploads);
     await task._deleteFile();
     task._abort();
+    _uploadStreamController.add(task);
   }
 
   void _startLocating(MediaUploadTask task) {

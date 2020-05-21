@@ -22,16 +22,21 @@ class _SettingsTabSelectionModel with ChangeNotifier {
   }
 }
 
-class SettingsEditorPage extends StatefulWidget {
+class SettingsEditorPage extends StatefulWidget implements ScaffoldPage {
+
+  final GlobalKey<ScaffoldState> scaffoldKey;
+
+  SettingsEditorPage(this.scaffoldKey);
+
   @override
-  _SettingsEditorPageState createState() => _SettingsEditorPageState();
+  _SettingsEditorPageState createState() => _SettingsEditorPageState(scaffoldKey);
 }
 
 class _SettingsEditorPageState extends BasePageState<SettingsEditorPage> {
 
   final _tabSelectionModel = _SettingsTabSelectionModel();
 
-  _SettingsEditorPageState() : super(AppRoute.SettingsEditor);
+  _SettingsEditorPageState(GlobalKey<ScaffoldState> scaffoldKey) : super(scaffoldKey, AppRoute.SettingsEditor);
 
   @override
   Widget buildBody(BuildContext context) {

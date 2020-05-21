@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/widgets.dart';
+import 'package:social_alert_app/service/configuration.dart';
 import 'package:social_alert_app/service/filesystem.dart';
 import 'package:social_alert_app/service/serviceprodiver.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
@@ -24,8 +25,8 @@ class VideoEncoder extends Service {
       thumbnailPath: thumbnailFile.path,
       imageFormat: ImageFormat.JPEG,
       timeMs: 1000,
-      maxHeight: 160,
-      maxWidth: 90,
+      maxHeight: thumbnailHeight,
+      maxWidth: thumbnailWidth,
       quality: 100,
     );
     return thumbnailFile;

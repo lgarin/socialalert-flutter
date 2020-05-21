@@ -15,12 +15,17 @@ import 'package:social_alert_app/service/pagemanager.dart';
 import 'package:social_alert_app/service/permission.dart';
 import 'package:social_alert_app/service/profileupdate.dart';
 
+abstract class ScaffoldPage implements Widget {
+
+  GlobalKey<ScaffoldState> get scaffoldKey;
+}
+
 class _NotificationHook extends StatefulWidget {
   final String pageName;
   final GlobalKey<ScaffoldState> scaffoldKey;
   final Widget child;
 
-  const _NotificationHook({@required this.pageName, @required this.scaffoldKey, @required this.child});
+  _NotificationHook({@required this.pageName, @required this.scaffoldKey, @required this.child});
 
   @override
   _NotificationHookState createState() => _NotificationHookState();
@@ -36,6 +41,9 @@ class _NotificationEvent {
 }
 
 class _NotificationHookState extends State<_NotificationHook> {
+
+  static final repeatMessageDelay = Duration(seconds: 2);
+  static final oldUploadAge = Duration(minutes: 2);
 
   StreamSubscription<PageEvent> _pageListener;
   StreamSubscription<MediaUploadTask> _uploadResultListener;
@@ -62,7 +70,7 @@ class _NotificationHookState extends State<_NotificationHook> {
     MediaUploadList uploadList = Provider.of(context, listen: false);
     _showAllUploadSnackBars(uploadList);
 
-    final recentTimestamp = DateTime.now().subtract(Duration(seconds: 5));
+    final recentTimestamp = DateTime.now().subtract(repeatMessageDelay);
     _showRecentSnackBars(recentTimestamp);
   }
 
@@ -78,7 +86,6 @@ class _NotificationHookState extends State<_NotificationHook> {
 
   @override
   void dispose() {
-    _previousEvents.clear();
     _pageListener.cancel();
     _uploadResultListener.cancel();
     _userProfileListener.cancel();
@@ -86,6 +93,7 @@ class _NotificationHookState extends State<_NotificationHook> {
   }
 
   void _showSnackBar(String message, Color color, SnackBarAction action) {
+
     if (PageManager.current(context).currentPageName != widget.pageName) {
       _previousEvents.add(_NotificationEvent(message, color, action, DateTime.now()));
       return;
@@ -109,16 +117,14 @@ class _NotificationHookState extends State<_NotificationHook> {
   }
 
   void _showUploadSnackBar(MediaUploadTask task) {
-    if (task.title == null || task.title.isEmpty) {
+    if (task.isDeleted) {
+      showSuccessSnackBar('New Snype has been deleted');
+    } else if (task.isTitleMissing) {
       showWarningSnackBar('Title for new Snype is missing',
           action: SnackBarAction(label: 'Edit', onPressed: () => _onEditUpload(task))
       );
-    } else if (task.status == MediaUploadStatus.CREATED) {
-      // TODO improve
+    } else if (task.isNew) {
       showSuccessSnackBar('New Snype has been saved localy');
-    } else if (task.status == null) {
-      // TODO improve
-      showSuccessSnackBar('New Snype has been deleted');
     } else if (task.isCompleted) {
       showSuccessSnackBar('Upload of "${task.title}" has completed');
     } else if (task.hasError) {
@@ -144,6 +150,7 @@ class _NotificationHookState extends State<_NotificationHook> {
     if (profile == null) {
       return;
     }
+
     if (_currentUserProfile != null && !_currentUserProfile.same(profile)) {
       showSuccessSnackBar('Your profile has been saved');
       _currentUserProfile = profile;
@@ -163,8 +170,12 @@ class _NotificationHookState extends State<_NotificationHook> {
     if (uploadList == null) {
       return;
     }
+
+    final oldUploadTimestamp = DateTime.now().subtract(oldUploadAge);
     for (final upload in uploadList) {
-      _showUploadSnackBar(upload);
+      if (upload.isTitleMissing && upload.timestamp.isBefore(oldUploadTimestamp)) {
+        _showUploadSnackBar(upload);
+      }
     }
   }
 }
@@ -172,34 +183,17 @@ class _NotificationHookState extends State<_NotificationHook> {
 abstract class BasePageState<T extends StatefulWidget> extends State<T> {
   final appName = 'Snypix';
   final String pageName;
-  final _scaffoldKey = GlobalKey<ScaffoldState>();
-  PageManager _pageManager;
+  final GlobalKey<ScaffoldState> scaffoldKey;
 
-  BasePageState(this.pageName);
-
-
-  @override
-  void initState() {
-    super.initState();
-
-    _pageManager = PageManager.current(context);
-    _pageManager.pushPage(_scaffoldKey, pageName);
-  }
-
-
-  @override
-  void dispose() {
-    _pageManager?.popPage(_scaffoldKey);
-    super.dispose();
-  }
+  BasePageState(this.scaffoldKey, this.pageName);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-          key: _scaffoldKey,
+          key: scaffoldKey,
           appBar: buildAppBar(),
           drawer: buildDrawer(),
-          body: _NotificationHook(pageName: pageName, scaffoldKey: _scaffoldKey, child: Builder(builder: buildBody)),
+          body: _NotificationHook(pageName: pageName, scaffoldKey: scaffoldKey, child: Builder(builder: buildBody)),
           floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
           floatingActionButton: buildCaptureButton(),
           bottomNavigationBar: buildNavBar()
