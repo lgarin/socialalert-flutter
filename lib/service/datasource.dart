@@ -8,14 +8,14 @@ import 'package:path/path.dart';
 import 'package:social_alert_app/service/configuration.dart';
 import 'package:social_alert_app/service/serviceprodiver.dart';
 
-class JsonHttpService extends Service {
+class DataSource extends Service {
   static const jsonMediaType = 'application/json; charset=UTF-8';
   static const textMediaType = 'text/plain; charset=utf-8';
 
   final _client = Client();
   final _uploader = FlutterUploader();
 
-  JsonHttpService(BuildContext context) : super(context);
+  DataSource(BuildContext context) : super(context);
 
   Map<String, String> _buildHeader({String contentType, String accessToken}) {
     final result = Map<String, String>();

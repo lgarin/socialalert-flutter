@@ -4,7 +4,7 @@ import 'package:social_alert_app/base.dart';
 import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/service/mediaupload.dart';
-import 'package:social_alert_app/service/videoservice.dart';
+import 'package:social_alert_app/service/videoencoder.dart';
 import 'package:timeago_flutter/timeago_flutter.dart';
 
 class UploadManagerPage extends StatefulWidget {
@@ -122,7 +122,7 @@ class _UploadManagerPageState extends BasePageState<UploadManagerPage> {
 
     return FutureBuilder(
       key: ValueKey(task.id),
-      future: VideoService.current(context).createThumbnail(task.file),
+      future: VideoEncoder.current(context).createThumbnail(task.file),
       builder: (context, snapshot) {
         if (snapshot.data == null) {
           return SizedBox(height: 160, width: 90, child: LoadingCircle());

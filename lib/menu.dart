@@ -102,7 +102,7 @@ class _MenuItem extends StatelessWidget {
       title: Text(title),
       onTap: () {
         if (targetPage == AppRoute.Login) {
-          AuthService.current(context).signOut().then((_) => Navigator.pushReplacementNamed(context, AppRoute.Login));
+          Authentication.current(context).signOut().then((_) => Navigator.pushReplacementNamed(context, AppRoute.Login));
         } else if (targetPage != null) {
           Navigator.popAndPushNamed(context, targetPage);
         } else {

@@ -4,19 +4,19 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/dataobjet.dart';
-import 'package:social_alert_app/service/httpservice.dart';
+import 'package:social_alert_app/service/datasource.dart';
 import 'package:social_alert_app/service/serviceprodiver.dart';
 
 class _CommentQueryApi {
 
-  final JsonHttpService httpService;
+  final DataSource dataSource;
 
-  _CommentQueryApi(this.httpService);
+  _CommentQueryApi(this.dataSource);
 
   Future<MediaCommentPage> listComments({@required String type, @required String id, @required PagingParameter paging, @required String accessToken}) async {
     final timestampParameter = paging.timestamp != null ? '&pagingTimestamp=${paging.timestamp}' : '';
     final uri = '/$type/comments/$id?pageNumber=${paging.pageNumber}&pageSize=${paging.pageSize}$timestampParameter';
-    final response = await httpService.getJson(uri: uri, accessToken: accessToken);
+    final response = await dataSource.getJson(uri: uri, accessToken: accessToken);
     if (response.statusCode == 200) {
       return MediaCommentPage.fromJson(jsonDecode(response.body));
     }
@@ -38,7 +38,7 @@ class CommentQueryService extends Service {
 
   CommentQueryService(BuildContext context) : super(context);
 
-  AuthService get _authService => lookup();
+  Authentication get _authService => lookup();
   _CommentQueryApi get _queryApi => _CommentQueryApi(lookup());
 
 

@@ -51,7 +51,7 @@ class PageManager extends Service {
     }
   }
 
-  ScaffoldState get currentPageState => _lastPageKey.currentState;
+  ScaffoldState get currentPageState => _lastPageKey?.currentState;
 
   String get currentPageName => _lastPageName;
 

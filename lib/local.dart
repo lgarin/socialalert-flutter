@@ -178,7 +178,7 @@ class LocalMediaInfoPage extends StatelessWidget {
 
   Future<_ExifData> _buildExifData(BuildContext context) async {
     Map<String, dynamic> tags = await readExif(FileReader(upload.file));
-    final device = await CameraDeviceService.current(context).device;
+    final device = await CameraDevice.current(context).info;
     return _ExifData(
       mediaHeight: tags['ImageHeight'] ?? tags['ExifImageHeight'] ?? tags['PixelYDimension'] as int,
       mediaWidth: tags['ImageWidth'] ?? tags['ExifImageWidth'] ?? tags['PixelXDimension'] as int,

@@ -6,11 +6,11 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:social_alert_app/service/serviceprodiver.dart';
 
-class FileService extends Service {
+class FileSystem extends Service {
 
-  static FileService current(BuildContext context) => ServiceProvider.of(context);
+  static FileSystem current(BuildContext context) => ServiceProvider.of(context);
 
-  FileService(BuildContext context) : super(context);
+  FileSystem(BuildContext context) : super(context);
 
   Future<File> defineOutputFile(String extension) async {
     final outputDir = await getApplicationDocumentsDirectory();

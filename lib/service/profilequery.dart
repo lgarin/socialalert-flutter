@@ -3,18 +3,18 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:social_alert_app/service/authentication.dart';
-import 'package:social_alert_app/service/httpservice.dart';
+import 'package:social_alert_app/service/datasource.dart';
 import 'package:social_alert_app/service/serviceprodiver.dart';
 
 class _ProfileQueryApi {
 
-  final JsonHttpService httpService;
+  final DataSource dataSource;
 
-  _ProfileQueryApi(this.httpService);
+  _ProfileQueryApi(this.dataSource);
 
   Future<UserProfile> get({@required String userId, @required String accessToken}) async {
     final uri = '/user/info/$userId';
-    final response = await httpService.getJson(uri: uri, accessToken: accessToken);
+    final response = await dataSource.getJson(uri: uri, accessToken: accessToken);
     if (response.statusCode == 200) {
       return UserProfile.fromJson(jsonDecode(response.body));
     }
@@ -23,7 +23,7 @@ class _ProfileQueryApi {
 
   Future<List<UserProfile>> getFollowedUsers({@required String accessToken}) async {
     final uri = '/user/followed';
-    final response = await httpService.getJson(uri: uri, accessToken: accessToken);
+    final response = await dataSource.getJson(uri: uri, accessToken: accessToken);
     if (response.statusCode == 200) {
       return  UserProfile.fromJsonList(jsonDecode(response.body));
     }
@@ -37,7 +37,7 @@ class ProfileQueryService extends Service {
 
   ProfileQueryService(BuildContext context) : super(context);
 
-  AuthService get _authService => lookup();
+  Authentication get _authService => lookup();
   _ProfileQueryApi get _queryApi => _ProfileQueryApi(lookup());
 
   Future<UserProfile> get(String userId) async {

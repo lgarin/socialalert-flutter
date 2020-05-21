@@ -11,7 +11,7 @@ import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/cameradevice.dart';
 import 'package:social_alert_app/service/configuration.dart';
 import 'package:social_alert_app/service/geolocation.dart';
-import 'package:social_alert_app/service/httpservice.dart';
+import 'package:social_alert_app/service/datasource.dart';
 import 'package:social_alert_app/service/serviceprodiver.dart';
 
 enum MediaUploadStatus {
@@ -326,23 +326,23 @@ class _ClaimParameter {
 
 class _MediaUploadApi {
 
-  final JsonHttpService httpService;
+  final DataSource dataSource;
 
-  _MediaUploadApi(this.httpService);
+  _MediaUploadApi(this.dataSource);
 
   Future<void> claimMedia({@required String mediaUri, @required _ClaimParameter param, @required String accessToken}) async {
-    final response = await httpService.postJson(uri: '/media/claim/$mediaUri', body: param, accessToken: accessToken);
+    final response = await dataSource.postJson(uri: '/media/claim/$mediaUri', body: param, accessToken: accessToken);
     if (response.statusCode != 200) {
       throw response.reasonPhrase;
     }
   }
 
   Future<String> enqueueImage({@required String title, @required File file, @required String accessToken}) {
-    return httpService.queueImageUpload(uri: '/file/upload/picture', file: file, title: title, accessToken: accessToken, showNotification: true);
+    return dataSource.queueImageUpload(uri: '/file/upload/picture', file: file, title: title, accessToken: accessToken, showNotification: true);
   }
 
   Future<String> enqueueVideo({@required String title, @required File file, @required String accessToken}) {
-    return httpService.queueImageUpload(uri: '/file/upload/video', file: file, title: title, accessToken: accessToken, showNotification: true);
+    return dataSource.queueImageUpload(uri: '/file/upload/video', file: file, title: title, accessToken: accessToken, showNotification: true);
   }
 
   _UploadTaskResult _mapResponse(UploadTaskResponse response) {
@@ -362,7 +362,7 @@ class _MediaUploadApi {
   }
 
   Stream<_UploadTaskResult> get resultStream {
-    return httpService.uploadResultStream.map(_mapResponse);
+    return dataSource.uploadResultStream.map(_mapResponse);
   }
 
   _UploadTaskStep _mapProgress(UploadTaskProgress event) {
@@ -370,7 +370,7 @@ class _MediaUploadApi {
   }
 
   Stream<_UploadTaskStep> get progressStream {
-    return httpService.uploadProgressStream.where((event) => event.status == UploadTaskStatus.running).map(_mapProgress);
+    return dataSource.uploadProgressStream.where((event) => event.status == UploadTaskStatus.running).map(_mapProgress);
   }
 }
 
@@ -421,7 +421,7 @@ class MediaUploadService extends Service {
     _progressSubscription = _uploadProgressStream.listen(_progressStreamController.add, onError: _progressStreamController.addError, onDone: _progressStreamController.close);
   }
 
-  AuthService get _authService => lookup();
+  Authentication get _authService => lookup();
   GeoLocationService get _locationService => lookup();
   _MediaUploadApi get _uploadApi => _MediaUploadApi(lookup());
 

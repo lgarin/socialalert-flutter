@@ -6,7 +6,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_uploader/flutter_uploader.dart';
 import 'package:intl/intl.dart';
 import 'package:social_alert_app/service/authentication.dart';
-import 'package:social_alert_app/service/httpservice.dart';
+import 'package:social_alert_app/service/datasource.dart';
 import 'package:social_alert_app/service/serviceprodiver.dart';
 
 class AvatarUploadProgress {
@@ -83,12 +83,12 @@ class ProfileUpdateRequest {
 }
 
 class _ProfileUpdateApi {
-  final JsonHttpService httpService;
+  final DataSource dataSource;
 
-  _ProfileUpdateApi(this.httpService);
+  _ProfileUpdateApi(this.dataSource);
 
   Future<String> enqueueAvatar({@required String title, @required File file, @required String accessToken}) {
-    return httpService.queueImageUpload(uri: '/file/upload/avatar',
+    return dataSource.queueImageUpload(uri: '/file/upload/avatar',
         file: file,
         showNotification: false,
         title: title,
@@ -97,18 +97,18 @@ class _ProfileUpdateApi {
   }
 
   Stream<UploadTaskResponse> get avatarUploadStream {
-    return httpService.uploadResultStream;
+    return dataSource.uploadResultStream;
   }
 
   AvatarUploadProgress _mapProgress(UploadTaskProgress event) {
     return AvatarUploadProgress(taskId: event.taskId, progress: event.progress, status: event.status);
   }
 
-  Stream<AvatarUploadProgress> get avatarUploadProgressStream => httpService.uploadProgressStream.map(_mapProgress);
+  Stream<AvatarUploadProgress> get avatarUploadProgressStream => dataSource.uploadProgressStream.map(_mapProgress);
 
   Future<Iterable<Country>> loadValidCountries() async {
     final uri = '/user/countries';
-    final response = await httpService.getJson(uri: uri);
+    final response = await dataSource.getJson(uri: uri);
     if (response.statusCode == 200) {
       return Map<String,String>.from(jsonDecode(response.body)).entries.map((entry) => Country(entry.key, entry.value));
     }
@@ -117,7 +117,7 @@ class _ProfileUpdateApi {
 
   Future<UserProfile> updateProfile(ProfileUpdateRequest request, String accessToken) async {
     final uri = '/user/profile';
-    final response = await httpService.postJson(uri: uri, body: request, accessToken: accessToken);
+    final response = await dataSource.postJson(uri: uri, body: request, accessToken: accessToken);
     if (response.statusCode == 200) {
       return UserProfile.fromJson(jsonDecode(response.body));
     }
@@ -126,7 +126,7 @@ class _ProfileUpdateApi {
 
   Future<UserProfile> followUser(String userId, String accessToken) async {
     final uri = '/user/follow/$userId';
-    final response = await httpService.post(uri: uri,accessToken: accessToken);
+    final response = await dataSource.post(uri: uri,accessToken: accessToken);
     if (response.statusCode == 201 || response.statusCode == 200) {
       return UserProfile.fromJson(jsonDecode(response.body));
     }
@@ -135,7 +135,7 @@ class _ProfileUpdateApi {
 
   Future<UserProfile> unfollowUser(String userId, String accessToken) async {
     final uri = '/user/unfollow/$userId';
-    final response = await httpService.post(uri: uri,accessToken: accessToken);
+    final response = await dataSource.post(uri: uri,accessToken: accessToken);
     if (response.statusCode == 201 || response.statusCode == 200) {
       return UserProfile.fromJson(jsonDecode(response.body));
     }
@@ -161,7 +161,7 @@ class ProfileUpdateService extends Service {
   static ProfileUpdateService current(BuildContext context) => ServiceProvider.of(context);
 
   _ProfileUpdateApi get _updateApi => _ProfileUpdateApi(lookup());
-  AuthService get _authService => lookup();
+  Authentication get _authService => lookup();
 
   @override
   void dispose() {

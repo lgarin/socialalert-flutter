@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter/widgets.dart';
 import 'package:social_alert_app/service/credential.dart';
 import 'package:social_alert_app/service/dataobjet.dart';
-import 'package:social_alert_app/service/httpservice.dart';
+import 'package:social_alert_app/service/datasource.dart';
 import 'package:social_alert_app/service/serviceprodiver.dart';
 
 class _LoginTokenResponse {
@@ -47,12 +47,12 @@ class _LoginResponse extends _LoginTokenResponse {
 
 class _AuthenticationApi {
 
-  final JsonHttpService httpService;
+  final DataSource dataSource;
 
-  _AuthenticationApi(this.httpService);
+  _AuthenticationApi(this.dataSource);
 
   Future<_LoginResponse> loginUser(Credential credential) async {
-    final response = await httpService.postJson(uri: '/user/login', body: credential);
+    final response = await dataSource.postJson(uri: '/user/login', body: credential);
     if (response.statusCode == 200) {
       return _LoginResponse.fromJson(jsonDecode(response.body));
     } else if (response.statusCode == 401) {
@@ -62,7 +62,7 @@ class _AuthenticationApi {
   }
 
   Future<_LoginTokenResponse> renewLogin(String refreshToken) async {
-    final response = await httpService.postText(uri: '/user/renewLogin', body: refreshToken);
+    final response = await dataSource.postText(uri: '/user/renewLogin', body: refreshToken);
     if (response.statusCode == 200) {
       return _LoginTokenResponse.fromJson(jsonDecode(response.body));
     } else if (response.statusCode == 401) {
@@ -72,7 +72,7 @@ class _AuthenticationApi {
   }
 
   Future<UserProfile> currentUser(String accessToken) async {
-    final response = await httpService.getJson(uri: '/user/current', accessToken: accessToken ?? '');
+    final response = await dataSource.getJson(uri: '/user/current', accessToken: accessToken ?? '');
     if (response.statusCode == 200) {
       return UserProfile.fromJson(jsonDecode(response.body));
     } else if (response.statusCode == 401) {
@@ -82,7 +82,7 @@ class _AuthenticationApi {
   }
 
   Future<void> logout(String accessToken) async {
-    final response = await httpService.post(uri: '/user/logout', accessToken: accessToken);
+    final response = await dataSource.post(uri: '/user/logout', accessToken: accessToken);
     if (response.statusCode == 204) {
       return;
     }
@@ -207,15 +207,15 @@ class UserProfile {
 
 }
 
-class AuthService extends Service {
+class Authentication extends Service {
 
   final _credentialStore = CredentialStore();
   final _profileController = StreamController<UserProfile>();
   _AuthToken _token;
 
-  AuthService(BuildContext context) : super(context);
+  Authentication(BuildContext context) : super(context);
 
-  static AuthService current(BuildContext context) => ServiceProvider.of(context);
+  static Authentication current(BuildContext context) => ServiceProvider.of(context);
 
   Stream<UserProfile> get profileStream => _profileController.stream;
 

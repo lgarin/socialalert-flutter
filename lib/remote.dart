@@ -774,6 +774,13 @@ class _RemoteVideoDisplayState extends State<RemoteVideoDisplay> {
     );
   }
 
+  Widget _buildVideoError(BuildContext context, String errorMessage) {
+    showSimpleDialog(context, 'Cannot load video', errorMessage);
+    return Center(
+        child: Icon(Icons.error, color: Colors.white, size: 64)
+    );
+  }
+
   Widget _buildVideo(BuildContext context) {
     final url = MediaQueryService.toVideoUrl(widget.media.mediaUri);
     _videoPlayerController = VideoPlayerController.network(url);
@@ -785,6 +792,7 @@ class _RemoteVideoDisplayState extends State<RemoteVideoDisplay> {
       autoInitialize: true,
       autoPlay: !widget.preview,
       looping: false,
+      errorBuilder: _buildVideoError,
     );
     return Chewie(controller: _chewieController);
   }

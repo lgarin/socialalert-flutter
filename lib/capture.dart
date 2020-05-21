@@ -9,7 +9,7 @@ import 'package:provider/provider.dart';
 import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/service/cameradevice.dart';
-import 'package:social_alert_app/service/fileservice.dart';
+import 'package:social_alert_app/service/filesystem.dart';
 import 'package:social_alert_app/service/geolocation.dart';
 import 'package:social_alert_app/service/mediaupload.dart';
 
@@ -54,7 +54,7 @@ class _CaptureMediaPageState extends State<CaptureMediaPage> {
   void initState() {
     super.initState();
     _asyncPosition = GeoLocationService.current(context).readPosition(20.0);
-    _asyncDevice = CameraDeviceService.current(context).device;
+    _asyncDevice = CameraDevice.current(context).info;
   }
 
 
@@ -94,7 +94,7 @@ class _CaptureMediaPageState extends State<CaptureMediaPage> {
   void _onPictureCapture() async {
     cameraNotifier.value = null;
     try {
-      File outputFile = await FileService.current(context).defineOutputFile('jpg');
+      File outputFile = await FileSystem.current(context).defineOutputFile('jpg');
       await _cameraController.takePicture(outputFile.path);
       final device = await _asyncDevice;
       final position = await _asyncPosition;
@@ -120,8 +120,8 @@ class _CaptureMediaPageState extends State<CaptureMediaPage> {
         await _cameraController.resumeVideoRecording();
         cameraNotifier.value = _cameraController?.value;
       } else {
-        _videoFile = await FileService.current(context).defineOutputFile('mp4');
-        _videoMonitor = FileService.current(context).createFileSizeMonitor(_videoFile, MediaUploadTask.maximumFileSize, _onMaximumVideoSize);
+        _videoFile = await FileSystem.current(context).defineOutputFile('mp4');
+        _videoMonitor = FileSystem.current(context).createFileSizeMonitor(_videoFile, MediaUploadTask.maximumFileSize, _onMaximumVideoSize);
         await _cameraController.startVideoRecording(_videoFile.path);
         cameraNotifier.value = _cameraController?.value;
       }
@@ -162,7 +162,7 @@ class _CaptureMediaPageState extends State<CaptureMediaPage> {
   }
 
   Future<CameraController> _createCameraController(BuildContext context) async {
-    _cameraController = await CameraDeviceService.current(context).findCamera(_lensDirection, _videoMode ? ResolutionPreset.high : ResolutionPreset.max);
+    _cameraController = await CameraDevice.current(context).findCamera(_lensDirection, _videoMode ? ResolutionPreset.high : ResolutionPreset.max);
     cameraNotifier.value = _cameraController?.value;
     return _cameraController;
   }

@@ -162,11 +162,11 @@ class _LoginFormState extends State<_LoginForm> {
   }
 
   Future<UserProfile> _findCurrentUser(BuildContext context) async {
-    return await AuthService.current(context).currentUser();
+    return await Authentication.current(context).currentUser();
   }
 
   Future<_LoginModel> _prepareModel(BuildContext context) async {
-    final credential = await AuthService.current(context).initialCredential;
+    final credential = await Authentication.current(context).initialCredential;
     return _LoginModel.fromCredential(credential);
   }
 
@@ -191,7 +191,7 @@ class _LoginFormState extends State<_LoginForm> {
 
   Future<UserProfile> _authenticateUser(Credential credential) async {
     try {
-      final userProfile = await AuthService.current(context).authenticate(credential);
+      final userProfile = await Authentication.current(context).authenticate(credential);
       _showNextPage(userProfile);
       return userProfile;
     } catch (e) {

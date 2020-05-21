@@ -12,6 +12,7 @@ import 'package:social_alert_app/service/dataobjet.dart';
 import 'package:social_alert_app/service/eventbus.dart';
 import 'package:social_alert_app/service/mediaupload.dart';
 import 'package:social_alert_app/service/pagemanager.dart';
+import 'package:social_alert_app/service/permission.dart';
 import 'package:social_alert_app/service/profileupdate.dart';
 
 class _NotificationHook extends StatefulWidget {
@@ -25,12 +26,22 @@ class _NotificationHook extends StatefulWidget {
   _NotificationHookState createState() => _NotificationHookState();
 }
 
+class _NotificationEvent {
+  final String message;
+  final Color color;
+  final SnackBarAction action;
+  final DateTime timestamp;
+
+  _NotificationEvent(this.message, this.color, this.action, this.timestamp);
+}
+
 class _NotificationHookState extends State<_NotificationHook> {
 
   StreamSubscription<PageEvent> _pageListener;
   StreamSubscription<MediaUploadTask> _uploadResultListener;
   StreamSubscription<UserProfile> _userProfileListener;
   UserProfile _currentUserProfile;
+  final _previousEvents = List<_NotificationEvent>();
 
   @override
   void initState() {
@@ -50,6 +61,14 @@ class _NotificationHookState extends State<_NotificationHook> {
 
     MediaUploadList uploadList = Provider.of(context, listen: false);
     _showAllUploadSnackBars(uploadList);
+
+    final recentTimestamp = DateTime.now().subtract(Duration(seconds: 5));
+    _showRecentSnackBars(recentTimestamp);
+  }
+
+  void _showRecentSnackBars(DateTime minTimestamp) {
+    _previousEvents.where((event) => event.timestamp.isAfter(minTimestamp)).forEach((element) => _showSnackBar(element.message, element.color, element.action));
+    _previousEvents.clear();
   }
 
   @override
@@ -59,6 +78,7 @@ class _NotificationHookState extends State<_NotificationHook> {
 
   @override
   void dispose() {
+    _previousEvents.clear();
     _pageListener.cancel();
     _uploadResultListener.cancel();
     _userProfileListener.cancel();
@@ -67,7 +87,7 @@ class _NotificationHookState extends State<_NotificationHook> {
 
   void _showSnackBar(String message, Color color, SnackBarAction action) {
     if (PageManager.current(context).currentPageName != widget.pageName) {
-      // TODO keep the snackbar in a waiting list
+      _previousEvents.add(_NotificationEvent(message, color, action, DateTime.now()));
       return;
     }
     var scaffoldState = widget.scaffoldKey.currentState;
@@ -90,9 +110,15 @@ class _NotificationHookState extends State<_NotificationHook> {
 
   void _showUploadSnackBar(MediaUploadTask task) {
     if (task.title == null || task.title.isEmpty) {
-      showWarningSnackBar('Title for media is missing',
+      showWarningSnackBar('Title for new Snype is missing',
           action: SnackBarAction(label: 'Edit', onPressed: () => _onEditUpload(task))
       );
+    } else if (task.status == MediaUploadStatus.CREATED) {
+      // TODO improve
+      showSuccessSnackBar('New Snype has been saved localy');
+    } else if (task.status == null) {
+      // TODO improve
+      showSuccessSnackBar('New Snype has been deleted');
     } else if (task.isCompleted) {
       showSuccessSnackBar('Upload of "${task.title}" has completed');
     } else if (task.hasError) {
@@ -200,16 +226,9 @@ abstract class BasePageState<T extends StatefulWidget> extends State<T> {
   }
 
   void _captureMedia(BuildContext context) async {
-    // TODO introduce a PermissionService
-    final permissionMap = await [
-      Permission.camera,
-      Permission.microphone,
-      Permission.locationWhenInUse,
-    ].request();
-    if (permissionMap.values.every((permission) => permission.isGranted)) {
+    final requestedPermissions = [Permission.camera, Permission.microphone, Permission.locationWhenInUse];
+    if (await PermissionManager.current(context).allows(requestedPermissions)) {
       Navigator.of(context).pushNamed(AppRoute.CaptureMedia);
-    } else if (permissionMap.values.any((permission) => permission.isPermanentlyDenied)) {
-      openAppSettings();
     }
   }
 

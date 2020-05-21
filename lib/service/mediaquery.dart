@@ -3,15 +3,15 @@ import 'package:flutter/widgets.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/configuration.dart';
-import 'package:social_alert_app/service/httpservice.dart';
+import 'package:social_alert_app/service/datasource.dart';
 import 'package:social_alert_app/service/dataobjet.dart';
 import 'package:social_alert_app/service/serviceprodiver.dart';
 
 class _MediaQueryApi {
 
-  final JsonHttpService httpService;
+  final DataSource dataSource;
 
-  _MediaQueryApi(this.httpService);
+  _MediaQueryApi(this.dataSource);
 
   Future<MediaInfoPage> listMedia({String creator, String category, String keywords, LatLngBounds bounds, @required PagingParameter paging, @required String accessToken}) async {
     final creatorParameter = creator != null ? '&creator=$creator' : '';
@@ -20,7 +20,7 @@ class _MediaQueryApi {
     final boundsParameter = bounds != null ? '&minLongitude=${bounds.southwest.longitude}&maxLongitude=${bounds.northeast.longitude}&minLatitude=${bounds.southwest.latitude}&maxLatitude=${bounds.northeast.latitude}' : '';
     final timestampParameter = paging.timestamp != null ? '&pagingTimestamp=${paging.timestamp}' : '';
     final uri = '/media/search?pageNumber=${paging.pageNumber}&pageSize=${paging.pageSize}$timestampParameter$creatorParameter$categoryParameter$keywordsParameter$boundsParameter';
-    final response = await httpService.getJson(uri: uri, accessToken: accessToken);
+    final response = await dataSource.getJson(uri: uri, accessToken: accessToken);
     if (response.statusCode == 200) {
       return MediaInfoPage.fromJson(jsonDecode(response.body));
     }
@@ -32,7 +32,7 @@ class _MediaQueryApi {
     final keywordsParameter = keywords != null ? '&keywords=$keywords' : '';
     final boundsParameter = 'minLongitude=${bounds.southwest.longitude}&maxLongitude=${bounds.northeast.longitude}&minLatitude=${bounds.southwest.latitude}&maxLatitude=${bounds.northeast.latitude}';
     final uri = '/media/mapCount?$boundsParameter$categoryParameter$keywordsParameter';
-    final response = await httpService.getJson(uri: uri, accessToken: accessToken);
+    final response = await dataSource.getJson(uri: uri, accessToken: accessToken);
     if (response.statusCode == 200) {
       return GeoStatistic.fromJsonList(jsonDecode(response.body));
     }
@@ -41,7 +41,7 @@ class _MediaQueryApi {
 
   Future<List<String>> suggestTags({@required String term, @required int maxHitCount, @required String accessToken}) async {
     final uri = '/media/suggestTags?term=$term&maxHitCount=$maxHitCount';
-    final response = await httpService.getJson(uri: uri, accessToken: accessToken);
+    final response = await dataSource.getJson(uri: uri, accessToken: accessToken);
     if (response.statusCode == 200) {
       return List<String>.from(jsonDecode(response.body));
     }
@@ -50,7 +50,7 @@ class _MediaQueryApi {
 
   Future<MediaDetail> viewDetail({@required String mediaUri, @required String accessToken}) async {
     final uri = '/media/view/$mediaUri';
-    final response = await httpService.getJson(uri: uri, accessToken: accessToken);
+    final response = await dataSource.getJson(uri: uri, accessToken: accessToken);
     if (response.statusCode == 200) {
       return MediaDetail.fromJson(jsonDecode(response.body));
     }
@@ -78,7 +78,7 @@ class MediaQueryService extends Service {
 
   MediaQueryService(BuildContext context) : super(context);
 
-  AuthService get _authService => lookup();
+  Authentication get _authService => lookup();
   _MediaQueryApi get _queryApi => _MediaQueryApi(lookup());
 
   Future<MediaInfoPage> listMedia(String category, String keywords, PagingParameter paging, {LatLngBounds bounds}) async {
