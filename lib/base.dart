@@ -64,14 +64,14 @@ class _NotificationHookState extends State<_NotificationHook> {
       return;
     }
 
+    final recentTimestamp = DateTime.now().subtract(repeatMessageDelay);
+    _showRecentSnackBars(recentTimestamp);
+
     _currentUserProfile = Provider.of(context, listen: false);
     _showUserProfileSnackBar(_currentUserProfile);
 
     MediaUploadList uploadList = Provider.of(context, listen: false);
     _showAllUploadSnackBars(uploadList);
-
-    final recentTimestamp = DateTime.now().subtract(repeatMessageDelay);
-    _showRecentSnackBars(recentTimestamp);
   }
 
   void _showRecentSnackBars(DateTime minTimestamp) {
@@ -151,7 +151,10 @@ class _NotificationHookState extends State<_NotificationHook> {
       return;
     }
 
-    if (_currentUserProfile != null && !_currentUserProfile.same(profile)) {
+    if (_currentUserProfile != null && _currentUserProfile.imageUri != profile.imageUri) {
+      showSuccessSnackBar('Your profile picture has been changed');
+      _currentUserProfile = profile;
+    } else if (_currentUserProfile != null && !_currentUserProfile.same(profile)) {
       showSuccessSnackBar('Your profile has been saved');
       _currentUserProfile = profile;
     }
