@@ -160,6 +160,9 @@ class _NotificationHookState extends State<_NotificationHook> {
   }
 
   void _showAllUploadSnackBars(MediaUploadList uploadList) {
+    if (uploadList == null) {
+      return;
+    }
     for (final upload in uploadList) {
       _showUploadSnackBar(upload);
     }

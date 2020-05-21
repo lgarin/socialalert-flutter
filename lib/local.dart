@@ -191,6 +191,7 @@ class LocalMediaInfoPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return FutureProvider(
         create: _buildExifData,
+        catchError: showUnexpectedError,
         child: Scaffold(
             backgroundColor: backgroundColor,
             appBar: _buildAppBar(context),

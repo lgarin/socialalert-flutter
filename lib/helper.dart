@@ -6,6 +6,11 @@ import 'package:form_field_validator/form_field_validator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:social_alert_app/service/pagemanager.dart';
 
+T showUnexpectedError<T>(BuildContext context, Object error) {
+  showSimpleDialog(context, 'Unexpected error', error);
+  return null;
+}
+
 Future showSimpleDialog(BuildContext context, String title, String message) {
   return showDialog(
     builder: (context) {

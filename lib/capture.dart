@@ -35,6 +35,7 @@ class _CaptureMediaPageState extends State<CaptureMediaPage> {
     return FutureProvider(
       key: ValueKey('$_lensDirection/$_videoMode'),
       create: _createCameraController,
+      catchError: showUnexpectedError,
       child: _buildContent(context),
     );
   }

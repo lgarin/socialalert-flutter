@@ -49,7 +49,7 @@ class SocialAlertApp extends StatelessWidget {
           StreamProvider<UserProfile>(create: (context) => ProfileUpdateService.current(context).profileStream, lazy: false),
           StreamProvider<AvatarUploadProgress>(create: (context) => ProfileUpdateService.current(context).uploadProgressStream, lazy: false),
           ServiceProvider<MediaUploadService>(create: (context) => MediaUploadService(context)),
-          FutureProvider<MediaUploadList>(create: (context) => MediaUploadService.current(context).currentUploads(), lazy: false),
+          FutureProvider<MediaUploadList>(create: (context) => MediaUploadService.current(context).currentUploads(), lazy: false, catchError: showUnexpectedError),
           ServiceProvider<MediaQueryService>(create: (context) => MediaQueryService(context)),
           ServiceProvider<MediaUpdateService>(create: (context) => MediaUpdateService(context)),
           ServiceProvider<CommentQueryService>(create: (context) => CommentQueryService(context)),

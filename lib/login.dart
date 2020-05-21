@@ -204,9 +204,11 @@ class _LoginFormState extends State<_LoginForm> {
   Widget build(BuildContext context) {
     return FutureProvider<UserProfile>(
         create: _findCurrentUser,
+        catchError: showUnexpectedError,
         lazy: false,
         child: FutureProvider<_LoginModel>(
           create: _prepareModel,
+          catchError: showUnexpectedError,
           lazy: false,
           child: Consumer2<UserProfile, _LoginModel>(
             builder: (context, user, login, _) => FutureBuilder<UserProfile>(

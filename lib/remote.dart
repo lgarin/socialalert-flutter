@@ -81,11 +81,7 @@ class _RemoteMediaDetailPageState extends BasePageState<RemoteMediaDetailPage> {
   Widget buildBody(BuildContext context) {
     return FutureProvider(
         create: _buildMediaModel,
-        catchError: (context, error) {
-          // TODO what is going on here?
-          print(error);
-          return null;
-        },
+        catchError: showUnexpectedError,
         child: Consumer<_MediaInfoModel>(
           builder: _buildContent,
           child: widget.media.hasVideoPreview
@@ -688,29 +684,13 @@ class RemotePictureDisplay extends StatelessWidget {
       onTapUp: preview && (!media.isVideo || media.hasVideoPreview) ? _onTap : null,
       imageProvider: NetworkImage(url, headers: snapshot.data),
       loadingBuilder: _loadingBuilder,
-      loadFailedChild: _buildErrorWidget(context),
+      loadFailedChild: _MediaDownloadFailedMessage(),
       heroAttributes: PhotoViewHeroAttributes(tag: media.mediaUri),
     ));
   }
 
   void _onTap(BuildContext context, TapUpDetails details, PhotoViewControllerValue controllerValue) {
     Navigator.of(context).pushNamed(AppRoute.RemoteMediaDisplay, arguments: media);
-  }
-
-  Widget _buildErrorWidget(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          Icon(Icons.broken_image, size: 100, color: Colors.grey),
-          Text('Download failed', style: Theme
-              .of(context)
-              .textTheme
-              .headline6),
-          Text('Please retry later.')
-        ],
-      ),
-    );
   }
 
   Widget _loadingBuilder(BuildContext context, ImageChunkEvent loadingProgress) {
@@ -724,8 +704,25 @@ class RemotePictureDisplay extends StatelessWidget {
 
   Widget _buildProgressIndicator(BuildContext context, double progress) {
     return Center(
-            child: CircularProgressIndicator(value: progress)
-        );
+      child: CircularProgressIndicator(value: progress)
+    );
+  }
+}
+
+class _MediaDownloadFailedMessage extends StatelessWidget {
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Icon(Icons.broken_image, size: 100, color: Colors.grey),
+          Text('Download failed', style: Theme.of(context).textTheme.headline6),
+          Text('Please retry later.')
+        ],
+      ),
+    );
   }
 }
 
@@ -776,9 +773,7 @@ class _RemoteVideoDisplayState extends State<RemoteVideoDisplay> {
 
   Widget _buildVideoError(BuildContext context, String errorMessage) {
     showSimpleDialog(context, 'Cannot load video', errorMessage);
-    return Center(
-        child: Icon(Icons.error, color: Colors.white, size: 64)
-    );
+    return _MediaDownloadFailedMessage();
   }
 
   Widget _buildVideo(BuildContext context) {
