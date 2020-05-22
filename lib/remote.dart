@@ -719,8 +719,8 @@ class _MediaDownloadFailedMessage extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
           Icon(Icons.broken_image, size: 100, color: Colors.grey),
-          Text('Download failed', style: Theme.of(context).textTheme.headline6.copyWith(color: Colors.white)),
-          Text('Please retry later.', style: TextStyle(color: Colors.white))
+          Text('Download failed', style: Theme.of(context).textTheme.headline6.copyWith(color: Colors.grey)),
+          Text('Please retry later.', style: TextStyle(color: Colors.grey))
         ],
       ),
     );

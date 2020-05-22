@@ -98,6 +98,16 @@ class _LocalVideoDisplayState extends State<LocalVideoDisplay> {
     _actionSubscription = EventBus.current(context).on<VideoAction>().listen((event) {
       _chewieController?.pause();
     });
+    _videoPlayerController = VideoPlayerController.file(widget.file);
+    _chewieController = ChewieController(
+      videoPlayerController: _videoPlayerController,
+      fullScreenByDefault: !widget.preview,
+      allowFullScreen: widget.preview,
+      aspectRatio: 16 / 9,
+      autoInitialize: true,
+      autoPlay: !widget.preview,
+      looping: false,
+    );
   }
 
   @override
@@ -122,16 +132,6 @@ class _LocalVideoDisplayState extends State<LocalVideoDisplay> {
   }
 
   Widget _buildVideo(BuildContext context) {
-    _videoPlayerController = VideoPlayerController.file(widget.file);
-    _chewieController = ChewieController(
-      videoPlayerController: _videoPlayerController,
-      fullScreenByDefault: !widget.preview,
-      allowFullScreen: widget.preview,
-      aspectRatio: 16 / 9,
-      autoInitialize: true,
-      autoPlay: !widget.preview,
-      looping: false,
-    );
     return Chewie(controller: _chewieController);
   }
 }
