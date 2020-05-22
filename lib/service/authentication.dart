@@ -215,7 +215,7 @@ class Authentication extends Service {
 
   Authentication(BuildContext context) : super(context);
 
-  static Authentication current(BuildContext context) => ServiceProvider.of(context);
+  static Authentication of(BuildContext context) => ServiceProvider.of(context);
 
   Stream<UserProfile> get profileStream => _profileController.stream;
 

@@ -95,7 +95,7 @@ class _LocalVideoDisplayState extends State<LocalVideoDisplay> {
   @override
   void initState() {
     super.initState();
-    _actionSubscription = EventBus.current(context).on<VideoAction>().listen((event) {
+    _actionSubscription = EventBus.of(context).on<VideoAction>().listen((event) {
       _chewieController?.pause();
     });
     _videoPlayerController = VideoPlayerController.file(widget.file);
@@ -181,7 +181,7 @@ class LocalMediaInfoPage extends StatelessWidget implements ScaffoldPage {
 
   Future<_ExifData> _buildExifData(BuildContext context) async {
     Map<String, dynamic> tags = await readExif(FileReader(upload.file));
-    final device = await CameraDevice.current(context).info;
+    final device = await CameraDevice.of(context).info;
     return _ExifData(
       mediaHeight: tags['ImageHeight'] ?? tags['ExifImageHeight'] ?? tags['PixelYDimension'] as int,
       mediaWidth: tags['ImageWidth'] ?? tags['ExifImageWidth'] ?? tags['PixelXDimension'] as int,

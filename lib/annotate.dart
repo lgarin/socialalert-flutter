@@ -87,7 +87,7 @@ class _AppBarPopupMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     return PopupMenuButton<_MediaAction>(
       itemBuilder: _buildPopupMenuItems,
-      onSelected: (action) => EventBus.current(context).fire(action),
+      onSelected: (action) => EventBus.of(context).fire(action),
     );
   }
   List<PopupMenuEntry<_MediaAction>> _buildPopupMenuItems(BuildContext context) {
@@ -109,7 +109,7 @@ class _PublishIconButton extends StatelessWidget {
     return IconButton(
         icon: Icon(userProfile.anonym ? Icons.save_alt : Icons.cloud_upload),
         tooltip: userProfile.anonym ? 'Save' : 'Publish',
-        onPressed: () => EventBus.current(context).fire(_MediaAction.PUBLISH)
+        onPressed: () => EventBus.of(context).fire(_MediaAction.PUBLISH)
     );
   }
 }
@@ -137,7 +137,7 @@ class _MetadataFormState extends State<_MetadataForm> {
     _model.setTitle(widget.upload.title);
     _model.tags.addAll(widget.upload.tags);
     _model.selectedCategory = widget.upload.category;
-    _actionSubscription = EventBus.current(context).on<_MediaAction>().listen((action) {
+    _actionSubscription = EventBus.of(context).on<_MediaAction>().listen((action) {
       if (action == _MediaAction.PUBLISH) {
         _onPublish();
       } else if (action == _MediaAction.DELETE) {
@@ -188,7 +188,7 @@ class _MetadataFormState extends State<_MetadataForm> {
         category: _model.selectedCategory,
         tags: List.from(_model.tags),
       );
-      await MediaUploadService.current(context).saveTask(widget.upload);
+      await MediaUploadService.of(context).saveTask(widget.upload);
     }
     return true;
   }
@@ -204,11 +204,11 @@ class _MetadataFormState extends State<_MetadataForm> {
       );
       try {
         final userProfile = Provider.of<UserProfile>(context, listen: false);
-        await MediaUploadService.current(context).saveTask(widget.upload);
+        await MediaUploadService.of(context).saveTask(widget.upload);
         if (!userProfile.anonym) {
-          MediaUploadService.current(context).restartTask(widget.upload);
+          MediaUploadService.of(context).restartTask(widget.upload);
         }
-        Navigator.pop(context);
+        Navigator.of(context).maybePop();
       } catch (e) {
         showSimpleDialog(context, "Upload failed", e.toString());
       }
@@ -227,13 +227,13 @@ class _MetadataFormState extends State<_MetadataForm> {
   }
 
   void _onInfo() {
-    EventBus.current(context).fire(VideoAction.PAUSE);
+    EventBus.of(context).fire(VideoAction.PAUSE);
     Navigator.of(context).pushNamed(AppRoute.LocalMediaInfo, arguments: widget.upload);
   }
 
   void _onConfirmUploadDeletion() {
-    MediaUploadService.current(context).deleteTask(widget.upload);
-    Navigator.pop(context);
+    MediaUploadService.of(context).deleteTask(widget.upload);
+    Navigator.of(context).maybePop();
   }
 }
 
@@ -330,7 +330,7 @@ class _TagsWidget extends StatelessWidget {
   }
 
   Future<List<String>> _fetchSuggestions(BuildContext context, String pattern) {
-    return MediaQueryService.current(context).suggestTags(pattern, 5);
+    return MediaQueryService.of(context).suggestTags(pattern, 5);
   }
 
   void _onNewTag(FormFieldState<Set<String>> state, String newTag) {
@@ -414,7 +414,7 @@ class _PublishButton extends StatelessWidget {
         RaisedButton(
           child: Text(userProfile.anonym ? 'Save' : 'Publish',
               style: Theme.of(context).textTheme.button),
-          onPressed: () => EventBus.current(context).fire(_MediaAction.PUBLISH),
+          onPressed: () => EventBus.of(context).fire(_MediaAction.PUBLISH),
           color: Theme.of(context).buttonColor,
           shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.all(

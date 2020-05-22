@@ -23,7 +23,7 @@ class UserMenu extends StatelessWidget {
         child: Column(
           children: <Widget>[
             Container(height: 10.0, color: Theme.of(context).primaryColorDark.withOpacity(0.9),),
-            ProfileHeader(tapCallback: () => Navigator.popAndPushNamed(context, AppRoute.ProfileEditor), tapTooltip: 'Edit profile'),
+            ProfileHeader(tapCallback: () => Navigator.of(context).popAndPushNamed(AppRoute.ProfileEditor), tapTooltip: 'Edit profile'),
             Expanded(
                 child: _MenuBar(currentPage: currentPage)
             )
@@ -102,11 +102,11 @@ class _MenuItem extends StatelessWidget {
       title: Text(title),
       onTap: () {
         if (targetPage == AppRoute.Login) {
-          Authentication.current(context).signOut().then((_) => Navigator.pushReplacementNamed(context, AppRoute.Login));
+          Authentication.of(context).signOut().then((_) => Navigator.of(context).pushReplacementNamed(AppRoute.Login));
         } else if (targetPage != null) {
-          Navigator.popAndPushNamed(context, targetPage);
+          Navigator.of(context).popAndPushNamed(targetPage);
         } else {
-          Navigator.pop(context);
+          Navigator.of(context).pop();
         }
       },
     );

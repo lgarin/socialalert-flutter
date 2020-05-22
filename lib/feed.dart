@@ -59,7 +59,7 @@ class _FeedDisplayState extends BasePagingState<FeedDisplay, FeedItem> {
 
   @override
   Future<FeedItemPage> loadNextPage(PagingParameter parameter) {
-    return FeedQueryService.current(context).getFeed(widget.categoryToken, widget.keywords, parameter);
+    return FeedQueryService.of(context).getFeed(widget.categoryToken, widget.keywords, parameter);
   }
 
   @override
@@ -168,17 +168,17 @@ class _FeedDisplayState extends BasePagingState<FeedDisplay, FeedItem> {
   }
 
   void _showMediaDetail(MediaInfo media) async {
-    EventBus.current(context).fire(VideoAction.PAUSE);
+    EventBus.of(context).fire(VideoAction.PAUSE);
     await Navigator.of(context).pushNamed(AppRoute.RemoteMediaDetail, arguments: media);
   }
 
   void _showUserProfile(String userId) async {
     final currentProfile = Provider.of<UserProfile>(context, listen: false);
     if (userId != currentProfile.userId) {
-      final profile = await ProfileQueryService.current(context).get(userId);
-      Navigator.pushNamed(context, AppRoute.ProfileViewer, arguments: profile);
+      final profile = await ProfileQueryService.of(context).get(userId);
+      Navigator.of(context).pushNamed(AppRoute.ProfileViewer, arguments: profile);
     } else {
-      Navigator.pushNamed(context, AppRoute.ProfileViewer);
+      Navigator.of(context).pushNamed(AppRoute.ProfileViewer);
     }
   }
 

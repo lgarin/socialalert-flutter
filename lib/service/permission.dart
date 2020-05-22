@@ -5,7 +5,7 @@ import 'package:social_alert_app/service/serviceprodiver.dart';
 
 class PermissionManager extends Service {
 
-  static PermissionManager current(BuildContext context) => ServiceProvider.of(context);
+  static PermissionManager of(BuildContext context) => ServiceProvider.of(context);
 
   PermissionManager(BuildContext context) : super(context);
 

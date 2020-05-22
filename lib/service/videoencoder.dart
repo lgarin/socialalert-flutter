@@ -8,7 +8,7 @@ import 'package:video_thumbnail/video_thumbnail.dart';
 
 class VideoEncoder extends Service {
 
-  static VideoEncoder current(BuildContext context) => ServiceProvider.of(context);
+  static VideoEncoder of(BuildContext context) => ServiceProvider.of(context);
 
   VideoEncoder(BuildContext context) : super(context);
 

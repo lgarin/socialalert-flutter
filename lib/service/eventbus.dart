@@ -7,7 +7,7 @@ class EventBus extends Service {
 
   EventBus(BuildContext context) : super(context);
 
-  static EventBus current(BuildContext context) => ServiceProvider.of(context);
+  static EventBus of(BuildContext context) => ServiceProvider.of(context);
 
   Stream<T> on<T>() {
     if (T == dynamic) {

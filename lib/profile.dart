@@ -207,7 +207,7 @@ class _ProfileFormState extends State<_ProfileForm> {
     super.initState();
     _dirty = false;
     _formModel = _ProfileFormModel(Provider.of(context, listen: false));
-    _actionSubscription = EventBus.current(context).on<_ProfileAction>().listen((action) {
+    _actionSubscription = EventBus.of(context).on<_ProfileAction>().listen((action) {
       if (action == _ProfileAction.save) {
         _onSave();
       }
@@ -269,7 +269,7 @@ class _ProfileFormState extends State<_ProfileForm> {
     if (form != null && form.validate()) {
       form.save();
       try {
-        await ProfileUpdateService.current(context).updateProfile(_formModel.toUpdateRequest());
+        await ProfileUpdateService.of(context).updateProfile(_formModel.toUpdateRequest());
         _dirty = false;
         await Navigator.of(context).maybePop();
       } catch (e) {
@@ -391,7 +391,7 @@ class _CountryFormField extends StatelessWidget {
             borderRadius: BorderRadius.all(Radius.circular(10))),
         padding: EdgeInsets.all(10),
         child: FutureBuilder(
-          future: ProfileUpdateService.current(context).readValidCountries(),
+          future: ProfileUpdateService.of(context).readValidCountries(),
           builder: _buildInput,
           initialData: <Country>[],
         )
@@ -537,7 +537,7 @@ abstract class _BaseProfilePageState<T extends StatefulWidget> extends BasePageS
   @override
   void initState() {
     super.initState();
-    uploadProgressSubscription = ProfileUpdateService.current(context).uploadProgressStream.listen((event) {
+    uploadProgressSubscription = ProfileUpdateService.of(context).uploadProgressStream.listen((event) {
       if (event.taskId == _uploadTaskId && event.terminal) {
         if (event.error != null) {
           showSimpleDialog(context, 'Avatar upload failed', event.error);
@@ -564,7 +564,7 @@ abstract class _BaseProfilePageState<T extends StatefulWidget> extends BasePageS
 
   Future _beginUpload(File image) async {
     try {
-      final taskId = await ProfileUpdateService.current(context).beginAvatarUpload('Avatar', image);
+      final taskId = await ProfileUpdateService.of(context).beginAvatarUpload('Avatar', image);
       setState(() {
         _uploadTaskId = taskId;
       });
@@ -579,7 +579,7 @@ class _ProfileEditorPageState extends _BaseProfilePageState<ProfileEditorPage> {
   _ProfileEditorPageState(GlobalKey<ScaffoldState> scaffoldKey) : super(scaffoldKey, AppRoute.ProfileEditor);
 
   void _onSave() {
-    EventBus.current(context).fire(_ProfileAction.save);
+    EventBus.of(context).fire(_ProfileAction.save);
   }
 
   @override
@@ -662,7 +662,7 @@ class _ProfileViewerPageState extends _BaseProfilePageState<ProfileViewerPage> {
 
   void _followUser() async {
     try {
-      final newProfile = await ProfileUpdateService.current(context).followUser(profileOverride.userId);
+      final newProfile = await ProfileUpdateService.of(context).followUser(profileOverride.userId);
       showSuccessSnackBar(context, 'User "${profileOverride.username}" has been added to your network');
       setState(() {
         profileOverride = newProfile;
@@ -674,7 +674,7 @@ class _ProfileViewerPageState extends _BaseProfilePageState<ProfileViewerPage> {
 
   void _unfollowUser() async {
     try {
-      final newProfile = await ProfileUpdateService.current(context).unfollowUser(profileOverride.userId);
+      final newProfile = await ProfileUpdateService.of(context).unfollowUser(profileOverride.userId);
       showWarningSnackBar(context, 'User "${profileOverride.username}" has been removed from your network');
       setState(() {
         profileOverride = newProfile;
@@ -718,7 +718,7 @@ class _ProfileViewerPageState extends _BaseProfilePageState<ProfileViewerPage> {
   }
 
   Future<bool> _onPageExit() {
-    Navigator.pop(context, profileOverride);
+    Navigator.of(context).pop(profileOverride);
     return Future.value(false);
   }
 
@@ -810,7 +810,7 @@ class _ProfileInformationPanel extends StatelessWidget {
     if (_profile.country == null) {
       return null;
     }
-    return ProfileUpdateService.current(context).findCountry(_profile.country);
+    return ProfileUpdateService.of(context).findCountry(_profile.country);
   }
 
   Widget _buildContent(BuildContext context, AsyncSnapshot<Country> countrySnapshot) {
@@ -950,7 +950,7 @@ class _ProfileGalleryPanelState extends BasePagingState<_ProfileGalleryPanel, Me
   static final spacing = 4.0;
 
   Future<MediaInfoPage> loadNextPage(PagingParameter parameter) {
-    return MediaQueryService.current(context).listUserMedia(widget.userId, parameter);
+    return MediaQueryService.of(context).listUserMedia(widget.userId, parameter);
   }
 
   @override
@@ -1096,7 +1096,7 @@ class _UserCommentListState extends BasePagingState<_UserCommentList, MediaComme
 
   @override
   Future<ResultPage<MediaCommentInfo>> loadNextPage(PagingParameter parameter) {
-    return CommentQueryService.current(context).listUserComments(widget.userId, parameter);
+    return CommentQueryService.of(context).listUserComments(widget.userId, parameter);
   }
 
   Column _buildNoContent(BuildContext context) {

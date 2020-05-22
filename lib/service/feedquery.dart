@@ -26,7 +26,7 @@ class _FeedQueryApi {
 
 class FeedQueryService extends Service {
 
-  static FeedQueryService current(BuildContext context) => ServiceProvider.of(context);
+  static FeedQueryService of(BuildContext context) => ServiceProvider.of(context);
 
   FeedQueryService(BuildContext context) : super(context);
 

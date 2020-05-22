@@ -214,6 +214,6 @@ class _HomePageState extends BasePageState<HomePage> with SingleTickerProviderSt
   }
 
   Future<List<String>> _fetchSuggestions(String pattern) {
-    return MediaQueryService.current(context).suggestTags(pattern, 5);
+    return MediaQueryService.of(context).suggestTags(pattern, 5);
   }
 }

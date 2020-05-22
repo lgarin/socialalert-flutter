@@ -71,7 +71,7 @@ class GeoLocationService extends Service {
   final _positionController = StreamController<GeoPosition>.broadcast();
   final _locationController = StreamController<GeoLocation>.broadcast();
 
-  static GeoLocationService current(BuildContext context) => ServiceProvider.of(context);
+  static GeoLocationService of(BuildContext context) => ServiceProvider.of(context);
 
   GeoLocationService(BuildContext context) : super(context);
 

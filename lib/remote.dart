@@ -94,7 +94,7 @@ class _RemoteMediaDetailPageState extends BasePageState<RemoteMediaDetailPage> {
 
   Future<_MediaInfoModel> _buildMediaModel(BuildContext context) async {
     try {
-      final detail = await MediaQueryService.current(context).viewDetail(widget.mediaUri);
+      final detail = await MediaQueryService.of(context).viewDetail(widget.mediaUri);
       return _MediaInfoModel(detail);
     } catch (e) {
       showSimpleDialog(context, 'Load failed', e.toString());
@@ -129,7 +129,7 @@ class _RemoteMediaDetailPageState extends BasePageState<RemoteMediaDetailPage> {
   }
 
   Future<bool> _onCloseDetailPage(_MediaInfoModel model) {
-    Navigator.pop(context, model.detail);
+    Navigator.of(context).pop(model.detail);
     return Future.value(false);
   }
 
@@ -156,10 +156,10 @@ class _RemoteMediaDetailPageState extends BasePageState<RemoteMediaDetailPage> {
   void _showUserProfile(String userId) async {
     final currentProfile = Provider.of<UserProfile>(context, listen: false);
     if (userId != currentProfile.userId) {
-      final profile = await ProfileQueryService.current(context).get(userId);
-      Navigator.pushNamed(context, AppRoute.ProfileViewer, arguments: profile);
+      final profile = await ProfileQueryService.of(context).get(userId);
+      Navigator.of(context).pushNamed(AppRoute.ProfileViewer, arguments: profile);
     } else {
-      Navigator.pushNamed(context, AppRoute.ProfileViewer);
+      Navigator.of(context).pushNamed(AppRoute.ProfileViewer);
     }
   }
 
@@ -358,13 +358,13 @@ class _MediaFeedPanelState extends State<_MediaFeedPanel> {
   void _postComment(String comment) async {
     final model = Provider.of<_MediaInfoModel>(context, listen: false);
     try {
-      await MediaUpdateService.current(context).postComment(model.mediaUri, comment);
+      await MediaUpdateService.of(context).postComment(model.mediaUri, comment);
       showSuccessSnackBar(context, 'Scribe for "${model.detail.title}" has been posted');
       _endEditingComment();
     } catch (e) {
       showSimpleDialog(context, "Post failed", e.toString());
     }
-    MediaQueryService.current(context).viewDetail(model.mediaUri).then(model.refresh);
+    MediaQueryService.of(context).viewDetail(model.mediaUri).then(model.refresh);
   }
 }
 
@@ -397,10 +397,10 @@ class _MediaCommentListState extends BasePagingState<_MediaCommentList, MediaCom
   void _showUserProfile(String userId) async {
     final currentProfile = Provider.of<UserProfile>(context, listen: false);
     if (userId != currentProfile.userId) {
-      final profile = await ProfileQueryService.current(context).get(userId);
-      Navigator.pushNamed(context, AppRoute.ProfileViewer, arguments: profile);
+      final profile = await ProfileQueryService.of(context).get(userId);
+      Navigator.of(context).pushNamed(AppRoute.ProfileViewer, arguments: profile);
     } else {
-      Navigator.pushNamed(context, AppRoute.ProfileViewer);
+      Navigator.of(context).pushNamed(AppRoute.ProfileViewer);
     }
   }
 
@@ -449,7 +449,7 @@ class _MediaCommentListState extends BasePagingState<_MediaCommentList, MediaCom
 
   void _onActionSelection(_CommentActionItem selection) {
     if (selection.action == _CommentAction.LIKE || selection.action == _CommentAction.DISLIKE) {
-      MediaUpdateService.current(context).changeCommentApproval(selection.commentId, selection.modifier)
+      MediaUpdateService.of(context).changeCommentApproval(selection.commentId, selection.modifier)
           .catchError((error) => showSimpleDialog(context, 'Failure', error.toString()))
           .then(_refreshItem)
           .then((_) => _showSnackBar(context, selection.item, selection.modifier));
@@ -475,7 +475,7 @@ class _MediaCommentListState extends BasePagingState<_MediaCommentList, MediaCom
 
   @override
   Future<ResultPage<MediaCommentInfo>> loadNextPage(PagingParameter parameter) {
-    return CommentQueryService.current(context).listMediaComments(widget.mediaUri, parameter);
+    return CommentQueryService.of(context).listMediaComments(widget.mediaUri, parameter);
   }
 
   Column _buildNoContent(BuildContext context) {
@@ -571,7 +571,7 @@ class _ApprovalButton extends StatelessWidget {
     VoidCallback onPressed;
     if (media.userApprovalModifier == null || media.userApprovalModifier == _inverseApproval) {
       onPressed = () {
-        MediaUpdateService.current(context).changeMediaApproval(model.mediaUri, _approval)
+        MediaUpdateService.of(context).changeMediaApproval(model.mediaUri, _approval)
             .catchError((error) => showSimpleDialog(context, 'Failure', error.toString()))
             .then(model.refresh)
             .then((_) => _showSnackBar(context, media, _approval));
@@ -665,7 +665,7 @@ class RemotePictureDisplay extends StatelessWidget {
 
   Future<Map<String, String>> _buildRequestHeader(BuildContext context) {
     try {
-      return MediaQueryService.current(context).buildImagePreviewHeader();
+      return MediaQueryService.of(context).buildImagePreviewHeader();
     } catch (e) {
       return null;
     }
@@ -746,7 +746,7 @@ class _RemoteVideoDisplayState extends State<RemoteVideoDisplay> {
   @override
   void initState() {
     super.initState();
-    _actionSubscription = EventBus.current(context).on<VideoAction>().listen((event) {
+    _actionSubscription = EventBus.of(context).on<VideoAction>().listen((event) {
       _chewieController?.pause();
     });
     final url = MediaQueryService.toVideoUrl(widget.media.mediaUri);

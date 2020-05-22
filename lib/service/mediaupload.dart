@@ -6,7 +6,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_uploader/flutter_uploader.dart';
-import 'package:provider/provider.dart';
 import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/cameradevice.dart';
 import 'package:social_alert_app/service/configuration.dart';
@@ -417,8 +416,7 @@ class MediaUploadService extends Service {
 
   MediaUploadList _uploads;
 
-  static MediaUploadService current(BuildContext context) =>
-      Provider.of<MediaUploadService>(context, listen: false);
+  static MediaUploadService of(BuildContext context) => ServiceProvider.of(context);
 
   MediaUploadService(BuildContext context) : super(context) {
     _uploadSubscription = _uploadResultStream.listen(_uploadStreamController.add, onError: _uploadStreamController.addError, onDone: _uploadStreamController.close);

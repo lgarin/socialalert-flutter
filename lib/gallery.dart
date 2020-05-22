@@ -22,7 +22,7 @@ class _GalleryDisplayState extends BasePagingState<GalleryDisplay, MediaInfo> {
   static final spacing = 4.0;
 
   Future<MediaInfoPage> loadNextPage(PagingParameter parameter) {
-    return MediaQueryService.current(context).listMedia(widget.categoryToken, widget.keywords, parameter);
+    return MediaQueryService.of(context).listMedia(widget.categoryToken, widget.keywords, parameter);
   }
 
   Widget buildContent(BuildContext context, List<MediaInfo> data) {

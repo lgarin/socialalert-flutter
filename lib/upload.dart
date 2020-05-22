@@ -38,7 +38,7 @@ class _UploadManagerPageState extends BasePageState<UploadManagerPage> {
 
   @override
   AppBar buildAppBar() {
-    if (Navigator.canPop(context)) {
+    if (Navigator.of(context).canPop()) {
       return AppBar(title: Text('My Uploads'));
     }
     return super.buildAppBar();
@@ -126,7 +126,7 @@ class _UploadManagerPageState extends BasePageState<UploadManagerPage> {
 
     return FutureBuilder(
       key: ValueKey(task.id),
-      future: VideoEncoder.current(context).createThumbnail(task.file),
+      future: VideoEncoder.of(context).createThumbnail(task.file),
       builder: (context, snapshot) {
         if (snapshot.data == null) {
           return SizedBox(height: 160, width: 90, child: LoadingCircle());
@@ -187,7 +187,7 @@ class _UploadManagerPageState extends BasePageState<UploadManagerPage> {
         _onConfirmUploadDeletion(item.task);
       }
     } else if (item.action == _UploadErrorAction.RETRY) {
-      MediaUploadService.current(context).restartTask(item.task);
+      MediaUploadService.of(context).restartTask(item.task);
     }
   }
 
@@ -196,7 +196,7 @@ class _UploadManagerPageState extends BasePageState<UploadManagerPage> {
   }
 
   void _onConfirmUploadDeletion(MediaUploadTask task) {
-    MediaUploadService.current(context).deleteTask(task);
+    MediaUploadService.of(context).deleteTask(task);
   }
 
   void _onItemSelected(MediaUploadTask task) {

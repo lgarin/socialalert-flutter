@@ -164,11 +164,11 @@ class _LoginFormState extends State<_LoginForm> {
   }
 
   Future<UserProfile> _findCurrentUser(BuildContext context) async {
-    return await Authentication.current(context).currentUser();
+    return await Authentication.of(context).currentUser();
   }
 
   Future<_LoginModel> _prepareModel(BuildContext context) async {
-    final credential = await Authentication.current(context).initialCredential;
+    final credential = await Authentication.of(context).initialCredential;
     return _LoginModel.fromCredential(credential);
   }
 
@@ -185,15 +185,15 @@ class _LoginFormState extends State<_LoginForm> {
 
   void _showNextPage(UserProfile userProfile) {
     if (userProfile.anonym) {
-      Future(() => Navigator.pushReplacementNamed(context, AppRoute.UploadManager, arguments: userProfile));
+      Future(() => Navigator.of(context).pushReplacementNamed(AppRoute.UploadManager, arguments: userProfile));
     } else {
-      Future(() => Navigator.pushReplacementNamed(context, AppRoute.Home, arguments: userProfile));
+      Future(() => Navigator.of(context).pushReplacementNamed(AppRoute.Home, arguments: userProfile));
     }
   }
 
   Future<UserProfile> _authenticateUser(Credential credential) async {
     try {
-      final userProfile = await Authentication.current(context).authenticate(credential);
+      final userProfile = await Authentication.of(context).authenticate(credential);
       _showNextPage(userProfile);
       return userProfile;
     } catch (e) {

@@ -54,9 +54,9 @@ class _NotificationHookState extends State<_NotificationHook> {
   @override
   void initState() {
     super.initState();
-    _uploadResultListener = MediaUploadService.current(context).uploadResultStream.listen(_showUploadSnackBar);
-    _userProfileListener = ProfileUpdateService.current(context).profileStream.listen(_showUserProfileSnackBar);
-    _pageListener = EventBus.current(context).on<PageEvent>().listen(_onPageEvent);
+    _uploadResultListener = MediaUploadService.of(context).uploadResultStream.listen(_showUploadSnackBar);
+    _userProfileListener = ProfileUpdateService.of(context).profileStream.listen(_showUserProfileSnackBar);
+    _pageListener = EventBus.of(context).on<PageEvent>().listen(_onPageEvent);
   }
 
   void _onPageEvent(PageEvent event) {
@@ -94,7 +94,7 @@ class _NotificationHookState extends State<_NotificationHook> {
 
   void _showSnackBar(String message, Color color, SnackBarAction action) {
 
-    if (PageManager.current(context).currentPageName != widget.pageName) {
+    if (PageManager.of(context).currentPageName != widget.pageName) {
       _previousEvents.add(_NotificationEvent(message, color, action, DateTime.now()));
       return;
     }
@@ -136,13 +136,13 @@ class _NotificationHookState extends State<_NotificationHook> {
 
   void _onEditUpload(MediaUploadTask task) {
     if (task.isNew) {
-      Navigator.pushNamed(context, AppRoute.AnnotateMedia, arguments: task);
+      Navigator.of(context).pushNamed(AppRoute.AnnotateMedia, arguments: task);
     }
   }
 
   void _onRestartUpload(MediaUploadTask task) {
     if (task.hasError) {
-      MediaUploadService.current(context).restartTask(task);
+      MediaUploadService.of(context).restartTask(task);
     }
   }
 
@@ -159,14 +159,14 @@ class _NotificationHookState extends State<_NotificationHook> {
       _currentUserProfile = profile;
     }
 
-    if (!profile.anonym && profile.incomplete && PageManager.current(context).currentPageName != AppRoute.ProfileEditor) {
+    if (!profile.anonym && profile.incomplete && PageManager.of(context).currentPageName != AppRoute.ProfileEditor) {
       showWarningSnackBar('Your profile is missing some information',
           action: SnackBarAction(label: 'Edit', onPressed: _onEditProfile));
     }
   }
 
   void _onEditProfile() {
-    Navigator.pushNamed(context, AppRoute.ProfileEditor);
+    Navigator.of(context).pushNamed(AppRoute.ProfileEditor);
   }
 
   void _showAllUploadSnackBars(MediaUploadList uploadList) {
@@ -210,7 +210,7 @@ abstract class BasePageState<T extends StatefulWidget> extends State<T> {
   }
 
   Widget buildDrawer() {
-    if (Navigator.canPop(context)) {
+    if (Navigator.of(context).canPop()) {
       return null;
     }
     return UserMenu(currentPage: pageName);
@@ -227,7 +227,7 @@ abstract class BasePageState<T extends StatefulWidget> extends State<T> {
 
   void _captureMedia(BuildContext context) async {
     final requestedPermissions = [Permission.camera, Permission.microphone, Permission.locationWhenInUse];
-    if (await PermissionManager.current(context).allows(requestedPermissions)) {
+    if (await PermissionManager.of(context).allows(requestedPermissions)) {
       Navigator.of(context).pushNamed(AppRoute.CaptureMedia);
     }
   }

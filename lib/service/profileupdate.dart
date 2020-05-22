@@ -158,7 +158,7 @@ class ProfileUpdateService extends Service {
     _userLoginSubscription = _updateApi.avatarUploadStream.map(_mapResponse).skipWhile((element) => element == null).listen(_profileStreamController.add, onError: _profileStreamController.addError, onDone: _profileStreamController.close);
   }
 
-  static ProfileUpdateService current(BuildContext context) => ServiceProvider.of(context);
+  static ProfileUpdateService of(BuildContext context) => ServiceProvider.of(context);
 
   _ProfileUpdateApi get _updateApi => _ProfileUpdateApi(lookup());
   Authentication get _authService => lookup();

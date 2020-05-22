@@ -33,7 +33,7 @@ class _ProfileQueryApi {
 
 class ProfileQueryService extends Service {
 
-  static ProfileQueryService current(BuildContext context) => ServiceProvider.of(context);
+  static ProfileQueryService of(BuildContext context) => ServiceProvider.of(context);
 
   ProfileQueryService(BuildContext context) : super(context);
 

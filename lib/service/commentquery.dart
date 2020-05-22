@@ -34,7 +34,7 @@ class _CommentQueryApi {
 
 class CommentQueryService extends Service {
 
-  static CommentQueryService current(BuildContext context) => ServiceProvider.of(context);
+  static CommentQueryService of(BuildContext context) => ServiceProvider.of(context);
 
   CommentQueryService(BuildContext context) : super(context);
 

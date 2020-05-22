@@ -15,7 +15,7 @@ class DeviceInfo {
 class CameraDevice extends Service {
   final deviceInfo = DeviceInfoPlugin();
 
-  static CameraDevice current(BuildContext context) => ServiceProvider.of(context);
+  static CameraDevice of(BuildContext context) => ServiceProvider.of(context);
 
   CameraDevice(BuildContext context) : super(context);
 

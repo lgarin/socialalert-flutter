@@ -36,7 +36,7 @@ class _UserNetworkPageState extends BasePageState<UserNetworkPage> {
   @override
   Widget buildBody(BuildContext context) {
     return FutureBuilder(
-      future: ProfileQueryService.current(context).getFollowedUsers(),
+      future: ProfileQueryService.of(context).getFollowedUsers(),
       builder: _buildContent,
     );
   }
@@ -82,7 +82,7 @@ class _UserNetworkPageState extends BasePageState<UserNetworkPage> {
 
   void _unfollowUser(UserProfile profile) async {
     try {
-      await ProfileUpdateService.current(context).unfollowUser(profile.userId);
+      await ProfileUpdateService.of(context).unfollowUser(profile.userId);
       showWarningSnackBar(context, 'User "${profile.username}" has been removed from your network');
       setState(() {
         followedProfiles.remove(profile);
@@ -121,7 +121,7 @@ class _UserNetworkPageState extends BasePageState<UserNetworkPage> {
   }
 
   void _showUserProfile(UserProfile profile) async {
-    UserProfile newProfile = await Navigator.pushNamed(context, AppRoute.ProfileViewer, arguments: profile);
+    UserProfile newProfile = await Navigator.of(context).pushNamed(AppRoute.ProfileViewer, arguments: profile);
     if (!newProfile.followed) {
       setState(() {
         followedProfiles.remove(profile);

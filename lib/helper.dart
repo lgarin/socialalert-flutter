@@ -57,7 +57,7 @@ Future<bool> showConfirmDialog(BuildContext context, String title, String messag
 void _showSnackBar(BuildContext context, String message, Color color, SnackBarAction action) {
   var scaffoldState = Scaffold.of(context, nullOk: true);
   if (scaffoldState == null) {
-    scaffoldState = PageManager.current(context).currentPageState;
+    scaffoldState = PageManager.of(context).currentPageState;
   }
   if (scaffoldState != null) {
     scaffoldState.showSnackBar(SnackBar(content: Text(message, style: TextStyle(color: color)), action: action));

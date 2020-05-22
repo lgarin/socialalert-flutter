@@ -140,11 +140,11 @@ class _MapDisplayState extends State<MapDisplay> {
   void initState() {
     super.initState();
     postionSubscription = _createPositionSubscription();
-    GeoLocationService.current(context).readPosition(100.0);
+    GeoLocationService.of(context).readPosition(100.0);
   }
 
   StreamSubscription<GeoPosition> _createPositionSubscription() {
-    return GeoLocationService.current(context).positionStream.listen((event) {
+    return GeoLocationService.of(context).positionStream.listen((event) {
       if (_mapController != null) {
         _mapController.animateCamera(CameraUpdate.newLatLng(LatLng(event.latitude, event.longitude)));
       }
@@ -305,7 +305,7 @@ class _MapDisplayState extends State<MapDisplay> {
   }
 
   Future<GeoPosition> _readLastKnownPosition() async {
-    final position = await GeoLocationService.current(context).readLastKnownPosition();
+    final position = await GeoLocationService.of(context).readLastKnownPosition();
     if (position == null) {
       await showSimpleDialog(context, 'No GPS signal', 'Current position not available');
     }
@@ -350,7 +350,7 @@ class _MapDisplayState extends State<MapDisplay> {
       final result = await _queryMatchingMedia(bounds);
       List<Clusterable> clusters;
       if (result.nextPage != null) {
-        final statistic = await MediaQueryService.current(context).mapMediaCount(widget.categoryToken, widget.keywords, bounds);
+        final statistic = await MediaQueryService.of(context).mapMediaCount(widget.categoryToken, widget.keywords, bounds);
         clusters = _buildStatisticClusters(statistic, bounds, zoomLevel);
       } else {
         clusters = _buildMediaClusters(result.content, bounds, zoomLevel);
@@ -369,7 +369,7 @@ class _MapDisplayState extends State<MapDisplay> {
   }
 
   Future<MediaInfoPage> _queryMatchingMedia(LatLngBounds bounds) {
-    return MediaQueryService.current(context).listMedia(
+    return MediaQueryService.of(context).listMedia(
         widget.categoryToken, widget.keywords, PagingParameter(pageSize: maxThumbnailCount, pageNumber: 0), bounds: bounds);
   }
 

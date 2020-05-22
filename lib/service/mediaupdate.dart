@@ -54,7 +54,7 @@ class MediaUpdateService extends Service {
 
   MediaUpdateService(BuildContext context) : super(context);
 
-  static MediaUpdateService current(BuildContext context) => ServiceProvider.of(context);
+  static MediaUpdateService of(BuildContext context) => ServiceProvider.of(context);
 
   Authentication get _authService => lookup();
   _MediaUpdateApi get _updateApi => _MediaUpdateApi(lookup());

@@ -33,7 +33,7 @@ class _PageWrapperState extends State<PageWrapper> {
   @override
   void initState() {
     super.initState();
-    _pageManager = PageManager.current(context);
+    _pageManager = PageManager.of(context);
     _pageManager.pushPage(widget.pageKey, widget.pageName);
   }
 
@@ -59,7 +59,7 @@ class _PageWrapperState extends State<PageWrapper> {
 
 class PageManager extends Service {
 
-  static PageManager current(BuildContext context) => ServiceProvider.of(context);
+  static PageManager of(BuildContext context) => ServiceProvider.of(context);
 
   final _pageKeys = List<GlobalKey<ScaffoldState>>();
   final _pageNames = List<String>();

@@ -8,7 +8,7 @@ import 'package:social_alert_app/service/serviceprodiver.dart';
 
 class FileSystem extends Service {
 
-  static FileSystem current(BuildContext context) => ServiceProvider.of(context);
+  static FileSystem of(BuildContext context) => ServiceProvider.of(context);
 
   FileSystem(BuildContext context) : super(context);
 

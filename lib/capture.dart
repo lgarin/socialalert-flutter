@@ -63,8 +63,8 @@ class _CaptureMediaPageState extends State<CaptureMediaPage> {
   @override
   void initState() {
     super.initState();
-    _asyncPosition = GeoLocationService.current(context).readPosition(20.0);
-    _asyncDevice = CameraDevice.current(context).info;
+    _asyncPosition = GeoLocationService.of(context).readPosition(20.0);
+    _asyncDevice = CameraDevice.of(context).info;
   }
 
 
@@ -104,12 +104,12 @@ class _CaptureMediaPageState extends State<CaptureMediaPage> {
   void _onPictureCapture() async {
     cameraNotifier.value = null;
     try {
-      File outputFile = await FileSystem.current(context).defineOutputFile('jpg');
+      File outputFile = await FileSystem.of(context).defineOutputFile('jpg');
       await _cameraController.takePicture(outputFile.path);
       final device = await _asyncDevice;
       final position = await _asyncPosition;
       final task = MediaUploadTask(file: outputFile, type: MediaUploadType.PICTURE, position: position, device: device);
-      await MediaUploadService.current(context).saveTask(task);
+      await MediaUploadService.of(context).saveTask(task);
       Navigator.of(context).pushReplacementNamed(AppRoute.AnnotateMedia, arguments: task);
     } catch (e) {
       print(e);
@@ -130,8 +130,8 @@ class _CaptureMediaPageState extends State<CaptureMediaPage> {
         await _cameraController.resumeVideoRecording();
         cameraNotifier.value = _cameraController?.value;
       } else {
-        _videoFile = await FileSystem.current(context).defineOutputFile('mp4');
-        _videoMonitor = FileSystem.current(context).createFileSizeMonitor(_videoFile, MediaUploadTask.maximumFileSize, _onMaximumVideoSize);
+        _videoFile = await FileSystem.of(context).defineOutputFile('mp4');
+        _videoMonitor = FileSystem.of(context).createFileSizeMonitor(_videoFile, MediaUploadTask.maximumFileSize, _onMaximumVideoSize);
         await _cameraController.startVideoRecording(_videoFile.path);
         cameraNotifier.value = _cameraController?.value;
       }
@@ -151,7 +151,7 @@ class _CaptureMediaPageState extends State<CaptureMediaPage> {
       final device = await _asyncDevice;
       final position = await _asyncPosition;
       final task = MediaUploadTask(file: _videoFile, type: MediaUploadType.VIDEO, position: position, device: device);
-      await MediaUploadService.current(context).saveTask(task);
+      await MediaUploadService.of(context).saveTask(task);
       Navigator.of(context).pushReplacementNamed(AppRoute.AnnotateMedia, arguments: task);
     } catch (e) {
       _videoFile = null;
@@ -172,7 +172,7 @@ class _CaptureMediaPageState extends State<CaptureMediaPage> {
   }
 
   Future<CameraController> _createCameraController(BuildContext context) async {
-    _cameraController = await CameraDevice.current(context).findCamera(_lensDirection, _videoMode ? ResolutionPreset.high : ResolutionPreset.max);
+    _cameraController = await CameraDevice.of(context).findCamera(_lensDirection, _videoMode ? ResolutionPreset.high : ResolutionPreset.max);
     cameraNotifier.value = _cameraController?.value;
     return _cameraController;
   }
