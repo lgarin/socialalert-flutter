@@ -62,7 +62,7 @@ class _RemoteMediaDetailPageState extends BasePageState<RemoteMediaDetailPage> {
   @override
   void initState() {
     super.initState();
-    _tabSelectionModel.addListener(() => WidgetsBinding.instance.addPostFrameCallback((_) => _scrollController.jumpTo(_scrollController.position.maxScrollExtent)));
+    _tabSelectionModel.addListener(() => scrollToEnd(_scrollController));
   }
 
   AppBar buildAppBar() {
@@ -310,12 +310,8 @@ class _MediaFeedPanelState extends State<_MediaFeedPanel> {
     );
   }
 
-  Container _buildCommentField(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.all(Radius.circular(10))),
-      padding: EdgeInsets.all(10),
+  Widget _buildCommentField(BuildContext context) {
+    return WideRoundedField(
       child: TextFormField(
         onSaved: _postComment,
         autofocus: true,

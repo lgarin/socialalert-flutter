@@ -284,11 +284,7 @@ class _GenderFormField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
   _ProfileFormModel model = Provider.of(context);
-    return Container(
-      decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.all(Radius.circular(10))),
-      padding: EdgeInsets.all(10),
+    return WideRoundedField(
       child: DropdownButtonFormField<Gender>(
         onChanged: model.setGender,
         value: model.gender,
@@ -321,11 +317,7 @@ class _BirthdateFormField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     _ProfileFormModel model = Provider.of(context);
-    return Container(
-      decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.all(Radius.circular(10))),
-      padding: EdgeInsets.all(10),
+    return WideRoundedField(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -385,11 +377,7 @@ class _CountryFormField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-        decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.all(Radius.circular(10))),
-        padding: EdgeInsets.all(10),
+    return WideRoundedField(
         child: FutureBuilder(
           future: ProfileUpdateService.of(context).readValidCountries(),
           builder: _buildInput,
@@ -429,11 +417,7 @@ class _FirstnameFormField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     _ProfileFormModel model = Provider.of(context);
-    return Container(
-      decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.all(Radius.circular(10))),
-      padding: EdgeInsets.all(10),
+    return WideRoundedField(
       child: TextFormField(
         initialValue: model.firstname,
         onSaved: model.setFirstname,
@@ -451,11 +435,7 @@ class _LastnameFormField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     _ProfileFormModel model = Provider.of(context);
-    return Container(
-      decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.all(Radius.circular(10))),
-      padding: EdgeInsets.all(10),
+    return WideRoundedField(
       child: TextFormField(
         initialValue: model.lastname,
         onSaved: model.setLastname,
@@ -474,11 +454,7 @@ class _BiographyFormField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     _ProfileFormModel model = Provider.of(context);
-    return Container(
-      decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.all(Radius.circular(10))),
-      padding: EdgeInsets.all(10),
+    return WideRoundedField(
       child: TextFormField(
         initialValue: model.biography,
         keyboardType: TextInputType.multiline,
@@ -501,18 +477,9 @@ class _ProfileSaveButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(width: double.infinity,
-        height: 40,
-        child:
-        RaisedButton(
-          child: Text('Save',
-              style: Theme.of(context).textTheme.button),
-          onPressed: onSave,
-          color: Theme.of(context).buttonColor,
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(
-                  Radius.circular(20))),
-        )
+    return WideRoundedButton(
+      text: 'Save',
+      onPressed: onSave,
     );
   }
 }
@@ -626,7 +593,7 @@ class _ProfileViewerPageState extends _BaseProfilePageState<ProfileViewerPage> {
   @override
   void initState() {
     super.initState();
-    _tabSelectionModel.addListener(() => WidgetsBinding.instance.addPostFrameCallback((_) => _scrollController.jumpTo(_scrollController.position.maxScrollExtent)));
+    _tabSelectionModel.addListener(() => scrollToEnd(_scrollController));
   }
 
   @override

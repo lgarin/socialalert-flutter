@@ -246,11 +246,7 @@ class _TitleWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.all(Radius.circular(10))),
-      padding: EdgeInsets.all(10),
+    return WideRoundedField(
       child: TextFormField(
         autofocus: !model.hasTitleInput(),
         initialValue: model.title,
@@ -290,12 +286,7 @@ class _TagsWidget extends StatelessWidget {
     if (tags.length < maxTags) {
       children.add(_buildInput(state));
     }
-    return Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.all(Radius.circular(10))),
-        padding: EdgeInsets.all(10),
+    return WideRoundedField(
         child:Wrap(children: children, spacing: 5, runSpacing: 5,)
     );
   }
@@ -408,18 +399,9 @@ class _PublishButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final userProfile = Provider.of<UserProfile>(context, listen: false);
-    return SizedBox(width: double.infinity,
-        height: 40,
-        child:
-        RaisedButton(
-          child: Text(userProfile.anonym ? 'Save' : 'Publish',
-              style: Theme.of(context).textTheme.button),
-          onPressed: () => EventBus.of(context).fire(_MediaAction.PUBLISH),
-          color: Theme.of(context).buttonColor,
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(
-                  Radius.circular(20))),
-        )
+    return WideRoundedButton(
+        text: userProfile.anonym ? 'Save' : 'Publish',
+        onPressed: () => EventBus.of(context).fire(_MediaAction.PUBLISH)
     );
   }
 }

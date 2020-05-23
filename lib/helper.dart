@@ -156,6 +156,10 @@ Future<BitmapDescriptor> drawMapLocationMarker(double radius) async {
   return BitmapDescriptor.fromBytes(data.buffer.asUint8List());
 }
 
+void scrollToEnd(ScrollController controller) {
+  WidgetsBinding.instance.addPostFrameCallback((_) => controller.jumpTo(controller.position.maxScrollExtent));
+}
+
 class NoAnimationMaterialPageRoute<T> extends MaterialPageRoute<T> {
   NoAnimationMaterialPageRoute({
     @required WidgetBuilder builder,
@@ -172,5 +176,55 @@ class NoAnimationMaterialPageRoute<T> extends MaterialPageRoute<T> {
   Widget buildTransitions(BuildContext context, Animation<double> animation,
       Animation<double> secondaryAnimation, Widget child) {
     return child;
+  }
+}
+
+class WideRoundedButton extends StatelessWidget {
+
+  static const radius = 20.0;
+
+  final String text;
+  final VoidCallback onPressed;
+  final Color color;
+
+  WideRoundedButton({Key key, @required this.text, this.onPressed, this.color}) : super(key: key);
+
+  Widget build(BuildContext context) {
+    return SizedBox(
+        width: double.infinity,
+        height: 2 * radius,
+        child: RaisedButton(
+          child: Text(text, style: Theme
+              .of(context)
+              .textTheme
+              .button),
+          onPressed: onPressed,
+          color: color ?? Theme.of(context).buttonColor,
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(radius))
+          ),
+        )
+    );
+  }
+}
+
+class WideRoundedField extends StatelessWidget {
+
+  static const radius = 10.0;
+
+  final Widget child;
+
+  WideRoundedField({Key key, this.child}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.all(Radius.circular(radius))),
+        padding: EdgeInsets.all(radius),
+        child: child,
+    );
   }
 }

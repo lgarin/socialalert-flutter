@@ -25,21 +25,13 @@ class _LoginModel {
   void setUsername(String newUsername) => _username = newUsername;
   void setPassword(String newPassword) => _password = newPassword;
 
-  bool hasInput() {
-    return _username != '' || _password != '';
-  }
+  bool hasInput() => hasUsernameInput() || hasPasswordInput();
 
-  bool hasUsernameInput() {
-    return _username != '';
-  }
+  bool hasUsernameInput() => _username != '';
 
-  bool hasPasswordInput() {
-    return _password != '';
-  }
+  bool hasPasswordInput() => _password != '';
 
-  bool isDefined() {
-    return hasUsernameInput() && hasPasswordInput();
-  }
+  bool isDefined() => hasUsernameInput() && hasPasswordInput();
 
   Credential toCredential() => Credential(username, password);
 }
@@ -68,19 +60,14 @@ class _UsernameWidget extends StatelessWidget {
   static const label = 'Username';
 
   _UsernameWidget({
-    Key key,
     @required this.model,
-  }) : super(key: key);
+  });
 
   final _LoginModel model;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.all(Radius.circular(10))),
-      padding: EdgeInsets.all(10),
+    return WideRoundedField(
       child: TextFormField(
         autofocus: !model.hasUsernameInput(),
         initialValue: model.username,
@@ -99,29 +86,25 @@ class _PasswordWidget extends StatelessWidget {
   static const label = 'Password';
 
   _PasswordWidget({
-    Key key,
     @required this.model,
-  }) : super(key: key);
+  });
 
   final _LoginModel model;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-        decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.all(Radius.circular(10))),
-        padding: EdgeInsets.all(10),
-        child: TextFormField(
-          autofocus: model.hasUsernameInput() && !model.hasPasswordInput(),
-          initialValue: model.password,
-          onSaved: model.setPassword,
-          obscureText: true,
-          decoration: InputDecoration(
-              hintText: label,
-              icon: Icon(Icons.lock_open)),
-          validator: RequiredValidator(errorText: "$label required"),
-        ));
+    return WideRoundedField(
+      child: TextFormField(
+        autofocus: model.hasUsernameInput() && !model.hasPasswordInput(),
+        initialValue: model.password,
+        onSaved: model.setPassword,
+        obscureText: true,
+        decoration: InputDecoration(
+            hintText: label,
+            icon: Icon(Icons.lock_open)),
+        validator: RequiredValidator(errorText: "$label required"),
+      )
+    );
   }
 }
 
@@ -130,24 +113,31 @@ class _LoginButton extends StatelessWidget {
   static const label = 'Login';
 
   _LoginButton({
-    Key key,
     @required this.onLogin
-  }) : super(key: key);
+  });
 
   final VoidCallback onLogin;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(width: double.infinity,
-        height: 40,
-        child:
-        RaisedButton(
-          child: Text(label, style: Theme.of(context).textTheme.button),
-          onPressed: onLogin,
-          color: color,
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(Radius.circular(20))),
-        )
+    return WideRoundedButton(
+      text: label,
+      onPressed: onLogin,
+      color: color
+    );
+  }
+}
+
+class _RegisterButton extends StatelessWidget {
+  static const color = Color.fromARGB(255, 32, 47, 128);
+  static const label = 'Register';
+
+  @override
+  Widget build(BuildContext context) {
+    return WideRoundedButton(
+        text: label,
+        onPressed: () => Navigator.of(context).pushNamed(AppRoute.Register),
+        color: color,
     );
   }
 }
@@ -236,10 +226,9 @@ class _LoginWidget extends StatelessWidget {
   static const spacing = 10.0;
 
   _LoginWidget({
-    Key key,
     @required this.formKey,
     @required this.onLogin,
-  }) : super(key: key);
+  });
 
   final GlobalKey<FormState> formKey;
   final VoidCallback onLogin;
@@ -259,7 +248,9 @@ class _LoginWidget extends StatelessWidget {
             SizedBox(height: spacing),
             _PasswordWidget(model: model),
             SizedBox(height: spacing),
-            _LoginButton(onLogin: onLogin)
+            _LoginButton(onLogin: onLogin),
+            SizedBox(height: spacing),
+            _RegisterButton()
           ],
         ));
   }
@@ -283,6 +274,7 @@ class LoginPage extends StatelessWidget implements ScaffoldPage {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+        key: scaffoldKey,
         backgroundColor: Theme.of(context).backgroundColor,
         body: _buildBody());
   }
@@ -301,7 +293,7 @@ class LoginPage extends StatelessWidget implements ScaffoldPage {
     return ListView(
             children: <Widget>[
               Container(
-                margin: EdgeInsets.all(margin),
+                margin: EdgeInsets.only(top: margin, left: margin, right: margin),
                 child: _LoginHeader()
               ),
               Container(

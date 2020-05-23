@@ -8,6 +8,7 @@ import 'package:social_alert_app/local.dart';
 import 'package:social_alert_app/login.dart';
 import 'package:social_alert_app/network.dart';
 import 'package:social_alert_app/profile.dart';
+import 'package:social_alert_app/register.dart';
 import 'package:social_alert_app/remote.dart';
 import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/cameradevice.dart';
@@ -26,6 +27,7 @@ import 'package:social_alert_app/service/permission.dart';
 import 'package:social_alert_app/service/profilequery.dart';
 import 'package:social_alert_app/service/profileupdate.dart';
 import 'package:social_alert_app/service/serviceprodiver.dart';
+import 'package:social_alert_app/service/useraccount.dart';
 import 'package:social_alert_app/service/videoencoder.dart';
 import 'package:social_alert_app/settings.dart';
 import 'package:social_alert_app/upload.dart';
@@ -45,6 +47,7 @@ class SocialAlertApp extends StatelessWidget {
           ServiceProvider<GeoLocationService>(create: (context) => GeoLocationService(context)),
           StreamProvider<GeoLocation>(create: (context) => GeoLocationService.of(context).locationStream, lazy: false),
           ServiceProvider<Authentication>(create: (context) => Authentication(context)),
+          ServiceProvider<UserAccountService>(create: (context) => UserAccountService(context)),
           ServiceProvider<ProfileQueryService>(create: (context) => ProfileQueryService(context)),
           ServiceProvider<ProfileUpdateService>(create: (context) => ProfileUpdateService(context)),
           StreamProvider<UserProfile>(create: (context) => ProfileUpdateService.of(context).profileStream, lazy: false),
@@ -94,6 +97,9 @@ class SocialAlertApp extends StatelessWidget {
       case AppRoute.Login: return MaterialPageRoute(
         builder: _createRouteBuilder(settings, LoginPage(GlobalKey<ScaffoldState>()))
       );
+      case AppRoute.Register: return MaterialPageRoute(
+        builder: _createRouteBuilder(settings, RegisterPage(GlobalKey<ScaffoldState>()))
+      );
       case AppRoute.Home: return MaterialPageRoute(
           builder: _createRouteBuilder(settings, HomePage(GlobalKey<ScaffoldState>()))
       );
@@ -137,6 +143,7 @@ class SocialAlertApp extends StatelessWidget {
 
 class AppRoute {
   static const Login = 'login';
+  static const Register = 'register';
   static const Home = 'home';
   static const CaptureMedia = 'captureMedia';
   static const AnnotateMedia = 'annotateMedia';
