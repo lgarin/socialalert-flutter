@@ -42,7 +42,7 @@ class _NotificationEvent {
 
 class _NotificationHookState extends State<_NotificationHook> {
 
-  static final repeatMessageDelay = Duration(seconds: 2);
+  static final repeatMessageDelay = Duration(seconds: 3);
   static final oldUploadAge = Duration(minutes: 2);
 
   StreamSubscription<PageEvent> _pageListener;

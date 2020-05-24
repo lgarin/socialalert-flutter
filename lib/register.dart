@@ -26,15 +26,13 @@ class _RegisterModel {
   void setPassword(String newPassword) => _password = newPassword;
   void setVerification(String newVerification) => _verification = newVerification;
 
-  bool hasInput() => hasUsernameInput() || hasEmailInput() || hasPasswordInput() || hasVerificationInput();
+  bool hasInput() => hasUsernameInput() || hasEmailInput() || hasPasswordInput();
 
   bool hasUsernameInput() => _username != '';
 
   bool hasEmailInput() => _email != '';
 
   bool hasPasswordInput() => _password != '';
-
-  bool hasVerificationInput() => _verification != '';
 }
 
 
@@ -43,17 +41,14 @@ class _UsernameWidget extends StatelessWidget {
 
   _UsernameWidget({
     @required this.model,
-    @required this.focusNode,
   });
 
   final _RegisterModel model;
-  final FocusNode focusNode;
 
   @override
   Widget build(BuildContext context) {
     return WideRoundedField(
       child: TextFormField(
-        focusNode: focusNode,
         autofocus: !model.hasUsernameInput(),
         initialValue: model.username,
         onSaved: model.setUsername,
@@ -113,7 +108,7 @@ class _PasswordWidget extends StatelessWidget {
         child: TextFormField(
           autofocus: model.hasUsernameInput() && model.hasEmailInput() && !model.hasPasswordInput(),
           initialValue: model.password,
-          onChanged: model.setPassword,
+          onChanged: model.setVerification,
           onSaved: model.setPassword,
           obscureText: !model.showPassword,
           decoration: InputDecoration(
@@ -145,9 +140,7 @@ class _VerificationWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return WideRoundedField(
         child: TextFormField(
-          autofocus: model.hasUsernameInput() && model.hasEmailInput() && model.hasPasswordInput() && !model.hasVerificationInput(),
-          initialValue: model.verification,
-          onSaved: model.setVerification,
+          autofocus: model.hasUsernameInput() && model.hasEmailInput() && model.hasPasswordInput(),
           obscureText: !model.showPassword,
           decoration: InputDecoration(
               hintText: label,
@@ -157,7 +150,7 @@ class _VerificationWidget extends StatelessWidget {
                 onPressed: onSwitchVisibility
               )
           ),
-          validator: (val) => MatchValidator(errorText: 'Passwords do not match').validateMatch(val, model.password),
+          validator: (val) => MatchValidator(errorText: 'Passwords do not match').validateMatch(val, model.verification),
         )
     );
   }
@@ -207,7 +200,6 @@ class _RegisterFormState extends State<_RegisterForm> {
 
   final _formKey = GlobalKey<FormState>();
   final _model = _RegisterModel();
-  final _usernameFocus = FocusNode();
 
   @override
   Widget build(BuildContext context) {
@@ -221,7 +213,7 @@ class _RegisterFormState extends State<_RegisterForm> {
   Column _buildContent() {
     return Column(
         children: <Widget>[
-          _UsernameWidget(model: _model, focusNode: _usernameFocus),
+          _UsernameWidget(model: _model),
           SizedBox(height: spacing),
           _EmailWidget(model: _model),
           SizedBox(height: spacing),
@@ -266,10 +258,8 @@ class _RegisterFormState extends State<_RegisterForm> {
       await Navigator.maybePop(context);
       showSuccessSnackBar(context, 'New user account has been created');
     } else {
-      await showSimpleDialog(context, 'Username already exists', 'Please use a different username.');
-      setState(() {
-        _usernameFocus.requestFocus();
-      });
+      // TODO differentiate between duplicated username or email address
+      await showSimpleDialog(context, 'Account already exists', 'Please use a different username or email address.');
     }
   }
 }
