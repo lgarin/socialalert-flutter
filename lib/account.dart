@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:form_field_validator/form_field_validator.dart';
 import 'package:provider/provider.dart';
@@ -142,6 +141,24 @@ class _CancelButton extends StatelessWidget {
   }
 }
 
+class _HintText extends StatelessWidget {
+
+  final IconData icon;
+  final String message;
+
+  _HintText({Key key, this.icon, this.message}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        Icon(icon),
+        SizedBox(width: 10.0),
+        Flexible(child: Text(message)),
+      ]);
+  }
+}
+
 class _DeleteAccountForm extends StatefulWidget {
   @override
   _DeleteAccountFormState createState() => _DeleteAccountFormState();
@@ -165,14 +182,9 @@ class _DeleteAccountFormState extends State<_DeleteAccountForm> {
   Column _buildContent() {
     return Column(
       children: <Widget>[
-        Row(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
-          Icon(Icons.warning),
-          SizedBox(width: spacing),
-          Flexible(child: Text('Your account will be permanently deleted.')),
-        ],),
-
-        SizedBox(height: spacing),
-        Text('Confirm the deletion by entering your password.'),
+        _HintText(icon: Icons.warning,
+          message:'Your account will be permanently deleted. You must confirm this action by entering your current password.'
+        ),
         SizedBox(height: spacing),
         _PasswordWidget(label: 'Password', model: _model, onSwitchVisibility: _onSwitchPasswordVisibility),
         SizedBox(height: spacing),
@@ -238,9 +250,11 @@ class _ChangePasswordFormState extends State<_ChangePasswordForm> {
   Column _buildContent() {
     return Column(
       children: <Widget>[
-        Text('Confirm the password change by entering your current password.'),
+        _HintText(icon: Icons.info,
+          message: 'You must confirm the password change by entering first your current password.'
+        ),
         SizedBox(height: spacing),
-        _PasswordWidget(label: 'Old Password', model: _model, onSwitchVisibility: _onSwitchPasswordVisibility),
+        _PasswordWidget(label: 'Current Password', model: _model, onSwitchVisibility: _onSwitchPasswordVisibility),
         SizedBox(height: spacing),
         _NewPasswordWidget(label: 'New Password', model: _model, onSwitchVisibility: _onSwitchPasswordVisibility),
         SizedBox(height: spacing),

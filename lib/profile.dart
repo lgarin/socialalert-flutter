@@ -500,10 +500,12 @@ abstract class _BaseProfilePageState<T extends StatefulWidget> extends BasePageS
 
   StreamSubscription<AvatarUploadProgress> uploadProgressSubscription;
   String _uploadTaskId;
+  ImagePicker imagePicker;
 
   @override
   void initState() {
     super.initState();
+    imagePicker = ImagePicker();
     uploadProgressSubscription = ProfileUpdateService.of(context).uploadProgressStream.listen((event) {
       if (event.taskId == _uploadTaskId && event.terminal) {
         if (event.error != null) {
@@ -523,9 +525,9 @@ abstract class _BaseProfilePageState<T extends StatefulWidget> extends BasePageS
   }
 
   void _choosePicture() async {
-    final image = await ImagePicker.pickImage(source: ImageSource.gallery);
+    final image = await imagePicker.getImage(source: ImageSource.gallery);
     if (image != null) {
-      _beginUpload(image);
+      _beginUpload(File(image.path));
     }
   }
 
