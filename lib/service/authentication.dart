@@ -21,6 +21,7 @@ class _LoginResponse extends _LoginTokenResponse {
   final String userId;
   final String username;
   final String email;
+  final DateTime createdTimestamp;
   final String firstname;
   final String lastname;
   final String country;
@@ -34,6 +35,7 @@ class _LoginResponse extends _LoginTokenResponse {
     userId = json['id'],
     username = json['username'],
     email = json['email'],
+    createdTimestamp = json['createdTimestamp'] != null ? DateTime.fromMillisecondsSinceEpoch(json['createdTimestamp']) : null,
     firstname = json['firstname'],
     lastname = json['lastname'],
     country = json['country'],
@@ -113,6 +115,7 @@ class UserProfile {
   final String username;
   final bool online;
   final String email;
+  final DateTime createdTimestamp;
   final String firstname;
   final String lastname;
   final String country;
@@ -128,6 +131,7 @@ class UserProfile {
       username = login.username,
       online = true,
       email = login.email,
+      createdTimestamp = login.createdTimestamp,
       firstname = login.firstname,
       lastname = login.lastname,
       imageUri = login.imageUri,
@@ -143,6 +147,7 @@ class UserProfile {
         username = info.username,
         online = info.online,
         email = info.email,
+        createdTimestamp = info.createdTimestamp,
         firstname = info.firstname,
         lastname = info.lastname,
         imageUri = info.imageUri,
@@ -158,6 +163,7 @@ class UserProfile {
         username = null,
         online = false,
         email = null,
+        createdTimestamp = null,
         firstname = null,
         lastname = null,
         country = null,
@@ -173,6 +179,7 @@ class UserProfile {
         username = json['username'],
         online = json['online'],
         email = json['email'],
+        createdTimestamp = json['createdTimestamp'] != null ? DateTime.fromMillisecondsSinceEpoch(json['createdTimestamp']) : null,
         firstname = json['firstname'],
         lastname =  json['lastname'],
         country = json['country'],

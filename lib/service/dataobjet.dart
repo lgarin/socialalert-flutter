@@ -90,6 +90,7 @@ class UserInfo {
   final String username;
   final bool online;
   final String email;
+  final DateTime createdTimestamp;
   final String firstname;
   final String lastname;
   final String country;
@@ -104,6 +105,7 @@ class UserInfo {
         username = json['username'],
         online = json['online'],
         email = json['email'],
+        createdTimestamp = json['createdTimestamp'] != null ? DateTime.fromMillisecondsSinceEpoch(json['createdTimestamp']) : null,
         firstname = json['firstname'],
         lastname = json['lastname'],
         country = json['country'],

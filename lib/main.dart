@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:social_alert_app/account.dart';
 import 'package:social_alert_app/annotate.dart';
 import 'package:social_alert_app/base.dart';
 import 'package:social_alert_app/capture.dart';
@@ -136,6 +137,12 @@ class SocialAlertApp extends StatelessWidget {
       case AppRoute.CaptureMedia: return NoAnimationMaterialPageRoute(
           builder: _createRouteBuilder(settings, CaptureMediaPage(GlobalKey<ScaffoldState>()))
       );
+      case AppRoute.DeleteAccount: return MaterialPageRoute(
+          builder: _createRouteBuilder(settings, DeleteAccountPage(GlobalKey<ScaffoldState>()))
+      );
+      case AppRoute.ChangePassword: return MaterialPageRoute(
+          builder: _createRouteBuilder(settings, ChangePasswordPage(GlobalKey<ScaffoldState>()))
+      );
       default: return null;
     }
   }
@@ -156,4 +163,6 @@ class AppRoute {
   static const ProfileEditor = 'profileEditor';
   static const ProfileViewer = 'profileViewer';
   static const SettingsEditor = 'settingsEditor';
+  static const DeleteAccount = 'deleteAccount';
+  static const ChangePassword = 'changePassword';
 }

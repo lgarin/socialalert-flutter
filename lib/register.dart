@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:form_field_validator/form_field_validator.dart';
 import 'package:social_alert_app/base.dart';
 import 'package:social_alert_app/helper.dart';
+import 'package:social_alert_app/service/configuration.dart';
 import 'package:social_alert_app/service/useraccount.dart';
 
 class _RegisterModel {
@@ -119,7 +120,7 @@ class _PasswordWidget extends StatelessWidget {
                 onPressed: onSwitchVisibility
               )
           ),
-          validator: MinLengthValidator(3, errorText: "At least 3 characters required"),
+          validator: MinLengthValidator(minPasswordLength, errorText: "At least $minPasswordLength characters required"),
         )
     );
   }

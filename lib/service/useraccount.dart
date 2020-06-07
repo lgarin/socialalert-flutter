@@ -1,5 +1,5 @@
 import 'package:flutter/widgets.dart';
-import 'package:social_alert_app/service/authentication.dart';
+import 'package:social_alert_app/service/credential.dart';
 import 'package:social_alert_app/service/datasource.dart';
 import 'package:social_alert_app/service/serviceprodiver.dart';
 
@@ -17,6 +17,19 @@ class _NewUserParameter {
   };
 }
 
+class _ChangePasswordParameter {
+  final String username;
+  final String password;
+  final String newPassword;
+
+  _ChangePasswordParameter(this.username, this.password, this.newPassword);
+
+  Map<String, dynamic> toJson() => {
+    'username': username,
+    'password': password,
+    'newPassword': newPassword,
+  };
+}
 
 class _UserManagerApi {
 
@@ -35,9 +48,17 @@ class _UserManagerApi {
     throw response.reasonPhrase;
   }
 
-  Future<void> changePassword({String password, String accessToken}) async {
+  Future<void> changePassword(_ChangePasswordParameter parameter) async {
     final uri = '/user/changePassword';
-    final response = await dataSource.postText(uri: uri, body: password, accessToken: accessToken);
+    final response = await dataSource.postJson(uri: uri, body: parameter);
+    if (response.statusCode != 204) {
+      throw response.reasonPhrase;
+    }
+  }
+
+  Future<void> deleteAccount(Credential parameter) async {
+    final uri = '/user/delete';
+    final response = await dataSource.postJson(uri: uri, body: parameter);
     if (response.statusCode != 204) {
       throw response.reasonPhrase;
     }
@@ -50,8 +71,6 @@ class UserAccountService extends Service {
 
   static UserAccountService of(BuildContext context) => ServiceProvider.of(context);
 
-  Authentication get _authService => lookup();
-
   _UserManagerApi get _userApi => _UserManagerApi(lookup());
 
   Future<bool> createUser(String username, String email, String password) async {
@@ -63,10 +82,18 @@ class UserAccountService extends Service {
     }
   }
 
-  Future<void> changePassword(String newPassword) async {
-    final accessToken = await _authService.accessToken;
+  Future<void> changePassword(String username, String oldPassword, String newPassword) async {
     try {
-      return await _userApi.changePassword(password: newPassword, accessToken: accessToken);
+      return await _userApi.changePassword(_ChangePasswordParameter(username, oldPassword, newPassword));
+    } catch (e) {
+      print(e);
+      throw e;
+    }
+  }
+
+  Future<void> deleteAccount(String username, String password) async {
+    try {
+      return await _userApi.deleteAccount(Credential(username, password));
     } catch (e) {
       print(e);
       throw e;
