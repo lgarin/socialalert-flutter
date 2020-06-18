@@ -152,18 +152,21 @@ const Map<String, LocationPrivacy> _locationPrivacyMap = {
 
 class UserPrivacy {
   final bool birthdateMasked;
+  final bool genderMasked;
   final bool nameMasked;
   final LocationPrivacy location;
 
-  UserPrivacy({this.birthdateMasked, this.nameMasked, this.location});
+  UserPrivacy({this.birthdateMasked, this.genderMasked, this.nameMasked, this.location});
 
   UserPrivacy.fromJson(Map<String, dynamic> json) :
         birthdateMasked = json['birthdateMasked'] ?? false,
+        genderMasked = json['genderMasked'] ?? false,
         nameMasked = json['nameMasked'] ?? false,
         location = json['location'] != null ? _locationPrivacyMap[json['location']] : null;
 
   Map<String, dynamic> toJson() => {
     'nameMasked': nameMasked,
+    'genderMasked': genderMasked,
     'birthdateMasked': birthdateMasked,
     'location': location != null ? _locationPrivacyNames[location.index] : null,
   };

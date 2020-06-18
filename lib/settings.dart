@@ -145,16 +145,19 @@ class _IdentityPanel extends StatelessWidget {
 
 class _PrivacyFormModel extends ChangeNotifier {
   bool _nameMasked;
+  bool _genderMasked;
   bool _birthdateMasked;
   bool _locationBlurred;
 
   _PrivacyFormModel(UserProfile profile) {
     _nameMasked = profile.privacy.nameMasked;
+    _genderMasked = profile.privacy.genderMasked;
     _birthdateMasked = profile.privacy.birthdateMasked;
     _locationBlurred = profile.privacy.location == LocationPrivacy.BLUR;
   }
 
   bool get nameMasked => _nameMasked;
+  bool get genderMasked => _genderMasked;
   bool get birthdateMasked => _birthdateMasked;
   bool get locationBlurred => _locationBlurred;
 
@@ -162,10 +165,17 @@ class _PrivacyFormModel extends ChangeNotifier {
     _nameMasked = newValue;
     notifyListeners();
   }
+
+  void setGenderMasked(bool newValue) {
+    _genderMasked = newValue;
+    notifyListeners();
+  }
+
   void setBirthdateMasked(bool newValue) {
     _birthdateMasked = newValue;
     notifyListeners();
   }
+
   void setLocationBlurred(bool newValue) {
     _locationBlurred = newValue;
     notifyListeners();
@@ -177,13 +187,14 @@ class _PrivacyFormModel extends ChangeNotifier {
       other is _PrivacyFormModel &&
           runtimeType == other.runtimeType &&
           _nameMasked == other._nameMasked &&
+          _genderMasked == other._genderMasked &&
           _birthdateMasked == other._birthdateMasked &&
           _locationBlurred == other._locationBlurred;
 
   @override
-  int get hashCode => _nameMasked.hashCode ^ _birthdateMasked.hashCode ^ _locationBlurred.hashCode;
+  int get hashCode => _nameMasked.hashCode ^ _genderMasked.hashCode ^ _birthdateMasked.hashCode ^ _locationBlurred.hashCode;
 
-  UserPrivacy toPrivacySettings() => UserPrivacy(nameMasked: _nameMasked, birthdateMasked: _birthdateMasked, location: _locationBlurred ? LocationPrivacy.BLUR : null);
+  UserPrivacy toPrivacySettings() => UserPrivacy(nameMasked: _nameMasked, genderMasked: _genderMasked, birthdateMasked: _birthdateMasked, location: _locationBlurred ? LocationPrivacy.BLUR : null);
 }
 
 class _PrivacyForm extends StatefulWidget {
@@ -217,6 +228,7 @@ class _PrivacyFormState extends State<_PrivacyForm> {
     return Column(
           children: <Widget>[
             _HideNameSwitch(),
+            _HideGenderSwitch(),
             _HideBirthdateSwitch(),
             _BlurLocationSwitch(),
             _PrivacySaveButton(onSave: _onSave, initialSettings: _initialModel)
@@ -257,6 +269,20 @@ class _HideNameSwitch extends StatelessWidget {
         secondary: Icon(Icons.person),
         value: model.nameMasked,
         onChanged: model.setNameMasked
+    );
+  }
+}
+
+class _HideGenderSwitch extends StatelessWidget {
+
+  @override
+  Widget build(BuildContext context) {
+    _PrivacyFormModel model = context.watch();
+    return SwitchListTile(
+        title: Text('Hide gender'),
+        secondary: Icon(Icons.person),
+        value: model.genderMasked,
+        onChanged: model.setGenderMasked
     );
   }
 }
