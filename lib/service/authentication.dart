@@ -146,23 +146,6 @@ class UserProfile {
       privacy = login.privacy,
       followedSince = null;
 
-  UserProfile.fromInfo(UserInfo info) :
-        userId = info.userId,
-        username = info.username,
-        online = info.online,
-        email = info.email,
-        createdTimestamp = info.createdTimestamp,
-        firstname = info.firstname,
-        lastname = info.lastname,
-        imageUri = info.imageUri,
-        country = info.country,
-        birthdate = info.birthdate,
-        biography = info.biography,
-        gender = info.gender,
-        statistic = info.statistic,
-        privacy = info.privacy,
-        followedSince = null;
-
   UserProfile.anonym() :
         userId = null,
         username = null,
