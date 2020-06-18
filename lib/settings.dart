@@ -40,12 +40,20 @@ class SettingsEditorPage extends StatefulWidget implements ScaffoldPage {
 class _SettingsEditorPageState extends BasePageState<SettingsEditorPage> {
 
   final _tabSelectionModel = _SettingsTabSelectionModel();
+  final _scrollController = ScrollController();
 
   _SettingsEditorPageState(GlobalKey<ScaffoldState> scaffoldKey) : super(scaffoldKey, AppRoute.SettingsEditor);
 
   @override
+  void initState() {
+    super.initState();
+    _tabSelectionModel.addListener(() => scrollToEnd(_scrollController));
+  }
+
+  @override
   Widget buildBody(BuildContext context) {
     return ListView(
+      controller: _scrollController,
       children: <Widget>[
         ProfileHeader(tapCallback: _showProfile, tapTooltip: 'Show profile',),
         _buildBottomPanel(context),
@@ -115,7 +123,8 @@ class _IdentityPanel extends StatelessWidget {
           dense: true),
         Divider(height: 5.0),
         _buildPasswordButton(context),
-        _buildDeleteButton(context)
+        _buildDeleteButton(context),
+        SizedBox(height: 80)
       ],
     );
   }
@@ -231,7 +240,8 @@ class _PrivacyFormState extends State<_PrivacyForm> {
             _HideGenderSwitch(),
             _HideBirthdateSwitch(),
             _BlurLocationSwitch(),
-            _PrivacySaveButton(onSave: _onSave, initialSettings: _initialModel)
+            _PrivacySaveButton(onSave: _onSave, initialSettings: _initialModel),
+            SizedBox(height: 80)
           ]
       );
   }
@@ -281,7 +291,7 @@ class _HideGenderSwitch extends StatelessWidget {
     _PrivacyFormModel model = context.watch();
     return SwitchListTile(
         title: Text('Hide gender'),
-        secondary: Icon(Icons.person),
+        secondary: Icon(Icons.wc),
         value: model.genderMasked,
         onChanged: model.setGenderMasked
     );
@@ -331,7 +341,6 @@ class _PrivacySaveButton extends StatelessWidget {
         child: WideRoundedButton(
             text: 'Save',
             onPressed: initialSettings != model ? onSave : null,
-            color: Theme.of(context).primaryColor
         )
     );
   }

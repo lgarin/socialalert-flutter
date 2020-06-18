@@ -212,15 +212,14 @@ class _DeleteAccountFormState extends State<_DeleteAccountForm> {
   void _deleteAccount(String password) async {
     try {
       UserProfile profile = Provider.of(context, listen: false);
-      await Authentication.of(context).signOut();
       await UserAccountService.of(context).deleteAccount(profile.username, password);
+      await Authentication.of(context).signOut();
       final navigator = Navigator.of(context);
       while (navigator.canPop()) {
         await navigator.maybePop();
       }
       navigator.pushReplacementNamed(AppRoute.Login);
-      // TODO context is not valid anymore here
-      //showSuccessSnackBar(context, 'Your account has been fully deleted');
+      // TODO pushReplacement never completes and consequently a snackbar cannot be shown in this case
     } catch (e) {
       showSimpleDialog(context, 'Deletion failure', e.toString());
     }

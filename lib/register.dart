@@ -10,14 +10,12 @@ class _RegisterModel {
   String _username = '';
   String _email = '';
   String _password = '';
-  String _verification = '';
 
   _RegisterModel();
 
   String get username => _username;
   String get email => _email;
   String get password => _password;
-  String get verification => _verification;
 
   bool get showPassword => _showPassword;
   void switchPasswordVisibility() => _showPassword = !_showPassword;
@@ -25,7 +23,6 @@ class _RegisterModel {
   void setUsername(String newUsername) => _username = newUsername;
   void setEmail(String newEmail) => _email = newEmail;
   void setPassword(String newPassword) => _password = newPassword;
-  void setVerification(String newVerification) => _verification = newVerification;
 
   bool hasInput() => hasUsernameInput() || hasEmailInput() || hasPasswordInput();
 
@@ -109,7 +106,6 @@ class _PasswordWidget extends StatelessWidget {
         child: TextFormField(
           autofocus: model.hasUsernameInput() && model.hasEmailInput() && !model.hasPasswordInput(),
           initialValue: model.password,
-          onChanged: model.setVerification,
           onSaved: model.setPassword,
           obscureText: !model.showPassword,
           decoration: InputDecoration(
@@ -121,37 +117,6 @@ class _PasswordWidget extends StatelessWidget {
               )
           ),
           validator: MinLengthValidator(minPasswordLength, errorText: "At least $minPasswordLength characters required"),
-        )
-    );
-  }
-}
-
-class _VerificationWidget extends StatelessWidget {
-  static const label = 'Repeat password';
-
-  _VerificationWidget({
-    @required this.model,
-    @required this.onSwitchVisibility
-  });
-
-  final _RegisterModel model;
-  final VoidCallback onSwitchVisibility;
-
-  @override
-  Widget build(BuildContext context) {
-    return WideRoundedField(
-        child: TextFormField(
-          autofocus: model.hasUsernameInput() && model.hasEmailInput() && model.hasPasswordInput(),
-          obscureText: !model.showPassword,
-          decoration: InputDecoration(
-              hintText: label,
-              icon: Icon(Icons.lock_open),
-              suffixIcon: IconButton(
-                icon: Icon(model.showPassword ? Icons.visibility : Icons.visibility_off),
-                onPressed: onSwitchVisibility
-              )
-          ),
-          validator: (val) => MatchValidator(errorText: 'Passwords do not match').validateMatch(val, model.verification),
         )
     );
   }
@@ -256,7 +221,7 @@ class _RegisterFormState extends State<_RegisterForm> {
 
   Future<void> _handleRegistrationResult(bool result) async {
     if (result) {
-      await Navigator.maybePop(context);
+      await Navigator.of(context).maybePop();
       showSuccessSnackBar(context, 'New user account has been created');
     } else {
       // TODO differentiate between duplicated username or email address
