@@ -30,6 +30,7 @@ class _LoginResponse extends _LoginTokenResponse {
   final String gender;
   final String imageUri;
   final UserStatistic statistic;
+  final UserPrivacy privacy;
 
   _LoginResponse.fromJson(Map<String, dynamic> json) :
     userId = json['id'],
@@ -44,6 +45,7 @@ class _LoginResponse extends _LoginTokenResponse {
     gender = json['gender'],
     imageUri = json['imageUri'],
     statistic = json['statistic'] != null ? UserStatistic.fromJson(json['statistic']) : null,
+    privacy = json['privacy'] != null ? UserPrivacy.fromJson(json['privacy']) : null,
     super.fromJson(json);
 }
 
@@ -124,6 +126,7 @@ class UserProfile {
   final String biography;
   final String gender;
   final UserStatistic statistic;
+  final UserPrivacy privacy;
   final DateTime followedSince;
 
   UserProfile.fromLogin(_LoginResponse login) :
@@ -140,6 +143,7 @@ class UserProfile {
       biography = login.biography,
       gender = login.gender,
       statistic = login.statistic,
+      privacy = login.privacy,
       followedSince = null;
 
   UserProfile.fromInfo(UserInfo info) :
@@ -156,6 +160,7 @@ class UserProfile {
         biography = info.biography,
         gender = info.gender,
         statistic = info.statistic,
+        privacy = info.privacy,
         followedSince = null;
 
   UserProfile.anonym() :
@@ -172,6 +177,7 @@ class UserProfile {
         biography = null,
         gender = null,
         statistic = null,
+        privacy = null,
         followedSince = null;
 
   UserProfile.fromJson(Map<String, dynamic> json) :
@@ -188,6 +194,7 @@ class UserProfile {
         gender = json['gender'],
         imageUri = json['imageUri'],
         statistic = UserStatistic.fromJson(json['statistic']),
+        privacy = UserPrivacy.fromJson(json['privacy']),
         followedSince = json['followedSince'] != null ? DateTime.fromMillisecondsSinceEpoch(json['followedSince']) : null;
 
   static List<UserProfile> fromJsonList(List<dynamic> json) {

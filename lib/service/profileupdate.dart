@@ -6,6 +6,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_uploader/flutter_uploader.dart';
 import 'package:intl/intl.dart';
 import 'package:social_alert_app/service/authentication.dart';
+import 'package:social_alert_app/service/dataobjet.dart';
 import 'package:social_alert_app/service/datasource.dart';
 import 'package:social_alert_app/service/serviceprodiver.dart';
 
@@ -118,6 +119,15 @@ class _ProfileUpdateApi {
   Future<UserProfile> updateProfile(ProfileUpdateRequest request, String accessToken) async {
     final uri = '/user/profile';
     final response = await dataSource.postJson(uri: uri, body: request, accessToken: accessToken);
+    if (response.statusCode == 200) {
+      return UserProfile.fromJson(jsonDecode(response.body));
+    }
+    throw response.reasonPhrase;
+  }
+
+  Future<UserProfile> updatePrivacy(UserPrivacy settings, String accessToken) async {
+    final uri = '/user/privacy';
+    final response = await dataSource.postJson(uri: uri, body: settings, accessToken: accessToken);
     if (response.statusCode == 200) {
       return UserProfile.fromJson(jsonDecode(response.body));
     }
@@ -245,6 +255,18 @@ class ProfileUpdateService extends Service {
     final accessToken = await _authService.accessToken;
     try {
       return await _updateApi.unfollowUser(userId, accessToken);
+    } catch (e) {
+      print(e);
+      throw e;
+    }
+  }
+
+  Future<UserProfile> updatePrivacy(UserPrivacy settings) async {
+    final accessToken = await _authService.accessToken;
+    try {
+      final profile = await _updateApi.updatePrivacy(settings, accessToken);
+      _profileStreamController.add(profile);
+      return profile;
     } catch (e) {
       print(e);
       throw e;

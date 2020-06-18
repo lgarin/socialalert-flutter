@@ -99,6 +99,7 @@ class UserInfo {
   final String biography;
   final String gender;
   final UserStatistic statistic;
+  final UserPrivacy privacy;
 
   UserInfo.fromJson(Map<String, dynamic> json) :
         userId = json['id'],
@@ -113,7 +114,8 @@ class UserInfo {
         birthdate = json['birthdate'],
         gender = json['gender'],
         imageUri = json['imageUri'],
-        statistic = UserStatistic.fromJson(json['statistic']);
+        statistic = UserStatistic.fromJson(json['statistic']),
+        privacy = UserPrivacy.fromJson(json['privacy']);
 }
 
 class UserStatistic {
@@ -135,6 +137,36 @@ class UserStatistic {
         commentCount = json['commentCount'];
 
   int get mediaCount => pictureCount + videoCount;
+}
+
+enum LocationPrivacy {
+  BLUR,
+  MASK
+}
+
+const List<String> _locationPrivacyNames = ['BLUR', 'MASK'];
+const Map<String, LocationPrivacy> _locationPrivacyMap = {
+  'BLUR': LocationPrivacy.BLUR,
+  'MASK': LocationPrivacy.MASK,
+};
+
+class UserPrivacy {
+  final bool birthdateMasked;
+  final bool nameMasked;
+  final LocationPrivacy location;
+
+  UserPrivacy({this.birthdateMasked, this.nameMasked, this.location});
+
+  UserPrivacy.fromJson(Map<String, dynamic> json) :
+        birthdateMasked = json['birthdateMasked'] ?? false,
+        nameMasked = json['nameMasked'] ?? false,
+        location = json['location'] != null ? _locationPrivacyMap[json['location']] : null;
+
+  Map<String, dynamic> toJson() => {
+    'nameMasked': nameMasked,
+    'birthdateMasked': birthdateMasked,
+    'location': location != null ? _locationPrivacyNames[location.index] : null,
+  };
 }
 
 class MediaDetail extends MediaInfo {

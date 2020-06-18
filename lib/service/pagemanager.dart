@@ -14,101 +14,34 @@ class PageEvent {
   PageEvent(this.pageName, this.type);
 }
 
-class PageWrapper extends StatefulWidget {
-
-  final GlobalKey<ScaffoldState> pageKey;
-  final String pageName;
-  final Widget page;
-
-  const PageWrapper({this.pageKey, this.pageName, this.page});
-
-  @override
-  _PageWrapperState createState() => _PageWrapperState();
-}
-
-class _PageWrapperState extends State<PageWrapper> {
-
-  PageManager _pageManager;
-
-  @override
-  void initState() {
-    super.initState();
-    _pageManager = PageManager.of(context);
-    _pageManager.pushPage(widget.pageKey, widget.pageName);
-  }
-
-  @override
-  void dispose() {
-    _pageManager.discardPage(widget.pageKey);
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return WillPopScope(
-      child: widget.page,
-      onWillPop: _onPagePop,
-    );
-  }
-
-  Future<bool> _onPagePop() {
-    _pageManager.popPage(widget.pageKey);
-    return Future.value(true);
-  }
-}
-
 class PageManager extends Service {
 
   static PageManager of(BuildContext context) => ServiceProvider.of(context);
 
-  final _pageKeys = List<GlobalKey<ScaffoldState>>();
-  final _pageNames = List<String>();
+  GlobalKey<ScaffoldState> _currentPageKey;
+  String _currentPageName;
 
   PageManager(BuildContext context) : super(context);
 
   EventBus get _eventBus => lookup();
 
-  String get _lastPageName => _pageNames.isEmpty ? null : _pageNames.last;
-  GlobalKey<ScaffoldState> get _lastPageKey => _pageKeys.isEmpty ? null : _pageKeys.last;
-
-  void pushPage(GlobalKey<ScaffoldState> key, String pageName) {
-    final previousPage = _lastPageName;
-    if (previousPage != null) {
-      _eventBus.fire(PageEvent(previousPage, PageEventType.HIDE));
+  void setCurrent(GlobalKey<ScaffoldState> pageKey, String pageName) {
+    if (pageKey == _currentPageKey) {
+      return;
     }
-    _pageKeys.add(key);
-    _pageNames.add(pageName);
+    if (_currentPageKey != null) {
+      _eventBus.fire(PageEvent(_currentPageName, PageEventType.HIDE));
+    }
+    _currentPageKey = pageKey;
+    _currentPageName = pageName;
     Future(() => _eventBus.fire(PageEvent(pageName, PageEventType.SHOW)));
   }
 
-  void discardPage(GlobalKey<ScaffoldState> key) {
-    final index = _pageKeys.lastIndexOf(key);
-    if (index >= 0) {
-      _pageKeys.removeAt(index);
-      _pageNames.removeAt(index);
-    }
-  }
+  ScaffoldState get currentPageState => _currentPageKey?.currentState;
 
-  void popPage(GlobalKey<ScaffoldState> key) {
-    final index = _pageKeys.lastIndexOf(key);
-    assert(index >= 0);
-    _pageKeys.removeAt(index);
-    final pageName = _pageNames.removeAt(index);
-    _eventBus.fire(PageEvent(pageName, PageEventType.HIDE));
-
-    final previousPage = _lastPageName;
-    if (previousPage != null) {
-      Future(() => _eventBus.fire(PageEvent(previousPage, PageEventType.SHOW)));
-    }
-  }
-
-  ScaffoldState get currentPageState => _lastPageKey?.currentState;
-
-  String get currentPageName => _lastPageName;
+  String get currentPageName => _currentPageName;
 
   @override
   void dispose() {
-    _pageKeys.clear();
-    _pageNames.clear();
   }
 }

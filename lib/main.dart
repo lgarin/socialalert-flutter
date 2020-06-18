@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:social_alert_app/account.dart';
 import 'package:social_alert_app/annotate.dart';
-import 'package:social_alert_app/base.dart';
 import 'package:social_alert_app/capture.dart';
 import 'package:social_alert_app/home.dart';
 import 'package:social_alert_app/local.dart';
@@ -89,59 +88,91 @@ class SocialAlertApp extends StatelessWidget {
       );
   }
 
-  static WidgetBuilder _createRouteBuilder(RouteSettings settings, ScaffoldPage pageWidget) {
-    return (context) => PageWrapper(page: pageWidget, pageKey: pageWidget.scaffoldKey, pageName: settings.name);
-  }
-
   MaterialPageRoute _buildRoute(RouteSettings settings) {
+    final pageKey = GlobalKey<ScaffoldState>();
     switch (settings.name) {
-      case AppRoute.Login: return MaterialPageRoute(
-        builder: _createRouteBuilder(settings, LoginPage(GlobalKey<ScaffoldState>()))
+      case AppRoute.Login: return _TrackedMaterialPageRoute(
+          pageKey: pageKey,
+          settings: settings,
+          builder: (_) => LoginPage(pageKey)
       );
-      case AppRoute.Register: return MaterialPageRoute(
-        builder: _createRouteBuilder(settings, RegisterPage(GlobalKey<ScaffoldState>()))
+      case AppRoute.Register: return _TrackedMaterialPageRoute(
+          pageKey: pageKey,
+          settings: settings,
+          builder: (_) => RegisterPage(pageKey)
       );
-      case AppRoute.Home: return MaterialPageRoute(
-          builder: _createRouteBuilder(settings, HomePage(GlobalKey<ScaffoldState>()))
+      case AppRoute.Home: return _TrackedMaterialPageRoute(
+          pageKey: pageKey,
+          settings: settings,
+          builder: (_) => HomePage(pageKey)
       );
-      case AppRoute.UploadManager: return MaterialPageRoute(
-          builder: _createRouteBuilder(settings, UploadManagerPage(GlobalKey<ScaffoldState>()))
+      case AppRoute.UploadManager: return _TrackedMaterialPageRoute(
+          pageKey: pageKey,
+          settings: settings,
+          builder: (_) => UploadManagerPage(pageKey)
       );
-      case AppRoute.AnnotateMedia: return MaterialPageRoute(
-          builder: _createRouteBuilder(settings, AnnotateMediaPage(GlobalKey<ScaffoldState>(), settings.arguments))
+      case AppRoute.AnnotateMedia: return _TrackedMaterialPageRoute(
+          pageKey: pageKey,
+          settings: settings,
+          builder: (_) => AnnotateMediaPage(pageKey, settings.arguments)
       );
-      case AppRoute.UserNetwork: return MaterialPageRoute(
-          builder: _createRouteBuilder(settings, UserNetworkPage(GlobalKey<ScaffoldState>()))
+      case AppRoute.UserNetwork: return _TrackedMaterialPageRoute(
+          pageKey: pageKey,
+          settings: settings,
+          builder: (_) => UserNetworkPage(pageKey)
       );
-      case AppRoute.LocalMediaInfo: return MaterialPageRoute(
-          builder: _createRouteBuilder(settings, LocalMediaInfoPage(GlobalKey<ScaffoldState>(), settings.arguments))
+      case AppRoute.LocalMediaInfo: return _TrackedMaterialPageRoute(
+          pageKey: pageKey,
+          settings: settings,
+          builder: (_) => LocalMediaInfoPage(pageKey, settings.arguments)
       );
-      case AppRoute.RemoteMediaDetail: return MaterialPageRoute<MediaDetail>(
-        builder: _createRouteBuilder(settings, RemoteMediaDetailPage(GlobalKey<ScaffoldState>(), settings.arguments))
+      case AppRoute.RemoteMediaDetail: return _TrackedMaterialPageRoute<MediaDetail>(
+          pageKey: pageKey,
+          settings: settings,
+          builder: (_) => RemoteMediaDetailPage(pageKey, settings.arguments)
       );
-      case AppRoute.ProfileViewer: return MaterialPageRoute<UserProfile>(
-        builder: _createRouteBuilder(settings, ProfileViewerPage(GlobalKey<ScaffoldState>(), settings.arguments))
+      case AppRoute.ProfileViewer: return _TrackedMaterialPageRoute<UserProfile>(
+          pageKey: pageKey,
+          settings: settings,
+          builder: (_) => ProfileViewerPage(pageKey, settings.arguments)
       );
-      case AppRoute.ProfileEditor: return MaterialPageRoute(
-        builder: _createRouteBuilder(settings, ProfileEditorPage(GlobalKey<ScaffoldState>()))
+      case AppRoute.ProfileEditor: return _TrackedMaterialPageRoute(
+          pageKey: pageKey,
+          settings: settings,
+          builder: (_) => ProfileEditorPage(pageKey)
       );
-      case AppRoute.SettingsEditor: return MaterialPageRoute(
-        builder: _createRouteBuilder(settings, SettingsEditorPage(GlobalKey<ScaffoldState>()))
+      case AppRoute.SettingsEditor: return _TrackedMaterialPageRoute(
+          pageKey: pageKey,
+          settings: settings,
+          builder: (_) => SettingsEditorPage(pageKey)
       );
-      case AppRoute.LocalMediaDisplay: return NoAnimationMaterialPageRoute(
-          builder: _createRouteBuilder(settings, LocalMediaDisplayPage(GlobalKey<ScaffoldState>(), settings.arguments))
+      case AppRoute.LocalMediaDisplay: return _TrackedMaterialPageRoute(
+          pageKey: pageKey,
+          skipAnimation: true,
+          settings: settings,
+          builder: (_) => LocalMediaDisplayPage(pageKey, settings.arguments)
       );
-      case AppRoute.RemoteMediaDisplay: return NoAnimationMaterialPageRoute(
-        builder: _createRouteBuilder(settings, RemoteMediaDisplayPage(GlobalKey<ScaffoldState>(), settings.arguments))
+      case AppRoute.RemoteMediaDisplay: return _TrackedMaterialPageRoute(
+          pageKey: pageKey,
+          skipAnimation: true,
+          settings: settings,
+          builder: (_) => RemoteMediaDisplayPage(pageKey, settings.arguments)
       );
-      case AppRoute.CaptureMedia: return NoAnimationMaterialPageRoute(
-          builder: _createRouteBuilder(settings, CaptureMediaPage(GlobalKey<ScaffoldState>()))
+      case AppRoute.CaptureMedia: return _TrackedMaterialPageRoute(
+          pageKey: pageKey,
+          skipAnimation: true,
+          settings: settings,
+          builder: (_) => CaptureMediaPage(pageKey)
       );
-      case AppRoute.DeleteAccount: return MaterialPageRoute(
-          builder: _createRouteBuilder(settings, DeleteAccountPage(GlobalKey<ScaffoldState>()))
+      case AppRoute.DeleteAccount: return _TrackedMaterialPageRoute(
+          pageKey: pageKey,
+          settings: settings,
+          builder: (_) => DeleteAccountPage(pageKey)
       );
-      case AppRoute.ChangePassword: return MaterialPageRoute(
-          builder: _createRouteBuilder(settings, ChangePasswordPage(GlobalKey<ScaffoldState>()))
+      case AppRoute.ChangePassword: return _TrackedMaterialPageRoute(
+          pageKey: pageKey,
+          settings: settings,
+          builder: (_) => ChangePasswordPage(pageKey)
       );
       default: return null;
     }
@@ -165,4 +196,72 @@ class AppRoute {
   static const SettingsEditor = 'settingsEditor';
   static const DeleteAccount = 'deleteAccount';
   static const ChangePassword = 'changePassword';
+}
+
+class _TrackedMaterialPageRoute<T> extends MaterialPageRoute<T> {
+
+  final GlobalKey<ScaffoldState> pageKey;
+  final bool skipAnimation;
+
+  _TrackedMaterialPageRoute({
+    @required this.pageKey,
+    @required WidgetBuilder builder,
+    @required RouteSettings settings,
+    bool maintainState = true,
+    bool fullscreenDialog = false,
+    this.skipAnimation = false,
+  }) : super(
+      builder: builder,
+      maintainState: maintainState,
+      settings: settings,
+      fullscreenDialog: fullscreenDialog);
+
+  String get pageName => settings?.name;
+
+  @override
+  Widget buildTransitions(BuildContext context, Animation<double> animation,
+      Animation<double> secondaryAnimation, Widget child) {
+
+    if (skipAnimation) {
+      return child;
+    }
+    return super.buildTransitions(context, animation, secondaryAnimation, child);
+  }
+
+  void _notifyPageChange() {
+    if (isCurrent) {
+      PageManager pageManager = navigator.context.read();
+      pageManager.setCurrent(pageKey, pageName);
+    }
+  }
+
+  @override
+  void didAdd() {
+    super.didAdd();
+    _notifyPageChange();
+  }
+
+  @override
+  void didReplace(Route<dynamic> oldRoute) {
+    super.didReplace(oldRoute);
+    _notifyPageChange();
+  }
+
+  @override
+  void didChangePrevious(Route<dynamic> previousRoute) {
+    super.didChangePrevious(previousRoute);
+    _notifyPageChange();
+  }
+
+  @override
+  void didChangeNext(Route<dynamic> nextRoute) {
+    super.didChangeNext(nextRoute);
+    _notifyPageChange();
+  }
+
+  @override
+  void didPopNext(Route<dynamic> nextRoute) {
+    super.didPopNext(nextRoute);
+    _notifyPageChange();
+  }
 }
