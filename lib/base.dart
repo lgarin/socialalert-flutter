@@ -42,13 +42,12 @@ class _NotificationEvent {
 
 class _NotificationHookState extends State<_NotificationHook> {
 
-  static final repeatMessageDelay = Duration(seconds: 3);
+  static final repeatMessageDelay = Duration(seconds: 2);
   static final oldUploadAge = Duration(minutes: 2);
 
   StreamSubscription<PageEvent> _pageListener;
   StreamSubscription<MediaUploadTask> _uploadResultListener;
   StreamSubscription<UserProfile> _userProfileListener;
-  UserProfile _currentUserProfile;
   final _previousEvents = List<_NotificationEvent>();
 
   @override
@@ -67,8 +66,8 @@ class _NotificationHookState extends State<_NotificationHook> {
     final recentTimestamp = DateTime.now().subtract(repeatMessageDelay);
     _showRecentSnackBars(recentTimestamp);
 
-    _currentUserProfile = Provider.of(context, listen: false);
-    _showUserProfileSnackBar(_currentUserProfile);
+    UserProfile userProfile = Provider.of(context, listen: false);
+    _showUserProfileSnackBar(userProfile);
 
     MediaUploadList uploadList = Provider.of(context, listen: false);
     _showAllUploadSnackBars(uploadList);
@@ -149,14 +148,6 @@ class _NotificationHookState extends State<_NotificationHook> {
   void _showUserProfileSnackBar(UserProfile profile) {
     if (profile == null) {
       return;
-    }
-
-    if (_currentUserProfile != null && _currentUserProfile.imageUri != profile.imageUri) {
-      showSuccessSnackBar('Your profile picture has been changed');
-      _currentUserProfile = profile;
-    } else if (_currentUserProfile != null && !_currentUserProfile.same(profile)) {
-      showSuccessSnackBar('Your profile has been saved');
-      _currentUserProfile = profile;
     }
 
     if (!profile.anonym && profile.incomplete && PageManager.of(context).currentPageName != AppRoute.ProfileEditor) {

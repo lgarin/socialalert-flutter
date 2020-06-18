@@ -272,6 +272,7 @@ class _ProfileFormState extends State<_ProfileForm> {
         await ProfileUpdateService.of(context).updateProfile(_formModel.toUpdateRequest());
         _dirty = false;
         await Navigator.of(context).maybePop();
+        showSuccessSnackBar(context, 'Your profile has been saved');
       } catch (e) {
         showSimpleDialog(context, 'Update failed', e.toString());
       }
@@ -510,6 +511,8 @@ abstract class _BaseProfilePageState<T extends StatefulWidget> extends BasePageS
       if (event.taskId == _uploadTaskId && event.terminal) {
         if (event.error != null) {
           showSimpleDialog(context, 'Avatar upload failed', event.error);
+        } else {
+          showSuccessSnackBar(context, 'Your profile picture has been changed');
         }
         setState(() {
           _uploadTaskId = null;

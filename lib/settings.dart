@@ -252,6 +252,7 @@ class _PrivacyFormState extends State<_PrivacyForm> {
         final profile = await ProfileUpdateService.of(context).updatePrivacy(_formModel.toPrivacySettings());
         _initialModel = _PrivacyFormModel(profile);
         await Navigator.of(context).maybePop();
+        showSuccessSnackBar(context, 'Your privacy settings have been saved');
       } catch (e) {
         showSimpleDialog(context, 'Update failed', e.toString());
       }
