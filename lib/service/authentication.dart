@@ -226,8 +226,12 @@ class Authentication extends Service {
     return _credentialStore.load();
   }
 
-  Future<UserProfile> authenticate(Credential credential) async {
-    await _credentialStore.store(credential);
+  Future<UserProfile> authenticate(Credential credential, bool storeCredential) async {
+    if (storeCredential) {
+      await _credentialStore.store(credential);
+    } else {
+      await _credentialStore.clear();
+    }
     var login = await _authApi.loginUser(credential);
 
     _token = _AuthToken(login);

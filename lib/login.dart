@@ -11,19 +11,23 @@ import 'base.dart';
 class _LoginModel {
   String _username = '';
   String _password = '';
+  bool _storeCredential = false;
 
   _LoginModel();
 
   _LoginModel.fromCredential(Credential credential) {
     _username = credential.username ?? '';
     _password = credential.password ?? '';
+    _storeCredential = hasUsernameInput() && hasPasswordInput();
   }
 
   String get username => _username;
   String get password => _password;
+  bool get storeCredential => _storeCredential;
 
   void setUsername(String newUsername) => _username = newUsername;
   void setPassword(String newPassword) => _password = newPassword;
+  void setStoreCredential(bool newValue) => _storeCredential = newValue;
 
   bool hasInput() => hasUsernameInput() || hasPasswordInput();
 
@@ -108,6 +112,29 @@ class _PasswordWidget extends StatelessWidget {
   }
 }
 
+class _AutomaticLoginWidget extends StatelessWidget {
+  static const label = 'Keep me signed in';
+
+  _AutomaticLoginWidget({
+    @required this.model,
+  });
+
+  final _LoginModel model;
+
+  @override
+  Widget build(BuildContext context) {
+    return WideRoundedField(
+        padding: EdgeInsets.symmetric(vertical: 10.0),
+        child: CheckboxFormField(
+          onSaved: model.setStoreCredential,
+          initialValue: model.storeCredential,
+          title: Text(label, style: Theme.of(context).textTheme.subtitle1),
+          secondary: Icon(Icons.vpn_key),
+        )
+    );
+  }
+}
+
 class _LoginButton extends StatelessWidget {
   static const color = Color.fromARGB(255, 231, 40, 102);
   static const label = 'Login';
@@ -167,7 +194,7 @@ class _LoginFormState extends State<_LoginForm> {
       _showNextPage(user);
       return Future.value(user);
     } else if (login != null && login.isDefined()) {
-      return _authenticateUser(login.toCredential());
+      return _authenticateUser(login.toCredential(), login.storeCredential);
     } else {
       return Future.value(null);
     }
@@ -181,9 +208,9 @@ class _LoginFormState extends State<_LoginForm> {
     }
   }
 
-  Future<UserProfile> _authenticateUser(Credential credential) async {
+  Future<UserProfile> _authenticateUser(Credential credential, bool storeCredential) async {
     try {
-      final userProfile = await Authentication.of(context).authenticate(credential);
+      final userProfile = await Authentication.of(context).authenticate(credential, storeCredential);
       _showNextPage(userProfile);
       return userProfile;
     } catch (e) {
@@ -247,6 +274,8 @@ class _LoginWidget extends StatelessWidget {
             _UsernameWidget(model: model),
             SizedBox(height: spacing),
             _PasswordWidget(model: model),
+            SizedBox(height: spacing),
+            _AutomaticLoginWidget(model: model),
             SizedBox(height: spacing),
             _LoginButton(onLogin: onLogin),
             SizedBox(height: spacing),

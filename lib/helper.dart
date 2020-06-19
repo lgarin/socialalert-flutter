@@ -191,8 +191,9 @@ class WideRoundedField extends StatelessWidget {
   static const radius = 10.0;
 
   final Widget child;
+  final EdgeInsetsGeometry padding;
 
-  WideRoundedField({Key key, this.child}) : super(key: key);
+  WideRoundedField({Key key, this.padding, this.child}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -201,8 +202,38 @@ class WideRoundedField extends StatelessWidget {
         decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.all(Radius.circular(radius))),
-        padding: EdgeInsets.all(radius),
+        padding: padding == null ? EdgeInsets.all(radius) : padding,
         child: child,
     );
   }
+}
+
+class CheckboxFormField extends FormField<bool> {
+  CheckboxFormField({
+    Widget title,
+    Widget secondary,
+    ListTileControlAffinity controlAffinity = ListTileControlAffinity.trailing,
+    FormFieldSetter<bool> onSaved,
+    FormFieldValidator<bool> validator,
+    bool initialValue = false,
+    bool autovalidate = false,
+  }) : super(
+            onSaved: onSaved,
+            validator: validator,
+            initialValue: initialValue,
+            autovalidate: autovalidate,
+            builder: (FormFieldState<bool> state) {
+              final subtitle = state.hasError
+                  ? Text(state.errorText, style: TextStyle(color: Theme.of(state.context).errorColor))
+                  : null;
+              return CheckboxListTile(
+                dense: true,
+                secondary: secondary,
+                title: title,
+                value: state.value,
+                onChanged: state.didChange,
+                subtitle: subtitle,
+                controlAffinity: controlAffinity,
+              );
+            });
 }
