@@ -41,7 +41,7 @@ class ProfileQueryService extends Service {
   _ProfileQueryApi get _queryApi => _ProfileQueryApi(lookup());
 
   Future<UserProfile> get(String userId) async {
-    final accessToken = await _authService.accessToken;
+    final accessToken = await _authService.obtainAccessToken();
     try {
       return await _queryApi.get(userId: userId, accessToken: accessToken);
     } catch (e) {
@@ -51,7 +51,7 @@ class ProfileQueryService extends Service {
   }
 
   Future<List<UserProfile>> getFollowedUsers() async {
-    final accessToken = await _authService.accessToken;
+    final accessToken = await _authService.obtainAccessToken();
     try {
       return await _queryApi.getFollowedUsers(accessToken: accessToken);
     } catch (e) {

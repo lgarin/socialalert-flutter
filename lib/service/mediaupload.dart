@@ -518,7 +518,7 @@ class MediaUploadService extends Service {
 
   Future<void> _startUploading(MediaUploadTask task) async {
     try {
-      final accessToken = await _authService.accessToken;
+      final accessToken = await _authService.obtainAccessToken();
       final taskId = task.isVideo
           ? await _uploadApi.enqueueVideo(title: task.title, file: task.file, accessToken: accessToken)
           : await _uploadApi.enqueueImage(title: task.title, file: task.file, accessToken: accessToken);
@@ -530,7 +530,7 @@ class MediaUploadService extends Service {
 
   Future<void> _startClaiming(MediaUploadTask task) async {
     try {
-      final accessToken = await _authService.accessToken;
+      final accessToken = await _authService.obtainAccessToken();
       final param = _ClaimParameter(title: task._title, category: task._category, description: task._description,
           location: task.location, tags: task.tags, cameraModel: task.cameraModel, cameraMaker: task.cameraMaker);
       _uploadApi.claimMedia(mediaUri: task.mediaUri, param: param, accessToken: accessToken)

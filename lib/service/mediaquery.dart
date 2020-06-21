@@ -85,7 +85,7 @@ class MediaQueryService extends Service {
     if (keywords.isEmpty) {
       keywords = null;
     }
-    final accessToken = await _authService.accessToken;
+    final accessToken = await _authService.obtainAccessToken();
     try {
       return await _queryApi.listMedia(category: category, keywords: keywords, bounds: bounds,
           paging: paging, accessToken: accessToken);
@@ -96,7 +96,7 @@ class MediaQueryService extends Service {
   }
 
   Future<MediaInfoPage> listUserMedia(String userId, PagingParameter paging) async {
-    final accessToken = await _authService.accessToken;
+    final accessToken = await _authService.obtainAccessToken();
     try {
       return await _queryApi.listMedia(creator: userId,
           paging: paging, accessToken: accessToken);
@@ -110,7 +110,7 @@ class MediaQueryService extends Service {
     if (keywords.isEmpty) {
       keywords = null;
     }
-    final accessToken = await _authService.accessToken;
+    final accessToken = await _authService.obtainAccessToken();
     try {
       return await _queryApi.mapMediaCount(category: category, keywords: keywords, bounds: bounds, accessToken: accessToken);
     } catch (e) {
@@ -123,7 +123,7 @@ class MediaQueryService extends Service {
     if (term == null || term.length < 3) {
       return List<String>();
     }
-    final accessToken = await _authService.accessToken;
+    final accessToken = await _authService.obtainAccessToken();
     try {
       return await _queryApi.suggestTags(term: term, maxHitCount: maxHitCount, accessToken: accessToken);
     } catch (e) {
@@ -133,7 +133,7 @@ class MediaQueryService extends Service {
   }
 
   Future<MediaDetail> viewDetail(String mediaUri) async {
-    final accessToken = await _authService.accessToken;
+    final accessToken = await _authService.obtainAccessToken();
     try {
       return await _queryApi.viewDetail(mediaUri: mediaUri, accessToken: accessToken);
     } catch (e) {
@@ -143,7 +143,7 @@ class MediaQueryService extends Service {
   }
 
   Future<Map<String, String>> buildImagePreviewHeader() async {
-    final accessToken = await _authService.accessToken;
+    final accessToken = await _authService.obtainAccessToken();
     return {
       'Accept': 'image/jpeg',
       'Authorization': accessToken

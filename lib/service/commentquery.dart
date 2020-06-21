@@ -43,7 +43,7 @@ class CommentQueryService extends Service {
 
 
   Future<MediaCommentPage> listMediaComments(String mediaUri, PagingParameter paging) async {
-    final accessToken = await _authService.accessToken;
+    final accessToken = await _authService.obtainAccessToken();
     try {
       return await _queryApi.listMediaComments(mediaUri: mediaUri, paging: paging, accessToken: accessToken);
     } catch (e) {
@@ -53,7 +53,7 @@ class CommentQueryService extends Service {
   }
 
   Future<MediaCommentPage> listUserComments(String userId, PagingParameter paging) async {
-    final accessToken = await _authService.accessToken;
+    final accessToken = await _authService.obtainAccessToken();
     try {
       return await _queryApi.listUserComments(userId: userId, paging: paging, accessToken: accessToken);
     } catch (e) {

@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/widgets.dart';
+import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/service/credential.dart';
 import 'package:social_alert_app/service/dataobjet.dart';
 import 'package:social_alert_app/service/datasource.dart';
+import 'package:social_alert_app/service/navigation.dart';
 import 'package:social_alert_app/service/serviceprodiver.dart';
 
 class _LoginTokenResponse {
@@ -70,7 +72,7 @@ class _AuthenticationApi {
     if (response.statusCode == 200) {
       return _LoginTokenResponse.fromJson(jsonDecode(response.body));
     } else if (response.statusCode == 401) {
-      throw 'Session timeout';
+      return Future.value(null);
     }
     throw response.reasonPhrase;
   }
@@ -222,6 +224,8 @@ class Authentication extends Service {
 
   _AuthenticationApi get _authApi => _AuthenticationApi(lookup());
 
+  NavigationService get _navigation => lookup();
+
   Future<Credential> get initialCredential {
     return _credentialStore.load();
   }
@@ -233,18 +237,31 @@ class Authentication extends Service {
       await _credentialStore.clear();
     }
     var login = await _authApi.loginUser(credential);
-
-    _token = _AuthToken(login);
+    initToken(login);
 
     final profile = UserProfile.fromLogin(login);
     _profileController.add(profile);
     return profile;
   }
 
+  void initToken(_LoginTokenResponse login) {
+    _token = login != null ? _AuthToken(login) : null;
+  }
+
+  String get _currentAccessToken => _token?.accessToken;
+
+  Future<String> getOrRenewAccessToken() async {
+    if (_token != null && _token.expired) {
+      final login = await _authApi.renewLogin(_token.refreshToken);
+      initToken(login);
+    }
+    return _currentAccessToken;
+  }
+
   Future<UserProfile> currentUser() async {
     UserProfile profile;
     try {
-      profile = await _authApi.currentUser(await accessToken);
+      profile = await _authApi.currentUser(await getOrRenewAccessToken());
     } catch (e) {
       // no server connection
       profile = UserProfile.anonym();
@@ -255,20 +272,17 @@ class Authentication extends Service {
     return profile;
   }
 
-  Future<String> get accessToken async {
-    if (_token == null) {
-      return null;
+  Future<String> obtainAccessToken() async {
+    final token = await getOrRenewAccessToken();
+    if (token == null) {
+      await _navigation.pushPage(AppRoute.Login);
     }
-    if (_token.expired) {
-      var login = await _authApi.renewLogin(_token.refreshToken);
-      _token = _AuthToken(login);
-    }
-    return _token.accessToken;
+    return _currentAccessToken;
   }
 
   Future<void> logout() async {
     try {
-      await _authApi.logout(await accessToken);
+      await _authApi.logout(await getOrRenewAccessToken());
     } catch (e) {
       // ignore
       print(e.toString());

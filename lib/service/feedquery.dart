@@ -37,7 +37,7 @@ class FeedQueryService extends Service {
     if (keywords.isEmpty) {
       keywords = null;
     }
-    final accessToken = await _authService.accessToken;
+    final accessToken = await _authService.obtainAccessToken();
     try {
       return await _queryApi.getFeed(category: category, keywords: keywords, paging: paging, accessToken: accessToken);
     } catch (e) {

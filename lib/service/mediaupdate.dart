@@ -60,7 +60,7 @@ class MediaUpdateService extends Service {
   _MediaUpdateApi get _updateApi => _MediaUpdateApi(lookup());
 
   Future<MediaDetail> changeMediaApproval(String mediaUri, ApprovalModifier modifier) async {
-    final accessToken = await _authService.accessToken;
+    final accessToken = await _authService.obtainAccessToken();
     try {
       return await _updateApi.changeMediaApproval(mediaUri: mediaUri, modifier: modifier, accessToken: accessToken);
     } catch (e) {
@@ -70,7 +70,7 @@ class MediaUpdateService extends Service {
   }
 
   Future<MediaCommentInfo> postComment(String mediaUri, String comment) async {
-    final accessToken = await _authService.accessToken;
+    final accessToken = await _authService.obtainAccessToken();
     try {
       return await _updateApi.postComment(mediaUri: mediaUri, comment: comment, accessToken: accessToken);
     } catch (e) {
@@ -80,7 +80,7 @@ class MediaUpdateService extends Service {
   }
 
   Future<MediaCommentInfo> changeCommentApproval(String commentId, ApprovalModifier modifier) async {
-    final accessToken = await _authService.accessToken;
+    final accessToken = await _authService.obtainAccessToken();
     try {
       return await _updateApi.changeCommentApproval(commentId: commentId, modifier: modifier, accessToken: accessToken);
     } catch (e) {

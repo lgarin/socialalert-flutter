@@ -183,7 +183,7 @@ class ProfileUpdateService extends Service {
   }
 
   Future<String> beginAvatarUpload(String title, File file) async {
-    final accessToken = await _authService.accessToken;
+    final accessToken = await _authService.obtainAccessToken();
     try {
       return await _updateApi.enqueueAvatar(title: title, file: file, accessToken: accessToken);
     } catch (e) {
@@ -230,7 +230,7 @@ class ProfileUpdateService extends Service {
   }
 
   Future<UserProfile> updateProfile(ProfileUpdateRequest request) async {
-    final accessToken = await _authService.accessToken;
+    final accessToken = await _authService.obtainAccessToken();
     try {
       final profile = await _updateApi.updateProfile(request, accessToken);
       _profileStreamController.add(profile);
@@ -242,7 +242,7 @@ class ProfileUpdateService extends Service {
   }
 
   Future<UserProfile> followUser(String userId) async {
-    final accessToken = await _authService.accessToken;
+    final accessToken = await _authService.obtainAccessToken();
     try {
       return await _updateApi.followUser(userId, accessToken);
     } catch (e) {
@@ -252,7 +252,7 @@ class ProfileUpdateService extends Service {
   }
 
   Future<UserProfile> unfollowUser(String userId) async {
-    final accessToken = await _authService.accessToken;
+    final accessToken = await _authService.obtainAccessToken();
     try {
       return await _updateApi.unfollowUser(userId, accessToken);
     } catch (e) {
@@ -262,7 +262,7 @@ class ProfileUpdateService extends Service {
   }
 
   Future<UserProfile> updatePrivacy(UserPrivacy settings) async {
-    final accessToken = await _authService.accessToken;
+    final accessToken = await _authService.obtainAccessToken();
     try {
       final profile = await _updateApi.updatePrivacy(settings, accessToken);
       _profileStreamController.add(profile);

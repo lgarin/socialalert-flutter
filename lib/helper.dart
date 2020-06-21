@@ -7,7 +7,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:social_alert_app/service/pagemanager.dart';
 
 T showUnexpectedError<T>(BuildContext context, Object error) {
-  showSimpleDialog(context, 'Unexpected error', error);
+  showSimpleDialog(context, 'Unexpected error', error.toString());
   return null;
 }
 

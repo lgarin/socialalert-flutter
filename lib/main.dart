@@ -22,6 +22,7 @@ import 'package:social_alert_app/service/datasource.dart';
 import 'package:social_alert_app/service/mediaquery.dart';
 import 'package:social_alert_app/service/mediaupdate.dart';
 import 'package:social_alert_app/service/mediaupload.dart';
+import 'package:social_alert_app/service/navigation.dart';
 import 'package:social_alert_app/service/pagemanager.dart';
 import 'package:social_alert_app/service/permission.dart';
 import 'package:social_alert_app/service/profilequery.dart';
@@ -34,16 +35,26 @@ import 'package:social_alert_app/upload.dart';
 
 import 'helper.dart';
 
-void main() => runApp(SocialAlertApp());
+void main() => runApp(SocialAlertApp(GlobalKey<NavigatorState>()));
 
 class SocialAlertApp extends StatelessWidget {
+
+  final GlobalKey<NavigatorState> _navigatorKey;
+
+  SocialAlertApp(this._navigatorKey);
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
         providers: [
+          ServiceProvider<NavigationService>(create: (context) => NavigationService(context, _navigatorKey)),
+          ServiceProvider<EventBus>(create: (context) => EventBus(context)),
+          ServiceProvider<PageManager>(create: (context) => PageManager(context)),
+          ServiceProvider<PermissionManager>(create: (context) => PermissionManager(context)),
+          ServiceProvider<FileSystem>(create: (context) => FileSystem(context)),
           ServiceProvider<DataSource>(create: (context) => DataSource(context)),
           ServiceProvider<CameraDevice>(create: (context) => CameraDevice(context)),
+          ServiceProvider<VideoEncoder>(create: (context) => VideoEncoder(context)),
           ServiceProvider<GeoLocationService>(create: (context) => GeoLocationService(context)),
           StreamProvider<GeoLocation>(create: (context) => GeoLocationService.of(context).locationStream, lazy: false),
           ServiceProvider<Authentication>(create: (context) => Authentication(context)),
@@ -58,11 +69,6 @@ class SocialAlertApp extends StatelessWidget {
           ServiceProvider<MediaUpdateService>(create: (context) => MediaUpdateService(context)),
           ServiceProvider<CommentQueryService>(create: (context) => CommentQueryService(context)),
           ServiceProvider<FeedQueryService>(create: (context) => FeedQueryService(context)),
-          ServiceProvider<FileSystem>(create: (context) => FileSystem(context)),
-          ServiceProvider<VideoEncoder>(create: (context) => VideoEncoder(context)),
-          ServiceProvider<EventBus>(create: (context) => EventBus(context)),
-          ServiceProvider<PageManager>(create: (context) => PageManager(context)),
-          ServiceProvider<PermissionManager>(create: (context) => PermissionManager(context)),
         ],
         child: _buildApp()
     );
@@ -84,6 +90,7 @@ class SocialAlertApp extends StatelessWidget {
           ),
         ),
         initialRoute: AppRoute.Login,
+        navigatorKey: _navigatorKey,
         onGenerateRoute: _buildRoute,
       );
   }

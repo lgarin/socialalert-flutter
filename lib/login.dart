@@ -201,7 +201,9 @@ class _LoginFormState extends State<_LoginForm> {
   }
 
   void _showNextPage(UserProfile userProfile) {
-    if (userProfile.anonym) {
+    if (Navigator.of(context).canPop()) {
+      Future(() => Navigator.of(context).maybePop(userProfile));
+    } else if (userProfile.anonym) {
       Future(() => Navigator.of(context).pushReplacementNamed(AppRoute.UploadManager, arguments: userProfile));
     } else {
       Future(() => Navigator.of(context).pushReplacementNamed(AppRoute.Home, arguments: userProfile));
