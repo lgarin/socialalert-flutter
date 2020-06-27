@@ -13,6 +13,7 @@ import 'package:social_alert_app/base.dart';
 import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/service/cameradevice.dart';
+import 'package:social_alert_app/service/dataobjet.dart';
 import 'package:social_alert_app/service/eventbus.dart';
 import 'package:social_alert_app/service/geolocation.dart';
 import 'package:social_alert_app/service/mediaupload.dart';
@@ -258,10 +259,11 @@ class MediaInfoPanel extends StatelessWidget {
 
   final DateTime timestamp;
   final GeoLocation location;
+  final LocationPrivacy locationPrivacy;
   final String format;
   final String camera;
 
-  const MediaInfoPanel({Key key, this.timestamp, this.location, this.format, this.camera}) : super(key: key);
+  const MediaInfoPanel({Key key, @required this.timestamp, this.location, this.locationPrivacy, this.format, this.camera}) : super(key: key);
 
   Widget build(BuildContext context) {
     final children = List<Widget>();
@@ -328,8 +330,14 @@ class MediaInfoPanel extends StatelessWidget {
 
   Future<Set<Marker>> _buildMarkers(BuildContext context) async {
     final position = LatLng(location.latitude, location.longitude);
-    final icon = await drawMapLocationMarker(40.0);
+    final icon = await _drawMarkerIcon();
     return {Marker(icon: icon, markerId: MarkerId(''), position: position)};
+  }
+
+  Future<BitmapDescriptor> _drawMarkerIcon() {
+    return locationPrivacy == LocationPrivacy.BLUR
+        ? drawMapClusterMarker("", 40.0, markerColor: Colors.blueAccent.withAlpha(150))
+        : drawMapLocationMarker(40.0);
   }
 
   GoogleMap _buildMap(BuildContext context, AsyncSnapshot<Set<Marker>> snapshot) {

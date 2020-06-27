@@ -102,9 +102,9 @@ class NonEmptyValidator extends TextFieldValidator {
   }
 }
 
-final _markerColor = Color.fromARGB(255, 231, 40, 102);
+const _markerColor = Color.fromARGB(255, 231, 40, 102);
 
-Future<BitmapDescriptor> drawMapClusterMarker(String text, double radius) async {
+Future<BitmapDescriptor> drawMapClusterMarker(String text, double radius, {Color markerColor = _markerColor}) async {
   final pictureRecorder = PictureRecorder();
   final canvas = Canvas(pictureRecorder);
   final paint = Paint();
@@ -114,7 +114,7 @@ Future<BitmapDescriptor> drawMapClusterMarker(String text, double radius) async 
   );
   final textPainter = TextPainter(textDirection: TextDirection.ltr, text: textSpan);
 
-  canvas.drawCircle(Offset(radius, radius), radius, paint..color = _markerColor);
+  canvas.drawCircle(Offset(radius, radius), radius, paint..color = markerColor);
   textPainter.layout();
   textPainter.paint(canvas,
   Offset(radius - textPainter.width / 2, radius - textPainter.height / 2),
@@ -129,13 +129,13 @@ Future<BitmapDescriptor> drawMapClusterMarker(String text, double radius) async 
   return BitmapDescriptor.fromBytes(data.buffer.asUint8List());
 }
 
-Future<BitmapDescriptor> drawMapLocationMarker(double radius) async {
+Future<BitmapDescriptor> drawMapLocationMarker(double radius, {Color markerColor = _markerColor}) async {
   final pictureRecorder = PictureRecorder();
   final canvas = Canvas(pictureRecorder);
   final paint = Paint();
   final path = Path();
 
-  paint.color = _markerColor;
+  paint.color = markerColor;
   paint.style = PaintingStyle.fill;
   path.moveTo(radius, 2 * radius);
   path.arcTo(Rect.fromLTWH(0.25 * radius, 0, 1.5 * radius, 1.5 * radius), pi - 0.5, pi + 1, false);

@@ -216,6 +216,8 @@ class MediaDetail extends MediaInfo {
     }
   }
 
+  LocationPrivacy get locationPrivacy => creator?.privacy?.location;
+
   String get format {
     if (height != null && width != null) {
       return numberFormat.format(height * width / oneMega) + 'MP - $height x $width';

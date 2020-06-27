@@ -207,7 +207,7 @@ class _MediaDetailPanel extends StatelessWidget {
       children: <Widget>[
         _buildInteractionBar(media),
         Divider(),
-        MediaInfoPanel(timestamp: media.timestamp, location: media.location, camera: media.camera, format: media.format)
+        MediaInfoPanel(timestamp: media.timestamp, location: media.location, locationPrivacy: media.locationPrivacy, camera: media.camera, format: media.format)
       ],
     );
   }
