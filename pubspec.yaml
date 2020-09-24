@@ -18,7 +18,7 @@ dependencies:
   flutter_uploader:
   path:
   path_provider:
-  geolocator:
+  geolocator: "< 6.0.0"
   timeago_flutter:
   google_maps_flutter:
   intl:
