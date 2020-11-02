@@ -206,6 +206,10 @@ class UserProfile {
 
 }
 
+class UserProfilePage extends ResultPage<UserProfile> {
+  UserProfilePage.fromJson(Map<String, dynamic> json) : super.fromJson(json, UserProfile.fromJsonList);
+}
+
 class Authentication extends Service {
 
   final _credentialStore = CredentialStore();

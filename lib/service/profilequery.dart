@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:social_alert_app/service/authentication.dart';
+import 'package:social_alert_app/service/dataobjet.dart';
 import 'package:social_alert_app/service/datasource.dart';
 import 'package:social_alert_app/service/serviceprodiver.dart';
 
@@ -26,6 +27,16 @@ class _ProfileQueryApi {
     final response = await dataSource.getJson(uri: uri, accessToken: accessToken);
     if (response.statusCode == 200) {
       return  UserProfile.fromJsonList(jsonDecode(response.body));
+    }
+    throw response.reasonPhrase;
+  }
+
+  Future<UserProfilePage> getFollowers({@required PagingParameter paging, @required String accessToken}) async {
+    final timestampParameter = paging.timestamp != null ? '&pagingTimestamp=${paging.timestamp}' : '';
+    final uri = '/user/followers?pageNumber=${paging.pageNumber}&pageSize=${paging.pageSize}$timestampParameter';
+    final response = await dataSource.getJson(uri: uri, accessToken: accessToken);
+    if (response.statusCode == 200) {
+      return  UserProfilePage.fromJson(jsonDecode(response.body));
     }
     throw response.reasonPhrase;
   }
@@ -54,6 +65,16 @@ class ProfileQueryService extends Service {
     final accessToken = await _authService.obtainAccessToken();
     try {
       return await _queryApi.getFollowedUsers(accessToken: accessToken);
+    } catch (e) {
+      print(e);
+      throw e;
+    }
+  }
+
+  Future<UserProfilePage> getFollowers(PagingParameter paging) async {
+    final accessToken = await _authService.obtainAccessToken();
+    try {
+      return await _queryApi.getFollowers(paging: paging, accessToken: accessToken);
     } catch (e) {
       print(e);
       throw e;
