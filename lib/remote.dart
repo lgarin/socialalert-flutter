@@ -595,11 +595,11 @@ class _MediaBottomNavigationBar extends StatelessWidget {
         items: <BottomNavigationBarItem>[
           new BottomNavigationBarItem(
             icon: Icon(Icons.info_outline),
-            title: Text('Details'),
+            label: 'Details',
           ),
           new BottomNavigationBarItem(
             icon: Icon(Icons.create),
-            title: Text('Scribes'),
+            label: 'Scribes',
           ),
         ]
     );

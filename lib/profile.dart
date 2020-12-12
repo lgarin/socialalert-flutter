@@ -729,15 +729,15 @@ class _ProfileBottomNavigationBar extends StatelessWidget {
         items: <BottomNavigationBarItem>[
           new BottomNavigationBarItem(
             icon: Icon(Icons.person),
-            title: Text('About'),
+            label: 'About',
           ),
           new BottomNavigationBarItem(
             icon: Icon(Icons.panorama),
-            title: Text('Snypes'),
+            label: 'Snypes',
           ),
           new BottomNavigationBarItem(
             icon: Icon(Icons.create),
-            title: Text('Scribes'),
+            label: 'Scribes',
           )
         ]
     );

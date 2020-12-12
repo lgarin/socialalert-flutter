@@ -165,7 +165,7 @@ class _MetadataFormState extends State<_MetadataForm> {
     return Form(
         onWillPop: _allowPop,
         key: _formKey,
-        autovalidate: _model.autovalidate,
+        autovalidateMode: _model.autovalidate ? AutovalidateMode.always : AutovalidateMode.onUserInteraction,
         child: Column(
           children: <Widget>[
             _TitleWidget(_model),

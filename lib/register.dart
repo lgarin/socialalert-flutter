@@ -171,7 +171,7 @@ class _RegisterFormState extends State<_RegisterForm> {
   Widget build(BuildContext context) {
     return Form(
         key: _formKey,
-        autovalidate: _model.hasInput(),
+        autovalidateMode: _model.hasInput() ? AutovalidateMode.always : AutovalidateMode.onUserInteraction,
         child: _buildContent()
     );
   }

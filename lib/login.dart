@@ -270,7 +270,7 @@ class _LoginWidget extends StatelessWidget {
     }
     return Form(
         key: formKey,
-        autovalidate: model.hasInput(),
+        autovalidateMode: model.hasInput() ? AutovalidateMode.always : AutovalidateMode.onUserInteraction,
         child: Column(
           children: <Widget>[
             _UsernameWidget(model: model),

@@ -190,15 +190,15 @@ class _HomePageState extends BasePageState<HomePage> with SingleTickerProviderSt
         items: <BottomNavigationBarItem>[
           new BottomNavigationBarItem(
             icon: Icon(Icons.panorama),
-            title: Text('Snypes'),
+            label: 'Snypes',
           ),
           new BottomNavigationBarItem(
             icon: Icon(Icons.forum),
-            title: Text('Feed'),
+            label: 'Feed',
           ),
           new BottomNavigationBarItem(
-              icon: Icon(Icons.place),
-              title: Text('Map')
+            icon: Icon(Icons.place),
+            label: 'Map'
           )
         ]
     );

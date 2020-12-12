@@ -174,7 +174,7 @@ class _DeleteAccountFormState extends State<_DeleteAccountForm> {
   Widget build(BuildContext context) {
     return Form(
         key: _formKey,
-        autovalidate: _model.hasInput(),
+        autovalidateMode: _model.hasInput() ? AutovalidateMode.always : AutovalidateMode.onUserInteraction,
         child: _buildContent()
     );
   }
@@ -241,7 +241,7 @@ class _ChangePasswordFormState extends State<_ChangePasswordForm> {
   Widget build(BuildContext context) {
     return Form(
         key: _formKey,
-        autovalidate: _model.hasInput(),
+        autovalidateMode: _model.hasInput() ? AutovalidateMode.always : AutovalidateMode.onUserInteraction,
         child: _buildContent()
     );
   }

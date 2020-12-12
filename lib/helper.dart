@@ -216,12 +216,12 @@ class CheckboxFormField extends FormField<bool> {
     FormFieldSetter<bool> onSaved,
     FormFieldValidator<bool> validator,
     bool initialValue = false,
-    bool autovalidate = false,
+    AutovalidateMode autovalidateMode,
   }) : super(
             onSaved: onSaved,
             validator: validator,
             initialValue: initialValue,
-            autovalidate: autovalidate,
+            autovalidateMode: autovalidateMode,
             builder: (FormFieldState<bool> state) {
               final subtitle = state.hasError
                   ? Text(state.errorText, style: TextStyle(color: Theme.of(state.context).errorColor))

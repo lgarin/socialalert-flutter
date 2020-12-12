@@ -356,11 +356,11 @@ class _SettingsBottomNavigationBar extends StatelessWidget {
         items: <BottomNavigationBarItem>[
           new BottomNavigationBarItem(
             icon: Icon(Icons.https),
-            title: Text('Identity'),
+            label: 'Identity',
           ),
           new BottomNavigationBarItem(
             icon: Icon(Icons.security),
-            title: Text('Privacy'),
+            label: 'Privacy',
           )
         ]
     );
