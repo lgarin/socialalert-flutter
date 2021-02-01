@@ -21,6 +21,7 @@ class _CaptureModel {
   String _title;
   final currentTag = TextEditingController();
   String selectedCategory;
+  int feeling;
   bool autovalidate = false;
 
   _CaptureModel()
@@ -30,6 +31,8 @@ class _CaptureModel {
 
   String get title => _title;
   void setTitle(String newTitle) => _title = newTitle;
+
+  List<bool> get selectedFeelings => [feeling == 0, feeling == 1, feeling == 2, feeling == 3, feeling == 4];
 }
 
 class AnnotateMediaPage extends StatelessWidget implements ScaffoldPage {
@@ -168,6 +171,8 @@ class _MetadataFormState extends State<_MetadataForm> {
         autovalidateMode: _model.autovalidate ? AutovalidateMode.always : AutovalidateMode.onUserInteraction,
         child: Column(
           children: <Widget>[
+            _FeelingWidget(_model),
+            SizedBox(height: 10),
             _TitleWidget(_model),
             SizedBox(height: 10),
             _CategoryWidget(_model),
@@ -201,6 +206,7 @@ class _MetadataFormState extends State<_MetadataForm> {
         title: _model.title,
         category: _model.selectedCategory,
         tags: List.from(_model.tags),
+        feeling: _model.feeling,
       );
       try {
         final userProfile = Provider.of<UserProfile>(context, listen: false);
@@ -257,6 +263,52 @@ class _TitleWidget extends StatelessWidget {
             icon: Icon(Icons.title)),
         validator: MultiValidator([NonEmptyValidator(errorText: "$label required"), MaxLengthValidator(40, errorText: "Maximum 40 characters allowed")]),
       ),
+    );
+  }
+}
+
+class _FeelingWidget extends StatefulWidget {
+
+  _FeelingWidget(this.model);
+
+  final _CaptureModel model;
+
+  @override
+  _FeelingWidgetState createState() => _FeelingWidgetState();
+}
+
+class _FeelingWidgetState extends State<_FeelingWidget> {
+
+  void _onSelected(int index) {
+    setState(() {
+      widget.model.feeling = index;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ToggleButtons(
+      children: [
+        _buildIcon(Icons.sentiment_very_dissatisfied_rounded, 0),
+        _buildIcon(Icons.sentiment_dissatisfied_rounded, 1),
+        _buildIcon(Icons.sentiment_neutral_rounded, 2),
+        _buildIcon(Icons.sentiment_satisfied_rounded, 3),
+        _buildIcon(Icons.sentiment_very_satisfied_rounded, 4)
+      ],
+      isSelected: widget.model.selectedFeelings,
+      selectedColor: Colors.white,
+      fillColor: Theme.of(context).primaryColor,
+      onPressed: _onSelected,
+      borderRadius: BorderRadius.circular(20),
+      borderWidth: 2,
+      selectedBorderColor: Theme.of(context).primaryColor,
+    );
+  }
+
+  Widget _buildIcon(IconData iconData, int index) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 15),
+      child: Icon(iconData, size: widget.model.feeling == index ? 40 : 30),
     );
   }
 }

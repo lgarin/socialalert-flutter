@@ -74,7 +74,7 @@ class _KeywordSearchWidget extends StatelessWidget {
       suggestionsBoxDecoration: SuggestionsBoxDecoration(borderRadius: BorderRadius.all(Radius.circular(5))),
       textFieldConfiguration: TextFieldConfiguration(
           controller: searchModel.controller,
-          onSubmitted: (v) => searchModel.beginSearch(v as String),
+          onSubmitted: searchModel.beginSearch,
           autofocus: searchModel.keyword.isEmpty,
           textInputAction: TextInputAction.search,
           style: TextStyle(color: Colors.white),

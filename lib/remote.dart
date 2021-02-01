@@ -133,9 +133,22 @@ class _RemoteMediaDetailPageState extends BasePageState<RemoteMediaDetailPage> {
     return Future.value(false);
   }
 
+  static Color _computeTitleColor(int feeling) {
+    if (feeling == null) {
+      return Colors.black;
+    } else if (feeling > 0) {
+      return Color.fromARGB(255, 86, 205, 105);
+    } else if (feeling < 0) {
+      return Color.fromARGB(255, 220, 53, 69);
+    } else {
+      return Color.fromARGB(255, 9, 114, 236);
+    }
+  }
+  
   Text _buildMediaTitle(BuildContext context, MediaDetail media) {
+    final color = _computeTitleColor(media.feeling);
     return Text(media.title, overflow: TextOverflow.ellipsis,
-        style: Theme.of(context).textTheme.headline6);
+        style: Theme.of(context).textTheme.headline6.copyWith(color: color));
   }
 
   Widget _buildMediaTagList(BuildContext context, MediaDetail media) {
@@ -218,6 +231,8 @@ class _MediaDetailPanel extends StatelessWidget {
           _ApprovalButton(ApprovalModifier.LIKE),
           SizedBox(width: 10.0,),
           _ApprovalButton(ApprovalModifier.DISLIKE),
+          SizedBox(width: 10.0,),
+          _FeelingDropdown(),
           Spacer(),
           _buildViewCountButton(media)
         ]
@@ -508,6 +523,76 @@ class _CommentActionItem {
     }
   }
   String get commentId => item.id;
+}
+
+class _FeelingDropdown extends StatelessWidget {
+  static final buttonColor = Color.fromARGB(255, 231, 40, 102);
+  static final List<int> feelings = [2, 1, 0, -1, -2];
+
+  static final List<IconData> icons = [
+    Icons.sentiment_very_satisfied_rounded,
+    Icons.sentiment_satisfied_rounded,
+    Icons.sentiment_neutral_rounded,
+    Icons.sentiment_dissatisfied_rounded,
+    Icons.sentiment_very_dissatisfied_rounded,
+  ];
+
+  static IconData _computeIcon(int feeling) => icons[2 - feeling];
+
+  DropdownMenuItem<int> _buildMenuItem(int feeling) {
+    return DropdownMenuItem(child: Icon(_computeIcon(feeling), size: 24), value: feeling);
+  }
+
+  static String _computeLabel(int feeling, String suffix) {
+    if (feeling > 1) {
+      return 'You feel very good about "$suffix"';
+    } else if (feeling > 0) {
+      return 'You feel good about "$suffix"';
+    } else if (feeling < -1) {
+      return 'You feel very bad about "$suffix"';
+    } else if (feeling < 0) {
+      return 'You feel bad about "$suffix"';
+    } else {
+      return 'You feel neutral about "$suffix"';
+    }
+  }
+
+  void _showSnackBar(BuildContext context, MediaInfo media, int feeling) {
+    showSuccessSnackBar(context, _computeLabel(feeling, media.title));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final model = Provider.of<_MediaInfoModel>(context);
+    return  Container(
+      decoration: BoxDecoration(
+        color: buttonColor,
+        borderRadius: BorderRadius.all(Radius.circular(2)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey,
+            offset: Offset(0, 1),
+            blurRadius: 1,
+          )
+        ]
+      ),
+      padding: EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+      child: DropdownButton<int>(
+          elevation: 16,
+          iconSize: 32,
+          hint: Icon(_computeIcon(0), size: 24, color: Colors.black38),
+          isDense: true,
+          underline: SizedBox(height: 0,),
+          items: feelings.map(_buildMenuItem).toList(growable: false),
+          onChanged: (feeling) {
+            MediaUpdateService.of(context).setFeeling(model.mediaUri, feeling)
+                .catchError((error) => showSimpleDialog(context, 'Failure', error.toString()))
+                .then(model.refresh)
+                .then((_) => _showSnackBar(context, model.detail, feeling));
+          },
+          value: model.detail.userFeeling)
+    );
+  }
 }
 
 class _ApprovalButton extends StatelessWidget {

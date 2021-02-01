@@ -64,6 +64,7 @@ class MediaInfo {
   final double longitude;
   final MediaFormat previewFormat;
   final MediaFormat fileFormat;
+  final int feeling;
 
   MediaInfo.fromJson(Map<String, dynamic> json) :
         title = json['title'],
@@ -75,7 +76,8 @@ class MediaInfo {
         latitude = json['latitude'],
         longitude = json['longitude'],
         previewFormat = _mediaFormatMap[json['previewFormat']],
-        fileFormat = _mediaFormatMap[json['fileFormat']];
+        fileFormat = _mediaFormatMap[json['fileFormat']],
+        feeling = json['feeling'];
 
   bool get hasVideoPreview => previewFormat == MediaFormat.PREVIEW_MP4;
   bool get isVideo => fileFormat == MediaFormat.MEDIA_MOV || fileFormat == MediaFormat.MEDIA_MP4;
@@ -183,6 +185,7 @@ class MediaDetail extends MediaInfo {
   final String category;
   final List<String> tags;
   final ApprovalModifier userApprovalModifier;
+  final int userFeeling;
   final UserInfo creator;
   final String cameraMaker;
   final String cameraModel;
@@ -197,6 +200,7 @@ class MediaDetail extends MediaInfo {
         category = json['category'],
         tags = List<String>.from(json['tags']),
         userApprovalModifier = json['userApprovalModifier'] != null ? _approvalModifierMap[json['userApprovalModifier']] : null,
+        userFeeling = json['userFeeling'],
         creator = UserInfo.fromJson(json['creator']),
         cameraMaker = json['cameraMaker'],
         cameraModel = json['cameraModel'],

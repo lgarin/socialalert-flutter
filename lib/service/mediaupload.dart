@@ -49,6 +49,7 @@ class MediaUploadTask with ChangeNotifier {
   String _description;
   String _category;
   List<String> _tags;
+  int _feeling;
   MediaUploadStatus _status;
   String _mediaUri;
   String _uploadTaskId;
@@ -87,6 +88,8 @@ class MediaUploadTask with ChangeNotifier {
   DateTime get lastUpdate => _lastUpdate;
 
   List<String> get tags => _tags == null ? [] : List.from(_tags);
+
+  int get feeling => _feeling;
 
   double get latitude => _latitude;
 
@@ -137,6 +140,7 @@ class MediaUploadTask with ChangeNotifier {
         _description = json['description'],
         _category = json['category'],
         _tags = List<String>.from(json['tags'] ?? []),
+        _feeling = json['feeling'],
         _status = MediaUploadStatus.values[json['status']],
         _mediaUri = json['mediaUri'],
         _uploadTaskId = json["uploadTaskId"],
@@ -157,6 +161,7 @@ class MediaUploadTask with ChangeNotifier {
     'description': _description,
     'category': _category,
     'tags': _tags,
+    'feeling': _feeling,
     'status': _status.index,
     'mediaUri': _mediaUri,
     'uploadTaskId': _uploadTaskId,
@@ -173,12 +178,13 @@ class MediaUploadTask with ChangeNotifier {
     _changeStatus(MediaUploadStatus.CREATED);
   }
 
-    void annotate({@required String title, String description, String category, List<String> tags}) {
+    void annotate({@required String title, String description, String category, List<String> tags, int feeling}) {
     assert(status == MediaUploadStatus.CREATED);
     _title = title;
     _description = description;
     _category = category;
     _tags = tags;
+    _feeling = feeling;
 
     _changeStatus(MediaUploadStatus.ANNOTATED);
   }
@@ -310,17 +316,19 @@ class _UploadTaskStep {
 class _ClaimParameter {
   final String title;
   final String category;
+  final int feeling;
   final String description;
   final GeoLocation location;
   final List<String> tags;
   final String cameraMaker;
   final String cameraModel;
 
-  _ClaimParameter({@required this.title, this.category, this.description, this.location, @required this.tags, this.cameraMaker, this.cameraModel});
+  _ClaimParameter({@required this.title, this.category, this.feeling, this.description, this.location, @required this.tags, this.cameraMaker, this.cameraModel});
 
   Map<String, dynamic> toJson() => {
     'title': title,
     'category': category,
+    'feeling': feeling,
     'description': description,
     'location': location?.toJson(),
     'tags': tags
@@ -532,7 +540,8 @@ class MediaUploadService extends Service {
     try {
       final accessToken = await _authService.obtainAccessToken();
       final param = _ClaimParameter(title: task._title, category: task._category, description: task._description,
-          location: task.location, tags: task.tags, cameraModel: task.cameraModel, cameraMaker: task.cameraMaker);
+          location: task.location, tags: task.tags, cameraModel: task.cameraModel, cameraMaker: task.cameraMaker,
+          feeling: task.feeling);
       _uploadApi.claimMedia(mediaUri: task.mediaUri, param: param, accessToken: accessToken)
           .then((_) => task._markClaimed(), onError: (e) => task._markClaimError(e))
           .whenComplete(() => _completeClaim(task));

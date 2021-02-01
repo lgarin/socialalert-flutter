@@ -24,13 +24,13 @@ dependencies:
   intl:
   exifdart:
   async:
-  pull_to_refresh:
+  pull_to_refresh: "1.6.3" #wait for next flutter version
   flutter_typeahead:
   badges:
   fluster:
   device_info:
   photo_view:
-  camera:
+  camera: "< 0.6.0"
   native_device_orientation:
   video_player:
   chewie:

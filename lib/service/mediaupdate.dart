@@ -31,6 +31,15 @@ class _MediaUpdateApi {
     throw response.reasonPhrase;
   }
 
+  Future<MediaDetail> setFeeling({String mediaUri, int feeling, String accessToken}) async {
+    final uri = '/media/feeling/$mediaUri/$feeling';
+    final response = await dataSource.post(uri: uri, accessToken: accessToken);
+    if (response.statusCode == 200) {
+      return MediaDetail.fromJson(jsonDecode(response.body));
+    }
+    throw response.reasonPhrase;
+  }
+
   Future<MediaCommentInfo> postComment({String mediaUri, String comment, String accessToken}) async {
     final uri = '/media/comment/$mediaUri';
     final response = await dataSource.postText(uri: uri, accessToken: accessToken, body: comment);
@@ -63,6 +72,16 @@ class MediaUpdateService extends Service {
     final accessToken = await _authService.obtainAccessToken();
     try {
       return await _updateApi.changeMediaApproval(mediaUri: mediaUri, modifier: modifier, accessToken: accessToken);
+    } catch (e) {
+      print(e);
+      throw e;
+    }
+  }
+
+  Future<MediaDetail> setFeeling(String mediaUri, int feeling) async {
+    final accessToken = await _authService.obtainAccessToken();
+    try {
+      return await _updateApi.setFeeling(mediaUri: mediaUri, feeling: feeling, accessToken: accessToken);
     } catch (e) {
       print(e);
       throw e;
