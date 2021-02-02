@@ -145,10 +145,18 @@ class _RemoteMediaDetailPageState extends BasePageState<RemoteMediaDetailPage> {
     }
   }
   
-  Text _buildMediaTitle(BuildContext context, MediaDetail media) {
-    final color = _computeTitleColor(media.feeling);
-    return Text(media.title, overflow: TextOverflow.ellipsis,
-        style: Theme.of(context).textTheme.headline6.copyWith(color: color));
+  Widget _buildMediaTitle(BuildContext context, MediaDetail media) {
+    final text = Text(media.title, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.headline6);
+    if (media.feeling == null) {
+      return text;
+    }
+    return Row(
+      children: [
+        Icon(_FeelingIcons.computeIcon(media.feeling), size: 24, color: _computeTitleColor(media.feeling)),
+        SizedBox(width: 4),
+        text
+      ],
+    );
   }
 
   Widget _buildMediaTagList(BuildContext context, MediaDetail media) {
@@ -525,10 +533,7 @@ class _CommentActionItem {
   String get commentId => item.id;
 }
 
-class _FeelingDropdown extends StatelessWidget {
-  static final buttonColor = Color.fromARGB(255, 231, 40, 102);
-  static final List<int> feelings = [2, 1, 0, -1, -2];
-
+class _FeelingIcons {
   static final List<IconData> icons = [
     Icons.sentiment_very_satisfied_rounded,
     Icons.sentiment_satisfied_rounded,
@@ -537,10 +542,15 @@ class _FeelingDropdown extends StatelessWidget {
     Icons.sentiment_very_dissatisfied_rounded,
   ];
 
-  static IconData _computeIcon(int feeling) => icons[2 - feeling];
+  static IconData computeIcon(int feeling) => icons[2 - feeling];
+}
+
+class _FeelingDropdown extends StatelessWidget {
+  static final buttonColor = Color.fromARGB(255, 231, 40, 102);
+  static final List<int> feelings = [2, 1, 0, -1, -2];
 
   DropdownMenuItem<int> _buildMenuItem(int feeling) {
-    return DropdownMenuItem(child: Icon(_computeIcon(feeling), size: 24), value: feeling);
+    return DropdownMenuItem(child: Icon(_FeelingIcons.computeIcon(feeling), size: 24), value: feeling);
   }
 
   static String _computeLabel(int feeling, String suffix) {
@@ -580,7 +590,7 @@ class _FeelingDropdown extends StatelessWidget {
       child: DropdownButton<int>(
           elevation: 16,
           iconSize: 32,
-          hint: Icon(_computeIcon(0), size: 24, color: Colors.black38),
+          hint: Icon(_FeelingIcons.computeIcon(0), size: 24, color: Colors.black38),
           isDense: true,
           underline: SizedBox(height: 0,),
           items: feelings.map(_buildMenuItem).toList(growable: false),

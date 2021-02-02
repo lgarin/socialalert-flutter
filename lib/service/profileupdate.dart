@@ -193,7 +193,7 @@ class ProfileUpdateService extends Service {
   }
 
   UserProfile _mapResponse(UploadTaskResponse response) {
-    if (response.status == UploadTaskStatus.complete) {
+    if (response.status == UploadTaskStatus.complete && response.response != null) {
       _uploadProgressStreamController.add(
           AvatarUploadProgress(taskId: response.taskId, progress: 100, status: UploadTaskStatus.complete));
       return UserProfile.fromJson(json.decode(response.response));

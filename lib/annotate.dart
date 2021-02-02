@@ -32,7 +32,7 @@ class _CaptureModel {
   String get title => _title;
   void setTitle(String newTitle) => _title = newTitle;
 
-  List<bool> get selectedFeelings => [feeling == 0, feeling == 1, feeling == 2, feeling == 3, feeling == 4];
+  List<bool> get selectedFeelings => [feeling == -2, feeling == -1, feeling == 0, feeling == 1, feeling == 2];
 }
 
 class AnnotateMediaPage extends StatelessWidget implements ScaffoldPage {
@@ -214,7 +214,7 @@ class _MetadataFormState extends State<_MetadataForm> {
         if (!userProfile.anonym) {
           MediaUploadService.of(context).restartTask(widget.upload);
         }
-        Navigator.of(context).maybePop();
+        Navigator.of(context).pop();
       } catch (e) {
         showSimpleDialog(context, "Upload failed", e.toString());
       }
@@ -281,7 +281,7 @@ class _FeelingWidgetState extends State<_FeelingWidget> {
 
   void _onSelected(int index) {
     setState(() {
-      widget.model.feeling = index;
+      widget.model.feeling = index - 2;
     });
   }
 
@@ -289,11 +289,11 @@ class _FeelingWidgetState extends State<_FeelingWidget> {
   Widget build(BuildContext context) {
     return ToggleButtons(
       children: [
-        _buildIcon(Icons.sentiment_very_dissatisfied_rounded, 0),
-        _buildIcon(Icons.sentiment_dissatisfied_rounded, 1),
-        _buildIcon(Icons.sentiment_neutral_rounded, 2),
-        _buildIcon(Icons.sentiment_satisfied_rounded, 3),
-        _buildIcon(Icons.sentiment_very_satisfied_rounded, 4)
+        _buildIcon(Icons.sentiment_very_dissatisfied_rounded, -2),
+        _buildIcon(Icons.sentiment_dissatisfied_rounded, -1),
+        _buildIcon(Icons.sentiment_neutral_rounded, 0),
+        _buildIcon(Icons.sentiment_satisfied_rounded, 1),
+        _buildIcon(Icons.sentiment_very_satisfied_rounded, 2)
       ],
       isSelected: widget.model.selectedFeelings,
       selectedColor: Colors.white,
@@ -305,10 +305,10 @@ class _FeelingWidgetState extends State<_FeelingWidget> {
     );
   }
 
-  Widget _buildIcon(IconData iconData, int index) {
+  Widget _buildIcon(IconData iconData, int feeling) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 15),
-      child: Icon(iconData, size: widget.model.feeling == index ? 40 : 30),
+      child: Icon(iconData, size: widget.model.feeling == feeling ? 40 : 30),
     );
   }
 }
