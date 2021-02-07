@@ -157,18 +157,21 @@ class _PrivacyFormModel extends ChangeNotifier {
   bool _genderMasked;
   bool _birthdateMasked;
   bool _locationBlurred;
+  bool _feelingMasked;
 
   _PrivacyFormModel(UserProfile profile) {
     _nameMasked = profile.privacy.nameMasked;
     _genderMasked = profile.privacy.genderMasked;
     _birthdateMasked = profile.privacy.birthdateMasked;
     _locationBlurred = profile.privacy.location == LocationPrivacy.BLUR;
+    _feelingMasked = profile.privacy.feelingMasked;
   }
 
   bool get nameMasked => _nameMasked;
   bool get genderMasked => _genderMasked;
   bool get birthdateMasked => _birthdateMasked;
   bool get locationBlurred => _locationBlurred;
+  bool get feelingMasked => _feelingMasked;
 
   void setNameMasked(bool newValue) {
     _nameMasked = newValue;
@@ -190,6 +193,11 @@ class _PrivacyFormModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setFeelingMasked(bool newValue) {
+    _feelingMasked = newValue;
+    notifyListeners();
+  }
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -198,12 +206,13 @@ class _PrivacyFormModel extends ChangeNotifier {
           _nameMasked == other._nameMasked &&
           _genderMasked == other._genderMasked &&
           _birthdateMasked == other._birthdateMasked &&
-          _locationBlurred == other._locationBlurred;
+          _locationBlurred == other._locationBlurred &&
+          _feelingMasked == other._feelingMasked;
 
   @override
-  int get hashCode => _nameMasked.hashCode ^ _genderMasked.hashCode ^ _birthdateMasked.hashCode ^ _locationBlurred.hashCode;
+  int get hashCode => _nameMasked.hashCode ^ _genderMasked.hashCode ^ _birthdateMasked.hashCode ^ _locationBlurred.hashCode ^ _feelingMasked.hashCode;
 
-  UserPrivacy toPrivacySettings() => UserPrivacy(nameMasked: _nameMasked, genderMasked: _genderMasked, birthdateMasked: _birthdateMasked, location: _locationBlurred ? LocationPrivacy.BLUR : null);
+  UserPrivacy toPrivacySettings() => UserPrivacy(nameMasked: _nameMasked, genderMasked: _genderMasked, birthdateMasked: _birthdateMasked, location: _locationBlurred ? LocationPrivacy.BLUR : null, feelingMasked: _feelingMasked);
 }
 
 class _PrivacyForm extends StatefulWidget {
@@ -240,6 +249,7 @@ class _PrivacyFormState extends State<_PrivacyForm> {
             _HideGenderSwitch(),
             _HideBirthdateSwitch(),
             _BlurLocationSwitch(),
+            _HideFeelingSwitch(),
             _PrivacySaveButton(onSave: _onSave, initialSettings: _initialModel),
             SizedBox(height: 80)
           ]
@@ -322,6 +332,20 @@ class _BlurLocationSwitch extends StatelessWidget {
         secondary: Icon(Icons.gps_fixed),
         value: model.locationBlurred,
         onChanged: model.setLocationBlurred
+    );
+  }
+}
+
+class _HideFeelingSwitch extends StatelessWidget {
+
+  @override
+  Widget build(BuildContext context) {
+    _PrivacyFormModel model = context.watch();
+    return SwitchListTile(
+        title: Text('Hide feeling'),
+        secondary: Icon(Icons.sentiment_neutral_rounded),
+        value: model.feelingMasked,
+        onChanged: model.setFeelingMasked
     );
   }
 }

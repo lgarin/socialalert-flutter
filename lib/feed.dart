@@ -7,6 +7,7 @@ import 'package:social_alert_app/local.dart';
 import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/remote.dart';
 import 'package:social_alert_app/profile.dart';
+import 'package:social_alert_app/feeling.dart';
 import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/configuration.dart';
 import 'package:social_alert_app/service/dataobjet.dart';
@@ -106,7 +107,22 @@ class _FeedDisplayState extends BasePagingState<FeedDisplay, FeedItem> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(getActivityText(item), overflow: TextOverflow.ellipsis),
-        Text(item.media.title, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.headline6)
+        _buildTitle(item)
+      ],
+    );
+  }
+
+  Widget _buildTitle(FeedItem item) {
+    final text = Text(item.media.title, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.headline6);
+    final feeling = Feeling.fromValue(item.media.feeling);
+    if (feeling == null) {
+      return text;
+    }
+    return Row(
+      children: [
+        Icon(feeling.icon, size: 24, color: feeling.color),
+        SizedBox(width: 4),
+        text
       ],
     );
   }

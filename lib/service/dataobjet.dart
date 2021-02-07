@@ -157,20 +157,23 @@ class UserPrivacy {
   final bool genderMasked;
   final bool nameMasked;
   final LocationPrivacy location;
+  final bool feelingMasked;
 
-  UserPrivacy({this.birthdateMasked, this.genderMasked, this.nameMasked, this.location});
+  UserPrivacy({this.birthdateMasked, this.genderMasked, this.nameMasked, this.location, this.feelingMasked});
 
   UserPrivacy.fromJson(Map<String, dynamic> json) :
         birthdateMasked = json['birthdateMasked'] ?? false,
         genderMasked = json['genderMasked'] ?? false,
         nameMasked = json['nameMasked'] ?? false,
-        location = json['location'] != null ? _locationPrivacyMap[json['location']] : null;
+        location = json['location'] != null ? _locationPrivacyMap[json['location']] : null,
+        feelingMasked = json['feelingMasked'] ?? false;
 
   Map<String, dynamic> toJson() => {
     'nameMasked': nameMasked,
     'genderMasked': genderMasked,
     'birthdateMasked': birthdateMasked,
     'location': location != null ? _locationPrivacyNames[location.index] : null,
+    'feelingMasked': feelingMasked,
   };
 }
 
