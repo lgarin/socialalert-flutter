@@ -9,6 +9,7 @@ import 'package:social_alert_app/base.dart';
 import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/local.dart';
 import 'package:social_alert_app/main.dart';
+import 'package:social_alert_app/feeling.dart';
 import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/configuration.dart';
 import 'package:social_alert_app/service/eventbus.dart';
@@ -21,7 +22,7 @@ class _CaptureModel {
   String _title;
   final currentTag = TextEditingController();
   String selectedCategory;
-  int feeling;
+  Feeling feeling;
   bool autovalidate = false;
 
   _CaptureModel()
@@ -31,8 +32,6 @@ class _CaptureModel {
 
   String get title => _title;
   void setTitle(String newTitle) => _title = newTitle;
-
-  List<bool> get selectedFeelings => [feeling == -2, feeling == -1, feeling == 0, feeling == 1, feeling == 2];
 }
 
 class AnnotateMediaPage extends StatelessWidget implements ScaffoldPage {
@@ -206,7 +205,7 @@ class _MetadataFormState extends State<_MetadataForm> {
         title: _model.title,
         category: _model.selectedCategory,
         tags: List.from(_model.tags),
-        feeling: _model.feeling,
+        feeling: _model.feeling?.value,
       );
       try {
         final userProfile = Provider.of<UserProfile>(context, listen: false);
@@ -281,21 +280,15 @@ class _FeelingWidgetState extends State<_FeelingWidget> {
 
   void _onSelected(int index) {
     setState(() {
-      widget.model.feeling = index - 2;
+      widget.model.feeling = Feeling.allDescending[index];
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return ToggleButtons(
-      children: [
-        _buildIcon(Icons.sentiment_very_dissatisfied_rounded, -2),
-        _buildIcon(Icons.sentiment_dissatisfied_rounded, -1),
-        _buildIcon(Icons.sentiment_neutral_rounded, 0),
-        _buildIcon(Icons.sentiment_satisfied_rounded, 1),
-        _buildIcon(Icons.sentiment_very_satisfied_rounded, 2)
-      ],
-      isSelected: widget.model.selectedFeelings,
+      children: Feeling.allDescending.map(_buildIcon).toList(growable: false),
+      isSelected: Feeling.allDescending.map(_isSelected).toList(growable: false),
       selectedColor: Colors.white,
       fillColor: Theme.of(context).primaryColor,
       onPressed: _onSelected,
@@ -305,10 +298,12 @@ class _FeelingWidgetState extends State<_FeelingWidget> {
     );
   }
 
-  Widget _buildIcon(IconData iconData, int feeling) {
+  bool _isSelected(Feeling feeling) => widget.model.feeling == feeling;
+
+  Widget _buildIcon(Feeling feeling) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 15),
-      child: Icon(iconData, size: widget.model.feeling == feeling ? 40 : 30),
+      child: Icon(feeling.icon, size: _isSelected(feeling) ? 40 : 30),
     );
   }
 }

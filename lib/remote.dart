@@ -6,6 +6,7 @@ import 'package:form_field_validator/form_field_validator.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:provider/provider.dart';
 import 'package:social_alert_app/base.dart';
+import 'package:social_alert_app/feeling.dart';
 import 'package:social_alert_app/local.dart';
 import 'package:social_alert_app/profile.dart';
 import 'package:social_alert_app/helper.dart';
@@ -133,26 +134,15 @@ class _RemoteMediaDetailPageState extends BasePageState<RemoteMediaDetailPage> {
     return Future.value(false);
   }
 
-  static Color _computeTitleColor(int feeling) {
-    if (feeling == null) {
-      return Colors.black;
-    } else if (feeling > 0) {
-      return Color.fromARGB(255, 86, 205, 105);
-    } else if (feeling < 0) {
-      return Color.fromARGB(255, 220, 53, 69);
-    } else {
-      return Color.fromARGB(255, 9, 114, 236);
-    }
-  }
-  
   Widget _buildMediaTitle(BuildContext context, MediaDetail media) {
     final text = Text(media.title, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.headline6);
-    if (media.feeling == null) {
+    final feeling = Feeling.fromValue(media.feeling);
+    if (feeling == null) {
       return text;
     }
     return Row(
       children: [
-        Icon(_FeelingIcons.computeIcon(media.feeling), size: 24, color: _computeTitleColor(media.feeling)),
+        Icon(feeling.icon, size: 24, color: feeling.color),
         SizedBox(width: 4),
         text
       ],
@@ -533,42 +523,15 @@ class _CommentActionItem {
   String get commentId => item.id;
 }
 
-class _FeelingIcons {
-  static final List<IconData> icons = [
-    Icons.sentiment_very_satisfied_rounded,
-    Icons.sentiment_satisfied_rounded,
-    Icons.sentiment_neutral_rounded,
-    Icons.sentiment_dissatisfied_rounded,
-    Icons.sentiment_very_dissatisfied_rounded,
-  ];
-
-  static IconData computeIcon(int feeling) => icons[2 - feeling];
-}
-
 class _FeelingDropdown extends StatelessWidget {
   static final buttonColor = Color.fromARGB(255, 231, 40, 102);
-  static final List<int> feelings = [2, 1, 0, -1, -2];
 
-  DropdownMenuItem<int> _buildMenuItem(int feeling) {
-    return DropdownMenuItem(child: Icon(_FeelingIcons.computeIcon(feeling), size: 24), value: feeling);
+  DropdownMenuItem<Feeling> _buildMenuItem(Feeling feeling) {
+    return DropdownMenuItem(child: Icon(feeling.icon, size: 24), value: feeling);
   }
 
-  static String _computeLabel(int feeling, String suffix) {
-    if (feeling > 1) {
-      return 'You feel very good about "$suffix"';
-    } else if (feeling > 0) {
-      return 'You feel good about "$suffix"';
-    } else if (feeling < -1) {
-      return 'You feel very bad about "$suffix"';
-    } else if (feeling < 0) {
-      return 'You feel bad about "$suffix"';
-    } else {
-      return 'You feel neutral about "$suffix"';
-    }
-  }
-
-  void _showSnackBar(BuildContext context, MediaInfo media, int feeling) {
-    showSuccessSnackBar(context, _computeLabel(feeling, media.title));
+  void _showSnackBar(BuildContext context, MediaInfo media, Feeling feeling) {
+    showSuccessSnackBar(context, 'You feel ${feeling.description} about "${media.title}".');
   }
 
   @override
@@ -587,20 +550,20 @@ class _FeelingDropdown extends StatelessWidget {
         ]
       ),
       padding: EdgeInsets.symmetric(horizontal: 14, vertical: 2),
-      child: DropdownButton<int>(
+      child: DropdownButton<Feeling>(
           elevation: 16,
           iconSize: 32,
-          hint: Icon(_FeelingIcons.computeIcon(0), size: 24, color: Colors.black38),
+          hint: Icon(Feeling.neutral.icon, size: 24, color: Colors.black38),
           isDense: true,
           underline: SizedBox(height: 0,),
-          items: feelings.map(_buildMenuItem).toList(growable: false),
+          items: Feeling.allDescending.map(_buildMenuItem).toList(growable: false),
           onChanged: (feeling) {
-            MediaUpdateService.of(context).setFeeling(model.mediaUri, feeling)
+            MediaUpdateService.of(context).setFeeling(model.mediaUri, feeling.value)
                 .catchError((error) => showSimpleDialog(context, 'Failure', error.toString()))
                 .then(model.refresh)
                 .then((_) => _showSnackBar(context, model.detail, feeling));
           },
-          value: model.detail.userFeeling)
+          value: Feeling.fromValue(model.detail.userFeeling))
     );
   }
 }
