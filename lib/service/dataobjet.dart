@@ -101,7 +101,6 @@ class UserInfo {
   final String biography;
   final String gender;
   final UserStatistic statistic;
-  final UserPrivacy privacy;
 
   UserInfo.fromJson(Map<String, dynamic> json) :
         userId = json['id'],
@@ -116,8 +115,7 @@ class UserInfo {
         birthdate = json['birthdate'],
         gender = json['gender'],
         imageUri = json['imageUri'],
-        statistic = UserStatistic.fromJson(json['statistic']),
-        privacy = UserPrivacy.fromJson(json['privacy']);
+        statistic = UserStatistic.fromJson(json['statistic']);
 }
 
 class UserStatistic {
@@ -222,8 +220,6 @@ class MediaDetail extends MediaInfo {
       return null;
     }
   }
-
-  LocationPrivacy get locationPrivacy => creator?.privacy?.location;
 
   String get format {
     if (height != null && width != null) {
