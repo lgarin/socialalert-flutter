@@ -179,7 +179,7 @@ class UserProfile {
         gender = json['gender'],
         imageUri = json['imageUri'],
         statistic = UserStatistic.fromJson(json['statistic']),
-        privacy = UserPrivacy.fromJson(json['privacy']),
+        privacy = json['privacy'] != null ? UserPrivacy.fromJson(json['privacy']) : null,
         followedSince = json['followedSince'] != null ? DateTime.fromMillisecondsSinceEpoch(json['followedSince']) : null;
 
   static List<UserProfile> fromJsonList(List<dynamic> json) {
