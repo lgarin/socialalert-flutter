@@ -9,10 +9,20 @@ class Feeling {
   static final Feeling bad = Feeling._init(-1, 'bad', Icons.sentiment_dissatisfied_rounded, Color.fromARGB(255, 220, 53, 69));
   static final Feeling veryBad = Feeling._init(-2, 'very bad', Icons.sentiment_very_dissatisfied_rounded, Color.fromARGB(255, 220, 53, 69));
 
-  static final List<Feeling> allAscending = [veryBad, bad, neutral, good, veryGood];
-  static final List<Feeling> allDescending = [veryGood, good, neutral, bad, veryBad];
+  static final List<Feeling> allAscending = [bad, neutral, good];
+  static final List<Feeling> allDescending = [good, neutral, bad];
 
-  static Feeling fromValue(int value) => value == null ? null : allAscending[value + 2];
+  static Feeling fromValue(int value) {
+    if (value == null) {
+      return null;
+    } else if (value > 0) {
+      return good;
+    } else if (value < 0) {
+      return bad;
+    } else {
+      return neutral;
+    }
+  }
 
   final int value;
   final String description;
