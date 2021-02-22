@@ -122,7 +122,7 @@ class _FeedDisplayState extends BasePagingState<FeedDisplay, FeedItem> {
       children: [
         Icon(feeling.icon, size: 24, color: feeling.color),
         SizedBox(width: 4),
-        text
+        Flexible(child: text)
       ],
     );
   }

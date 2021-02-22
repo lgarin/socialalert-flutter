@@ -144,7 +144,7 @@ class _RemoteMediaDetailPageState extends BasePageState<RemoteMediaDetailPage> {
       children: [
         Icon(feeling.icon, size: 24, color: feeling.color),
         SizedBox(width: 4),
-        text
+        Flexible(child: text)
       ],
     );
   }
