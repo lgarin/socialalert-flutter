@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:fluster/fluster.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:social_alert_app/feeling.dart';
 import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/service/geolocation.dart';
@@ -73,6 +74,16 @@ class _MediaCluster extends _Cluster<_MediaCluster> {
 
   Iterable<MediaInfo> get items => _items;
   MediaInfo get singleItem => !isCluster ? _items.first : null;
+
+  int averageFeeling() {
+    final feelings = _items.map((e) => e.feeling).where((e) => e != null).toList(growable: false);
+    int count = feelings.length;
+    if (count == 0 || 2 * count < _items.length) {
+      return null;
+    }
+    final sum = feelings.reduce((sum, e) => sum + e);
+    return sum ~/ count;
+  }
 }
 
 class _StatisticCluster extends _Cluster<_StatisticCluster> {
@@ -268,7 +279,7 @@ class _MapDisplayState extends State<MapDisplay> {
   Future<Marker> _toMediaSingleMarker(MediaInfo media) async {
     return Marker(markerId: MarkerId(media.mediaUri),
         position: LatLng(media.latitude, media.longitude),
-        icon: await drawMapLocationMarker(clusterMarkerRadius / 2),
+        icon: await drawMapLocationMarker(clusterMarkerRadius / 2, markerColor: Feeling.fromValue(media.feeling)?.color ?? Feeling.neutral.color),
         consumeTapEvents: true,
         onTap: () => _onMarkerSelection(media),
         infoWindow: InfoWindow(title: media.title, onTap: () => _onThumbnailSelection(media)));
@@ -277,7 +288,7 @@ class _MapDisplayState extends State<MapDisplay> {
   Future<Marker> _toMediaClusterMarker(_MediaCluster cluster) async {
     return Marker(markerId: MarkerId(cluster.markerId),
         position: LatLng(cluster.latitude, cluster.longitude),
-        icon: await drawMapClusterMarker(cluster.text, clusterMarkerRadius / 2),
+        icon: await drawMapClusterMarker(cluster.text, clusterMarkerRadius / 2, markerColor: Feeling.fromValue(cluster.averageFeeling())?.color ?? Feeling.neutral.color),
         consumeTapEvents: true,
         onTap: () => _onClusterSelection(cluster));
   }

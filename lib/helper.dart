@@ -104,7 +104,7 @@ class NonEmptyValidator extends TextFieldValidator {
 
 const _markerColor = Color.fromARGB(255, 231, 40, 102);
 
-Future<BitmapDescriptor> drawMapClusterMarker(String text, double radius, {Color markerColor = _markerColor}) async {
+Future<BitmapDescriptor> drawMapClusterMarker(String text, double radius, {Color markerColor}) async {
   final pictureRecorder = PictureRecorder();
   final canvas = Canvas(pictureRecorder);
   final paint = Paint();
@@ -114,28 +114,23 @@ Future<BitmapDescriptor> drawMapClusterMarker(String text, double radius, {Color
   );
   final textPainter = TextPainter(textDirection: TextDirection.ltr, text: textSpan);
 
-  canvas.drawCircle(Offset(radius, radius), radius, paint..color = markerColor);
+  paint.color = markerColor ?? _markerColor;
+  canvas.drawCircle(Offset(radius, radius), radius, paint);
   textPainter.layout();
-  textPainter.paint(canvas,
-  Offset(radius - textPainter.width / 2, radius - textPainter.height / 2),
-  );
+  textPainter.paint(canvas, Offset(radius - textPainter.width / 2, radius - textPainter.height / 2));
 
-  final image = await pictureRecorder.endRecording().toImage(
-  radius.toInt() * 2,
-  radius.toInt() * 2,
-  );
-
+  final image = await pictureRecorder.endRecording().toImage(radius.toInt() * 2, radius.toInt() * 2);
   final data = await image.toByteData(format: ImageByteFormat.png);
   return BitmapDescriptor.fromBytes(data.buffer.asUint8List());
 }
 
-Future<BitmapDescriptor> drawMapLocationMarker(double radius, {Color markerColor = _markerColor}) async {
+Future<BitmapDescriptor> drawMapLocationMarker(double radius, {Color markerColor}) async {
   final pictureRecorder = PictureRecorder();
   final canvas = Canvas(pictureRecorder);
   final paint = Paint();
   final path = Path();
 
-  paint.color = markerColor;
+  paint.color = markerColor ?? _markerColor;
   paint.style = PaintingStyle.fill;
   path.moveTo(radius, 2 * radius);
   path.arcTo(Rect.fromLTWH(0.25 * radius, 0, 1.5 * radius, 1.5 * radius), pi - 0.5, pi + 1, false);
@@ -144,11 +139,7 @@ Future<BitmapDescriptor> drawMapLocationMarker(double radius, {Color markerColor
 
   canvas.drawCircle(Offset(radius, radius / 1.5), 0.25 * radius, paint..color = Colors.white);
 
-  final image = await pictureRecorder.endRecording().toImage(
-    radius.toInt() * 2,
-    radius.toInt() * 2,
-  );
-
+  final image = await pictureRecorder.endRecording().toImage(radius.toInt() * 2, radius.toInt() * 2);
   final data = await image.toByteData(format: ImageByteFormat.png);
   return BitmapDescriptor.fromBytes(data.buffer.asUint8List());
 }
