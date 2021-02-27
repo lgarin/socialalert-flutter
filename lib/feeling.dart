@@ -24,6 +24,13 @@ class Feeling {
     }
   }
 
+  static Feeling fromAverage(int sum, int count, int totalCount) {
+    if (count == 0 || 2 * count < totalCount) {
+      return null;
+    }
+    return Feeling.fromValue(sum ~/ count);
+  }
+
   final int value;
   final String description;
   final IconData icon;

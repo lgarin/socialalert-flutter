@@ -284,13 +284,17 @@ class GeoStatistic {
   final double maxLon;
   final double minLat;
   final double minLon;
+  final int feelingCount;
+  final int feelingSum;
 
   GeoStatistic.fromJson(Map<String, dynamic> json) :
         count = json['count'],
         maxLat = json['maxLat'],
         maxLon = json['maxLon'],
         minLat = json['minLat'],
-        minLon = json['minLon'];
+        minLon = json['minLon'],
+        feelingCount = json['feelingCount'],
+        feelingSum = json['feelingSum'];
 
   double get centerLat => (maxLat + minLat) / 2.0;
   double get centerLon => (maxLon + minLon) / 2.0;

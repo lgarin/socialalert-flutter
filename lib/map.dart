@@ -49,6 +49,10 @@ abstract class _Cluster<T extends _Cluster<T>> extends Clusterable {
   void addChild(T child);
 
   String get text => pointsSize >= maxDisplayCount ? '$maxDisplayCount+' : pointsSize.toString();
+
+  Feeling get _averageFeeling;
+
+  Color get feelingColor => _averageFeeling?.color ?? Feeling.neutral.color;
 }
 
 class _MediaCluster extends _Cluster<_MediaCluster> {
@@ -75,14 +79,10 @@ class _MediaCluster extends _Cluster<_MediaCluster> {
   Iterable<MediaInfo> get items => _items;
   MediaInfo get singleItem => !isCluster ? _items.first : null;
 
-  int averageFeeling() {
+  Feeling get _averageFeeling {
     final feelings = _items.map((e) => e.feeling).where((e) => e != null).toList(growable: false);
-    int count = feelings.length;
-    if (count == 0 || 2 * count < _items.length) {
-      return null;
-    }
-    final sum = feelings.reduce((sum, e) => sum + e);
-    return sum ~/ count;
+    final sum = feelings.fold(0, (sum, e) => sum + e);
+    return Feeling.fromAverage(sum, feelings.length, _items.length);
   }
 }
 
@@ -92,6 +92,9 @@ class _StatisticCluster extends _Cluster<_StatisticCluster> {
   double _maxLat;
   double _minLon;
   double _maxLon;
+  int _count;
+  int _feelingCount;
+  int _feelingSum;
 
   _StatisticCluster(BaseCluster cluster, LatLng position) :
         super(cluster, position);
@@ -101,6 +104,9 @@ class _StatisticCluster extends _Cluster<_StatisticCluster> {
         _maxLat = item.maxLat,
         _minLon = item.minLon,
         _maxLon = item.maxLon,
+        _count = item.count,
+        _feelingCount = item.feelingCount,
+        _feelingSum = item.feelingSum,
         super.single(
           latitude: item.centerLat,
           longitude: item.centerLon,
@@ -114,15 +120,23 @@ class _StatisticCluster extends _Cluster<_StatisticCluster> {
       _maxLat = item._maxLat;
       _minLon = item._minLon;
       _maxLon = item._maxLon;
+      _count = item._count;
+      _feelingCount = item._feelingCount;
+      _feelingSum = item._feelingSum;
     } else {
       _minLat = min(_minLat, item._minLat);
       _maxLat = max(_maxLat, item._maxLat);
       _minLon = min(_minLon, item._minLon);
       _maxLon = max(_maxLon, item._maxLon);
+      _count += item._count;
+      _feelingCount += item._feelingCount;
+      _feelingSum += item._feelingSum;
     }
   }
 
   LatLngBounds get bounds => LatLngBounds(southwest: LatLng(_minLat, _minLon), northeast: LatLng(_maxLat, _maxLon));
+
+  Feeling get _averageFeeling => Feeling.fromAverage(_feelingSum, _feelingCount, _count);
 }
 
 class _MapDisplayState extends State<MapDisplay> {
@@ -145,7 +159,6 @@ class _MapDisplayState extends State<MapDisplay> {
   GoogleMapController _mapController;
   List<_Cluster> _clusterList = [];
   StreamSubscription<GeoPosition> postionSubscription;
-
 
   @override
   void initState() {
@@ -276,10 +289,11 @@ class _MapDisplayState extends State<MapDisplay> {
     });
   }
 
-  Future<Marker> _toMediaSingleMarker(MediaInfo media) async {
+  Future<Marker> _toMediaSingleMarker(_MediaCluster cluster) async {
+    final media = cluster.singleItem;
     return Marker(markerId: MarkerId(media.mediaUri),
         position: LatLng(media.latitude, media.longitude),
-        icon: await drawMapLocationMarker(clusterMarkerRadius / 2, markerColor: Feeling.fromValue(media.feeling)?.color ?? Feeling.neutral.color),
+        icon: await drawMapLocationMarker(clusterMarkerRadius / 2, markerColor: cluster.feelingColor),
         consumeTapEvents: true,
         onTap: () => _onMarkerSelection(media),
         infoWindow: InfoWindow(title: media.title, onTap: () => _onThumbnailSelection(media)));
@@ -288,7 +302,7 @@ class _MapDisplayState extends State<MapDisplay> {
   Future<Marker> _toMediaClusterMarker(_MediaCluster cluster) async {
     return Marker(markerId: MarkerId(cluster.markerId),
         position: LatLng(cluster.latitude, cluster.longitude),
-        icon: await drawMapClusterMarker(cluster.text, clusterMarkerRadius / 2, markerColor: Feeling.fromValue(cluster.averageFeeling())?.color ?? Feeling.neutral.color),
+        icon: await drawMapClusterMarker(cluster.text, clusterMarkerRadius / 2, markerColor: cluster.feelingColor),
         consumeTapEvents: true,
         onTap: () => _onClusterSelection(cluster));
   }
@@ -296,14 +310,14 @@ class _MapDisplayState extends State<MapDisplay> {
   Future<Marker> _toStatisticClusterMarker(_StatisticCluster cluster) async {
     return Marker(markerId: MarkerId(cluster.markerId),
         position: LatLng(cluster.latitude, cluster.longitude),
-        icon: await drawMapClusterMarker(cluster.text, clusterMarkerRadius / 2),
+        icon: await drawMapClusterMarker(cluster.text, clusterMarkerRadius / 2, markerColor: cluster.feelingColor),
         consumeTapEvents: true,
         onTap: () => _onStatisticSelection(cluster));
   }
 
   Future<Marker> _toClusterMarker(_Cluster cluster) async {
     if (cluster is _MediaCluster) {
-      return cluster.isCluster ? _toMediaClusterMarker(cluster) : _toMediaSingleMarker(cluster.items.first);
+      return cluster.isCluster ? _toMediaClusterMarker(cluster) : _toMediaSingleMarker(cluster);
     } else if (cluster is _StatisticCluster) {
       return _toStatisticClusterMarker(cluster);
     } else {
