@@ -15,17 +15,11 @@ import 'package:social_alert_app/service/pagemanager.dart';
 import 'package:social_alert_app/service/permission.dart';
 import 'package:social_alert_app/service/profileupdate.dart';
 
-abstract class ScaffoldPage implements Widget {
-
-  GlobalKey<ScaffoldState> get scaffoldKey;
-}
-
 class _NotificationHook extends StatefulWidget {
   final String pageName;
-  final GlobalKey<ScaffoldState> scaffoldKey;
   final Widget child;
 
-  _NotificationHook({@required this.pageName, @required this.scaffoldKey, @required this.child});
+  _NotificationHook({@required this.pageName, @required this.child});
 
   @override
   _NotificationHookState createState() => _NotificationHookState();
@@ -48,7 +42,7 @@ class _NotificationHookState extends State<_NotificationHook> {
   StreamSubscription<PageEvent> _pageListener;
   StreamSubscription<MediaUploadTask> _uploadResultListener;
   StreamSubscription<UserProfile> _userProfileListener;
-  final _previousEvents = List<_NotificationEvent>();
+  final _previousEvents = <_NotificationEvent>[];
 
   @override
   void initState() {
@@ -97,10 +91,7 @@ class _NotificationHookState extends State<_NotificationHook> {
       _previousEvents.add(_NotificationEvent(message, color, action, DateTime.now()));
       return;
     }
-    var scaffoldState = widget.scaffoldKey.currentState;
-    if (scaffoldState != null) {
-      scaffoldState.showSnackBar(SnackBar(content: Text(message, style: TextStyle(color: color)), action: action));
-    }
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message, style: TextStyle(color: color)), action: action));
   }
 
   void showSuccessSnackBar(String message, {SnackBarAction action}) {
@@ -177,17 +168,15 @@ class _NotificationHookState extends State<_NotificationHook> {
 abstract class BasePageState<T extends StatefulWidget> extends State<T> {
   final appName = 'Snypix';
   final String pageName;
-  final GlobalKey<ScaffoldState> scaffoldKey;
 
-  BasePageState(this.scaffoldKey, this.pageName);
+  BasePageState(this.pageName);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-          key: scaffoldKey,
           appBar: buildAppBar(),
           drawer: buildDrawer(),
-          body: _NotificationHook(pageName: pageName, scaffoldKey: scaffoldKey, child: Builder(builder: buildBody)),
+          body: _NotificationHook(pageName: pageName, child: Builder(builder: buildBody)),
           floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
           floatingActionButton: buildCaptureButton(),
           bottomNavigationBar: buildNavBar()
@@ -217,7 +206,7 @@ abstract class BasePageState<T extends StatefulWidget> extends State<T> {
   }
 
   void _captureMedia(BuildContext context) async {
-    final requestedPermissions = [Permission.camera, Permission.microphone, Permission.locationWhenInUse];
+    final requestedPermissions = [PermissionGroup.camera, PermissionGroup.microphone, PermissionGroup.locationWhenInUse];
     if (await PermissionManager.of(context).allows(requestedPermissions)) {
       Navigator.of(context).pushNamed(AppRoute.CaptureMedia);
     }
@@ -279,7 +268,7 @@ abstract class BasePagingState<T extends StatefulWidget, E> extends State<T> {
   }
 
   List<E> _createNewList(List<E> a, List<E> b) {
-    final result = List<E>(a.length + b.length);
+    final result = List<E>.filled(a.length + b.length, null);
     List.copyRange(result, 0, a);
     List.copyRange(result, a.length, b);
     return result;

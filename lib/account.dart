@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:form_field_validator/form_field_validator.dart';
 import 'package:provider/provider.dart';
-import 'package:social_alert_app/base.dart';
 import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/service/authentication.dart';
@@ -290,18 +289,16 @@ class _ChangePasswordFormState extends State<_ChangePasswordForm> {
   }
 }
 
-abstract class BaseAccountPage extends StatelessWidget implements ScaffoldPage {
+abstract class BaseAccountPage extends StatelessWidget {
   static const margin = 40.0;
   static const backgroundColor = Color.fromARGB(255, 240, 240, 240);
-  final GlobalKey<ScaffoldState> scaffoldKey;
   final String title;
 
-  BaseAccountPage(this.scaffoldKey, this.title);
+  BaseAccountPage(this.title);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        key: scaffoldKey,
         backgroundColor: backgroundColor,
         appBar: AppBar(title: Text(title, overflow: TextOverflow.ellipsis)),
         body: _buildContent(context)
@@ -323,7 +320,7 @@ abstract class BaseAccountPage extends StatelessWidget implements ScaffoldPage {
 
 class DeleteAccountPage extends BaseAccountPage {
 
-  DeleteAccountPage(GlobalKey<ScaffoldState> scaffoldKey) : super(scaffoldKey, 'Delete Account');
+  DeleteAccountPage() : super('Delete Account');
 
   Widget _buildBody(BuildContext context) {
     return _DeleteAccountForm();
@@ -332,7 +329,7 @@ class DeleteAccountPage extends BaseAccountPage {
 
 class ChangePasswordPage extends BaseAccountPage {
 
-  ChangePasswordPage(GlobalKey<ScaffoldState> scaffoldKey) : super(scaffoldKey, 'Change Password');
+  ChangePasswordPage() : super('Change Password');
 
   Widget _buildBody(BuildContext context) {
     return _ChangePasswordForm();

@@ -18,26 +18,22 @@ class PageManager extends Service {
 
   static PageManager of(BuildContext context) => ServiceProvider.of(context);
 
-  GlobalKey<ScaffoldState> _currentPageKey;
   String _currentPageName;
 
   PageManager(BuildContext context) : super(context);
 
   EventBus get _eventBus => lookup();
 
-  void setCurrent(GlobalKey<ScaffoldState> pageKey, String pageName) {
-    if (pageKey == _currentPageKey) {
+  void setCurrent(String pageName) {
+    if (pageName == _currentPageName) {
       return;
     }
-    if (_currentPageKey != null) {
+    if (_currentPageName != null) {
       _eventBus.fire(PageEvent(_currentPageName, PageEventType.HIDE));
     }
-    _currentPageKey = pageKey;
     _currentPageName = pageName;
     Future(() => _eventBus.fire(PageEvent(pageName, PageEventType.SHOW)));
   }
-
-  ScaffoldState get currentPageState => _currentPageKey?.currentState;
 
   String get currentPageName => _currentPageName;
 

@@ -9,7 +9,6 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:provider/provider.dart';
-import 'package:social_alert_app/base.dart';
 import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/service/cameradevice.dart';
@@ -170,14 +169,13 @@ class MediaPresentationPanel extends StatelessWidget {
   }
 }
 
-class LocalMediaInfoPage extends StatelessWidget implements ScaffoldPage {
+class LocalMediaInfoPage extends StatelessWidget {
   static const defaultTitle = 'New Snype';
   static const backgroundColor = Color.fromARGB(255, 240, 240, 240);
 
-  final GlobalKey<ScaffoldState> scaffoldKey;
   final MediaUploadTask upload;
 
-  LocalMediaInfoPage(this.scaffoldKey, this.upload);
+  LocalMediaInfoPage(this.upload);
 
   Future<_ExifData> _buildExifData(BuildContext context) async {
     Map<String, dynamic> tags = await readExif(FileReader(upload.file));
@@ -193,10 +191,10 @@ class LocalMediaInfoPage extends StatelessWidget implements ScaffoldPage {
   @override
   Widget build(BuildContext context) {
     return FutureProvider<_ExifData>(
+        initialData: null,
         create: _buildExifData,
         catchError: showUnexpectedError,
         child: Scaffold(
-            key: scaffoldKey,
             backgroundColor: backgroundColor,
             appBar: _buildAppBar(context),
             body: _buildBody()
@@ -264,7 +262,7 @@ class MediaInfoPanel extends StatelessWidget {
   const MediaInfoPanel({Key key, @required this.timestamp, this.location, this.format, this.camera}) : super(key: key);
 
   Widget build(BuildContext context) {
-    final children = List<Widget>();
+    final children = <Widget>[];
     children.add(
       Row(children: <Widget>[
         Icon(Icons.access_time),
@@ -349,17 +347,15 @@ class MediaInfoPanel extends StatelessWidget {
   }
 }
 
-class LocalMediaDisplayPage extends StatelessWidget implements ScaffoldPage {
+class LocalMediaDisplayPage extends StatelessWidget {
 
-  final GlobalKey<ScaffoldState> scaffoldKey;
   final LocalMedia media;
 
-  LocalMediaDisplayPage(this.scaffoldKey, this.media);
+  LocalMediaDisplayPage(this.media);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        key: scaffoldKey,
         appBar: AppBar(title: Text(media.title, overflow: TextOverflow.ellipsis)),
         body: media is LocalPicture
           ? LocalPictureDisplay(file: media.file, title: media.title)

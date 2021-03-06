@@ -26,21 +26,17 @@ class _NetworkTabSelectionModel with ChangeNotifier {
   }
 }
 
-class UserNetworkPage extends StatefulWidget implements ScaffoldPage {
-
-  final GlobalKey<ScaffoldState> scaffoldKey;
-
-  UserNetworkPage(this.scaffoldKey);
+class UserNetworkPage extends StatefulWidget {
 
   @override
-  _UserNetworkPageState createState() => _UserNetworkPageState(scaffoldKey);
+  _UserNetworkPageState createState() => _UserNetworkPageState();
 }
 
 class _UserNetworkPageState extends BasePageState<UserNetworkPage> {
 
   final _tabSelectionModel = _NetworkTabSelectionModel();
 
-  _UserNetworkPageState(GlobalKey<ScaffoldState> scaffoldKey) : super(scaffoldKey, AppRoute.UserNetwork);
+  _UserNetworkPageState() : super(AppRoute.UserNetwork);
 
   @override
   AppBar buildAppBar() {

@@ -387,7 +387,7 @@ class _MediaUploadApi {
 
 class MediaUploadList with IterableMixin<MediaUploadTask>, ChangeNotifier {
 
-  final _list = List<MediaUploadTask>();
+  final _list = <MediaUploadTask>[];
 
   MediaUploadTask findById(String id) {
     return _list.firstWhere((other) => other.id == id);
@@ -499,6 +499,9 @@ class MediaUploadService extends Service {
   }
 
   Future<void> deleteTask(MediaUploadTask task) async {
+    if (task.status == null) {
+      return;
+    }
     if (!task.canBeDeleted) {
       throw 'Invalid task state';
     }

@@ -27,14 +27,10 @@ class _SettingsTabSelectionModel with ChangeNotifier {
   }
 }
 
-class SettingsEditorPage extends StatefulWidget implements ScaffoldPage {
-
-  final GlobalKey<ScaffoldState> scaffoldKey;
-
-  SettingsEditorPage(this.scaffoldKey);
+class SettingsEditorPage extends StatefulWidget {
 
   @override
-  _SettingsEditorPageState createState() => _SettingsEditorPageState(scaffoldKey);
+  _SettingsEditorPageState createState() => _SettingsEditorPageState();
 }
 
 class _SettingsEditorPageState extends BasePageState<SettingsEditorPage> {
@@ -42,7 +38,7 @@ class _SettingsEditorPageState extends BasePageState<SettingsEditorPage> {
   final _tabSelectionModel = _SettingsTabSelectionModel();
   final _scrollController = ScrollController();
 
-  _SettingsEditorPageState(GlobalKey<ScaffoldState> scaffoldKey) : super(scaffoldKey, AppRoute.SettingsEditor);
+  _SettingsEditorPageState() : super(AppRoute.SettingsEditor);
 
   @override
   void initState() {

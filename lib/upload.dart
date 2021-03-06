@@ -7,14 +7,10 @@ import 'package:social_alert_app/service/mediaupload.dart';
 import 'package:social_alert_app/service/videoencoder.dart';
 import 'package:timeago_flutter/timeago_flutter.dart';
 
-class UploadManagerPage extends StatefulWidget implements ScaffoldPage {
-
-  final GlobalKey<ScaffoldState> scaffoldKey;
-
-  UploadManagerPage(this.scaffoldKey);
+class UploadManagerPage extends StatefulWidget {
 
   @override
-  _UploadManagerPageState createState() => _UploadManagerPageState(scaffoldKey);
+  _UploadManagerPageState createState() => _UploadManagerPageState();
 }
 
 enum _UploadErrorAction {
@@ -34,7 +30,7 @@ class _UploadManagerPageState extends BasePageState<UploadManagerPage> {
   static const iconSize = 50.0;
   static final itemMargin = EdgeInsets.only(left: 10, right: 10, top: 10);
 
-  _UploadManagerPageState(GlobalKey<ScaffoldState> scaffoldKey) : super(scaffoldKey, AppRoute.UploadManager);
+  _UploadManagerPageState() : super(AppRoute.UploadManager);
 
   @override
   AppBar buildAppBar() {
@@ -195,8 +191,12 @@ class _UploadManagerPageState extends BasePageState<UploadManagerPage> {
     return showConfirmDialog(context, 'Delete Snype', 'Do you really want to delete this upload?');
   }
 
-  void _onConfirmUploadDeletion(MediaUploadTask task) {
-    MediaUploadService.of(context).deleteTask(task);
+  void _onConfirmUploadDeletion(MediaUploadTask task) async {
+    try {
+      await MediaUploadService.of(context).deleteTask(task);
+    } catch (e) {
+      showSimpleDialog(context, 'Cannot delete Snype', e.toString());
+    }
   }
 
   void _onItemSelected(MediaUploadTask task) {

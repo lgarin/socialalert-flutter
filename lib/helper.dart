@@ -4,21 +4,20 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:form_field_validator/form_field_validator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:social_alert_app/service/pagemanager.dart';
 
 T showUnexpectedError<T>(BuildContext context, Object error) {
   showSimpleDialog(context, 'Unexpected error', error.toString());
   return null;
 }
 
-Future showSimpleDialog(BuildContext context, String title, String message) {
+Future<T> showSimpleDialog<T>(BuildContext context, String title, String message) {
   return showDialog(
     builder: (context) {
       return AlertDialog(
         title: Text(title),
         content: Text(message),
         actions: <Widget>[
-          FlatButton(
+          TextButton(
               child: Text('Dismiss'),
               onPressed: () {
                 Navigator.of(context).pop();
@@ -37,12 +36,12 @@ Future<bool> showConfirmDialog(BuildContext context, String title, String messag
         title: Text(title),
         content: Text(message),
         actions: <Widget>[
-          FlatButton(
+          TextButton(
               child: Text(confirmText),
               onPressed: () {
                 Navigator.of(context).pop(true);
               }),
-          FlatButton(
+          TextButton(
             child: Text(cancelText),
             onPressed: () {
               Navigator.of(context).pop(false);
@@ -55,10 +54,7 @@ Future<bool> showConfirmDialog(BuildContext context, String title, String messag
 }
 
 void _showSnackBar(BuildContext context, String message, Color color, SnackBarAction action) {
-  var scaffoldState = PageManager.of(context).currentPageState;
-  if (scaffoldState != null) {
-    scaffoldState.showSnackBar(SnackBar(content: Text(message, style: TextStyle(color: color)), action: action));
-  }
+  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message, style: TextStyle(color: color)), action: action));
 }
 
 void showSuccessSnackBar(BuildContext context, String message, {SnackBarAction action}) {
@@ -151,6 +147,7 @@ void scrollToEnd(ScrollController controller) {
 class WideRoundedButton extends StatelessWidget {
 
   static const radius = 20.0;
+  static const _shape = RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(radius)));
 
   final String text;
   final VoidCallback onPressed;
@@ -162,17 +159,11 @@ class WideRoundedButton extends StatelessWidget {
     return SizedBox(
         width: double.infinity,
         height: 2 * radius,
-        child: RaisedButton(
-          child: Text(text, style: Theme
-              .of(context)
-              .textTheme
-              .button),
+        child: ElevatedButton(
+          child: Text(text, style: Theme.of(context).textTheme.button),
           onPressed: onPressed,
-          color: color ?? Theme.of(context).buttonColor,
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(Radius.circular(radius))
+          style: ElevatedButton.styleFrom(shape: _shape, primary: color ?? Theme.of(context).buttonColor),
           ),
-        )
     );
   }
 }

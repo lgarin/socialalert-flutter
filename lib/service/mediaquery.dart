@@ -121,7 +121,7 @@ class MediaQueryService extends Service {
 
   Future<List<String>> suggestTags(String term, int maxHitCount) async {
     if (term == null || term.length < 3) {
-      return List<String>();
+      return <String>[];
     }
     final accessToken = await _authService.obtainAccessToken();
     try {

@@ -6,8 +6,6 @@ import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/credential.dart';
 
-import 'base.dart';
-
 class _LoginModel {
   String _username = '';
   String _password = '';
@@ -224,10 +222,12 @@ class _LoginFormState extends State<_LoginForm> {
   @override
   Widget build(BuildContext context) {
     return FutureProvider<UserProfile>(
+        initialData: null,
         create: _findCurrentUser,
         catchError: showUnexpectedError,
         lazy: false,
         child: FutureProvider<_LoginModel>(
+          initialData: null,
           create: _prepareModel,
           catchError: showUnexpectedError,
           lazy: false,
@@ -294,18 +294,13 @@ class _LoginForm extends StatefulWidget {
   }
 }
 
-class LoginPage extends StatelessWidget implements ScaffoldPage {
+class LoginPage extends StatelessWidget {
   static const backgroundImagePath = "images/login_bg.jpg";
   static const margin = 40.0;
-
-  final GlobalKey<ScaffoldState> scaffoldKey;
-
-  LoginPage(this.scaffoldKey);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        key: scaffoldKey,
         backgroundColor: Theme.of(context).backgroundColor,
         body: _buildBody());
   }

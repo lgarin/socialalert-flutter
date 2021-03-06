@@ -30,15 +30,15 @@ class DataSource extends Service {
   }
 
   Future<Response> post({@required String uri, String accessToken}) {
-    return _client.post(baseServerUrl + uri, headers: _buildHeader(accessToken: accessToken));
+    return _client.post(Uri.parse(baseServerUrl + uri), headers: _buildHeader(accessToken: accessToken));
   }
 
   Future<Response> postText({@required String uri, @required String body, String accessToken}) {
-    return _client.post(baseServerUrl + uri, headers: _buildHeader(contentType: textMediaType, accessToken: accessToken), body: body);
+    return _client.post(Uri.parse(baseServerUrl + uri), headers: _buildHeader(contentType: textMediaType, accessToken: accessToken), body: body);
   }
 
   Future<Response> postJson({@required String uri, @required Object body, String accessToken}) {
-    return _client.post(baseServerUrl + uri, headers: _buildHeader(contentType: jsonMediaType, accessToken: accessToken), body: jsonEncode(body));
+    return _client.post(Uri.parse(baseServerUrl + uri), headers: _buildHeader(contentType: jsonMediaType, accessToken: accessToken), body: jsonEncode(body));
   }
 
   Future<String> queueImageUpload({@required String uri, @required File file, @required String title, bool showNotification = false, String accessToken}) {
@@ -67,7 +67,7 @@ class DataSource extends Service {
   Stream<UploadTaskProgress> get uploadProgressStream => _uploader.progress;
 
   Future<Response> getJson({@required String uri, String accessToken}) {
-    return _client.get(baseServerUrl + uri, headers: _buildHeader(accessToken: accessToken));
+    return _client.get(Uri.parse(baseServerUrl + uri), headers: _buildHeader(accessToken: accessToken));
   }
 
   @override

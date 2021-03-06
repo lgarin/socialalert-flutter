@@ -56,15 +56,15 @@ class SocialAlertApp extends StatelessWidget {
           ServiceProvider<CameraDevice>(create: (context) => CameraDevice(context)),
           ServiceProvider<VideoEncoder>(create: (context) => VideoEncoder(context)),
           ServiceProvider<GeoLocationService>(create: (context) => GeoLocationService(context)),
-          StreamProvider<GeoLocation>(create: (context) => GeoLocationService.of(context).locationStream, lazy: false),
+          StreamProvider<GeoLocation>(create: (context) => GeoLocationService.of(context).locationStream, lazy: false, initialData: null),
           ServiceProvider<Authentication>(create: (context) => Authentication(context)),
           ServiceProvider<UserAccountService>(create: (context) => UserAccountService(context)),
           ServiceProvider<ProfileQueryService>(create: (context) => ProfileQueryService(context)),
           ServiceProvider<ProfileUpdateService>(create: (context) => ProfileUpdateService(context)),
-          StreamProvider<UserProfile>(create: (context) => ProfileUpdateService.of(context).profileStream, lazy: false),
-          StreamProvider<AvatarUploadProgress>(create: (context) => ProfileUpdateService.of(context).uploadProgressStream, lazy: false),
+          StreamProvider<UserProfile>(create: (context) => ProfileUpdateService.of(context).profileStream, lazy: false, initialData: null),
+          StreamProvider<AvatarUploadProgress>(create: (context) => ProfileUpdateService.of(context).uploadProgressStream, lazy: false, initialData: null),
           ServiceProvider<MediaUploadService>(create: (context) => MediaUploadService(context)),
-          FutureProvider<MediaUploadList>(create: (context) => MediaUploadService.of(context).currentUploads(), lazy: false, catchError: showUnexpectedError),
+          FutureProvider<MediaUploadList>(create: (context) => MediaUploadService.of(context).currentUploads(), catchError: showUnexpectedError, lazy: false, initialData: null),
           ServiceProvider<MediaQueryService>(create: (context) => MediaQueryService(context)),
           ServiceProvider<MediaUpdateService>(create: (context) => MediaUpdateService(context)),
           ServiceProvider<CommentQueryService>(create: (context) => CommentQueryService(context)),
@@ -96,90 +96,73 @@ class SocialAlertApp extends StatelessWidget {
   }
 
   MaterialPageRoute _buildRoute(RouteSettings settings) {
-    final pageKey = GlobalKey<ScaffoldState>();
     switch (settings.name) {
       case AppRoute.Login: return _TrackedMaterialPageRoute(
-          pageKey: pageKey,
           settings: settings,
-          builder: (_) => LoginPage(pageKey)
+          builder: (_) => LoginPage()
       );
       case AppRoute.Register: return _TrackedMaterialPageRoute(
-          pageKey: pageKey,
           settings: settings,
-          builder: (_) => RegisterPage(pageKey)
+          builder: (_) => RegisterPage()
       );
       case AppRoute.Home: return _TrackedMaterialPageRoute(
-          pageKey: pageKey,
           settings: settings,
-          builder: (_) => HomePage(pageKey)
+          builder: (_) => HomePage()
       );
       case AppRoute.UploadManager: return _TrackedMaterialPageRoute(
-          pageKey: pageKey,
           settings: settings,
-          builder: (_) => UploadManagerPage(pageKey)
+          builder: (_) => UploadManagerPage()
       );
       case AppRoute.AnnotateMedia: return _TrackedMaterialPageRoute(
-          pageKey: pageKey,
           settings: settings,
-          builder: (_) => AnnotateMediaPage(pageKey, settings.arguments)
+          builder: (_) => AnnotateMediaPage(settings.arguments)
       );
       case AppRoute.UserNetwork: return _TrackedMaterialPageRoute(
-          pageKey: pageKey,
           settings: settings,
-          builder: (_) => UserNetworkPage(pageKey)
+          builder: (_) => UserNetworkPage()
       );
       case AppRoute.LocalMediaInfo: return _TrackedMaterialPageRoute(
-          pageKey: pageKey,
           settings: settings,
-          builder: (_) => LocalMediaInfoPage(pageKey, settings.arguments)
+          builder: (_) => LocalMediaInfoPage(settings.arguments)
       );
       case AppRoute.RemoteMediaDetail: return _TrackedMaterialPageRoute<MediaDetail>(
-          pageKey: pageKey,
           settings: settings,
-          builder: (_) => RemoteMediaDetailPage(pageKey, settings.arguments)
+          builder: (_) => RemoteMediaDetailPage(settings.arguments)
       );
       case AppRoute.ProfileViewer: return _TrackedMaterialPageRoute<UserProfile>(
-          pageKey: pageKey,
           settings: settings,
-          builder: (_) => ProfileViewerPage(pageKey, settings.arguments)
+          builder: (_) => ProfileViewerPage(settings.arguments)
       );
       case AppRoute.ProfileEditor: return _TrackedMaterialPageRoute(
-          pageKey: pageKey,
           settings: settings,
-          builder: (_) => ProfileEditorPage(pageKey)
+          builder: (_) => ProfileEditorPage()
       );
       case AppRoute.SettingsEditor: return _TrackedMaterialPageRoute(
-          pageKey: pageKey,
           settings: settings,
-          builder: (_) => SettingsEditorPage(pageKey)
+          builder: (_) => SettingsEditorPage()
       );
       case AppRoute.LocalMediaDisplay: return _TrackedMaterialPageRoute(
-          pageKey: pageKey,
           skipAnimation: true,
           settings: settings,
-          builder: (_) => LocalMediaDisplayPage(pageKey, settings.arguments)
+          builder: (_) => LocalMediaDisplayPage(settings.arguments)
       );
       case AppRoute.RemoteMediaDisplay: return _TrackedMaterialPageRoute(
-          pageKey: pageKey,
           skipAnimation: true,
           settings: settings,
-          builder: (_) => RemoteMediaDisplayPage(pageKey, settings.arguments)
+          builder: (_) => RemoteMediaDisplayPage(settings.arguments)
       );
       case AppRoute.CaptureMedia: return _TrackedMaterialPageRoute(
-          pageKey: pageKey,
           skipAnimation: true,
           settings: settings,
-          builder: (_) => CaptureMediaPage(pageKey)
+          builder: (_) => CaptureMediaPage()
       );
       case AppRoute.DeleteAccount: return _TrackedMaterialPageRoute(
-          pageKey: pageKey,
           settings: settings,
-          builder: (_) => DeleteAccountPage(pageKey)
+          builder: (_) => DeleteAccountPage()
       );
       case AppRoute.ChangePassword: return _TrackedMaterialPageRoute(
-          pageKey: pageKey,
           settings: settings,
-          builder: (_) => ChangePasswordPage(pageKey)
+          builder: (_) => ChangePasswordPage()
       );
       default: return null;
     }
@@ -207,11 +190,9 @@ class AppRoute {
 
 class _TrackedMaterialPageRoute<T> extends MaterialPageRoute<T> {
 
-  final GlobalKey<ScaffoldState> pageKey;
   final bool skipAnimation;
 
   _TrackedMaterialPageRoute({
-    @required this.pageKey,
     @required WidgetBuilder builder,
     @required RouteSettings settings,
     bool maintainState = true,
@@ -238,7 +219,7 @@ class _TrackedMaterialPageRoute<T> extends MaterialPageRoute<T> {
   void _notifyPageChange() {
     if (isCurrent) {
       PageManager pageManager = navigator.context.read();
-      pageManager.setCurrent(pageKey, pageName);
+      pageManager.setCurrent(pageName);
     }
   }
 

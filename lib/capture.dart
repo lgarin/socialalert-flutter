@@ -6,7 +6,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:native_device_orientation/native_device_orientation.dart';
 import 'package:provider/provider.dart';
-import 'package:social_alert_app/base.dart';
 import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/service/cameradevice.dart';
@@ -14,19 +13,14 @@ import 'package:social_alert_app/service/filesystem.dart';
 import 'package:social_alert_app/service/geolocation.dart';
 import 'package:social_alert_app/service/mediaupload.dart';
 
-class CaptureMediaPage extends StatefulWidget implements ScaffoldPage {
-
-  final GlobalKey<ScaffoldState> scaffoldKey;
-
-  CaptureMediaPage(this.scaffoldKey);
+class CaptureMediaPage extends StatefulWidget {
 
   @override
-  _CaptureMediaPageState createState() => _CaptureMediaPageState(scaffoldKey);
+  _CaptureMediaPageState createState() => _CaptureMediaPageState();
 }
 
 class _CaptureMediaPageState extends State<CaptureMediaPage> {
 
-  final GlobalKey<ScaffoldState> scaffoldKey;
   final cameraNotifier = ValueNotifier<CameraValue>(null);
   CameraController _cameraController;
   CameraLensDirection _lensDirection = CameraLensDirection.back;
@@ -36,11 +30,10 @@ class _CaptureMediaPageState extends State<CaptureMediaPage> {
   File _videoFile;
   Timer _videoMonitor;
 
-  _CaptureMediaPageState(this.scaffoldKey);
-
   @override
   Widget build(BuildContext context) {
     return FutureProvider<CameraController>(
+      initialData: null,
       key: ValueKey('$_lensDirection/$_videoMode'),
       create: _createCameraController,
       catchError: showUnexpectedError,
@@ -51,7 +44,6 @@ class _CaptureMediaPageState extends State<CaptureMediaPage> {
   Scaffold _buildContent(BuildContext context) {
     final portrait = MediaQuery.of(context).orientation == Orientation.portrait;
     return Scaffold(
-      key: scaffoldKey,
       appBar: portrait ? AppBar(title: Text('Synpix')) : null,
       body: _CameraPreviewArea(),
       bottomNavigationBar: _CaptureNavigationBar(videoMode: _videoMode, cameraNotifier: cameraNotifier, onCameraSwitch: _onCameraSwitch, onVideoResume: _onVideoStart, onVideoPause: _onVideoPause, onModeSwitch: _onModeSwitch,),

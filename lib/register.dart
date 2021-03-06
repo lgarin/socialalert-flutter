@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:form_field_validator/form_field_validator.dart';
-import 'package:social_alert_app/base.dart';
 import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/service/configuration.dart';
 import 'package:social_alert_app/service/useraccount.dart';
@@ -245,18 +244,13 @@ class _RegisterHeader extends StatelessWidget {
   }
 }
 
-class RegisterPage extends StatelessWidget implements ScaffoldPage {
+class RegisterPage extends StatelessWidget {
   static const backgroundImagePath = "images/login_bg.jpg";
   static const margin = 40.0;
-
-  final GlobalKey<ScaffoldState> scaffoldKey;
-
-  RegisterPage(this.scaffoldKey);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        key: scaffoldKey,
         backgroundColor: Theme.of(context).backgroundColor,
         body: _buildBody());
   }

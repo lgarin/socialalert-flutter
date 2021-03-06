@@ -37,19 +37,18 @@ class _MediaInfoModel with ChangeNotifier {
   }
 }
 
-class RemoteMediaDetailPage extends StatefulWidget implements ScaffoldPage {
+class RemoteMediaDetailPage extends StatefulWidget {
 
   final MediaInfo media;
-  final GlobalKey<ScaffoldState> scaffoldKey;
 
-  RemoteMediaDetailPage(this.scaffoldKey, this.media);
+  RemoteMediaDetailPage(this.media);
 
   String get mediaUri => media.mediaUri;
 
   String get mediaTitle => media.title;
 
   @override
-  _RemoteMediaDetailPageState createState() => _RemoteMediaDetailPageState(scaffoldKey);
+  _RemoteMediaDetailPageState createState() => _RemoteMediaDetailPageState();
 }
 
 class _RemoteMediaDetailPageState extends BasePageState<RemoteMediaDetailPage> {
@@ -58,7 +57,7 @@ class _RemoteMediaDetailPageState extends BasePageState<RemoteMediaDetailPage> {
   final _tabSelectionModel = _MediaTabSelectionModel();
   final _scrollController = ScrollController();
 
-  _RemoteMediaDetailPageState(GlobalKey<ScaffoldState> scaffoldKey) : super(scaffoldKey, AppRoute.RemoteMediaDetail);
+  _RemoteMediaDetailPageState() : super(AppRoute.RemoteMediaDetail);
 
   @override
   void initState() {
@@ -82,6 +81,7 @@ class _RemoteMediaDetailPageState extends BasePageState<RemoteMediaDetailPage> {
   @override
   Widget buildBody(BuildContext context) {
     return FutureProvider<_MediaInfoModel>(
+        initialData: null,
         create: _buildMediaModel,
         catchError: showUnexpectedError,
         child: Consumer<_MediaInfoModel>(
@@ -150,7 +150,7 @@ class _RemoteMediaDetailPageState extends BasePageState<RemoteMediaDetailPage> {
   }
 
   Widget _buildMediaTagList(BuildContext context, MediaDetail media) {
-    final children = List<Widget>();
+    final children = <Widget>[];
     if (media.category != null) {
       children.add(Chip(label: Text(media.category), backgroundColor: Colors.blueAccent));
     }
@@ -240,8 +240,8 @@ class _MediaDetailPanel extends StatelessWidget {
   Widget _buildViewCountButton(MediaDetail media) {
     return Tooltip(
       message: 'Hit count',
-      child: RaisedButton.icon(onPressed: null,
-          disabledTextColor: Colors.black,
+      child: ElevatedButton.icon(onPressed: null,
+          style: ElevatedButton.styleFrom(primary: Colors.black),
           icon: Icon(Icons.remove_red_eye),
           label: Text(media.hitCount.toString())
       ),
@@ -280,11 +280,11 @@ class _MediaFeedPanelState extends State<_MediaFeedPanel> {
     if (!_editingComment) {
       return SizedBox(width: 0);
     }
-    return FlatButton.icon(
+    return TextButton.icon(
         label: Text('Cancel'),
         icon: Icon(Icons.cancel),
-        color: Colors.grey,
-        onPressed: _endEditingComment,
+        style: TextButton.styleFrom(backgroundColor: Colors.grey, primary: Colors.black),
+        onPressed: _endEditingComment
       );
   }
 
@@ -300,11 +300,11 @@ class _MediaFeedPanelState extends State<_MediaFeedPanel> {
     });
   }
 
-  FlatButton _buildSubmitButton(BuildContext context) {
-    return FlatButton.icon(
+  TextButton _buildSubmitButton(BuildContext context) {
+    return TextButton.icon(
         label: Text(_editingComment ? 'Post scribe' : 'Add scribe'),
         icon: Icon(_editingComment ? Icons.send : Icons.create),
-        color: buttonColor,
+        style: TextButton.styleFrom(backgroundColor: buttonColor, primary: Colors.black),
         onPressed: _editingComment ? _onPostComment : _startEditingComment
     );
   }
@@ -356,9 +356,9 @@ class _MediaFeedPanelState extends State<_MediaFeedPanel> {
   Widget _buildCommentCountButton(MediaDetail media) {
     return Tooltip(
       message: 'Comment count',
-      child: RaisedButton.icon(
+      child: ElevatedButton.icon(
           onPressed: null,
-          disabledTextColor: Colors.black,
+          style: ElevatedButton.styleFrom(primary: Colors.black),
           icon: Icon(Icons.create),
           label: Text(media.commentCount.toString())),
     );
@@ -459,7 +459,7 @@ class _MediaCommentListState extends BasePagingState<_MediaCommentList, MediaCom
   void _onActionSelection(_CommentActionItem selection) {
     if (selection.action == _CommentAction.LIKE || selection.action == _CommentAction.DISLIKE) {
       MediaUpdateService.of(context).changeCommentApproval(selection.commentId, selection.modifier)
-          .catchError((error) => showSimpleDialog(context, 'Failure', error.toString()))
+          .catchError((error) => showSimpleDialog<MediaCommentInfo>(context, 'Failure', error.toString()))
           .then(_refreshItem)
           .then((_) => _showSnackBar(context, selection.item, selection.modifier));
     }
@@ -559,7 +559,7 @@ class _FeelingDropdown extends StatelessWidget {
           items: Feeling.allDescending.map(_buildMenuItem).toList(growable: false),
           onChanged: (feeling) {
             MediaUpdateService.of(context).setFeeling(model.mediaUri, feeling.value)
-                .catchError((error) => showSimpleDialog(context, 'Failure', error.toString()))
+                .catchError((error) => showSimpleDialog<MediaDetail>(context, 'Failure', error.toString()))
                 .then(model.refresh)
                 .then((_) => _showSnackBar(context, model.detail, feeling));
           },
@@ -626,16 +626,15 @@ class _ApprovalButton extends StatelessWidget {
     if (media.userApprovalModifier == null || media.userApprovalModifier == _inverseApproval) {
       onPressed = () {
         MediaUpdateService.of(context).changeMediaApproval(model.mediaUri, _approval)
-            .catchError((error) => showSimpleDialog(context, 'Failure', error.toString()))
+            .catchError((error) => showSimpleDialog<MediaDetail>(context, 'Failure', error.toString()))
             .then(model.refresh)
             .then((_) => _showSnackBar(context, media, _approval));
       };
     }
     return Tooltip(
       message: _computeTooltip(media, onPressed != null),
-      child: RaisedButton.icon(onPressed: onPressed,
-          color: buttonColor,
-          disabledColor: buttonColor,
+      child: ElevatedButton.icon(onPressed: onPressed,
+          style: ElevatedButton.styleFrom(primary: buttonColor, onPrimary: Colors.black),
           icon: Icon(_computeIcon(media)),
           label: Text(_computeLabel(media))
       ),
@@ -848,17 +847,15 @@ class _RemoteVideoDisplayState extends State<RemoteVideoDisplay> {
   }
 }
 
-class RemoteMediaDisplayPage extends StatelessWidget implements ScaffoldPage {
+class RemoteMediaDisplayPage extends StatelessWidget {
 
-  final GlobalKey<ScaffoldState> scaffoldKey;
   final MediaInfo mediaInfo;
 
-  RemoteMediaDisplayPage(this.scaffoldKey, this.mediaInfo);
+  RemoteMediaDisplayPage(this.mediaInfo);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      key: scaffoldKey,
       appBar: AppBar(title: Text(mediaInfo.title, overflow: TextOverflow.ellipsis)),
       body: mediaInfo.hasVideoPreview
           ? RemoteVideoDisplay(media: mediaInfo)

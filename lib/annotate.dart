@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:form_field_validator/form_field_validator.dart';
 import 'package:provider/provider.dart';
-import 'package:social_alert_app/base.dart';
 import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/local.dart';
 import 'package:social_alert_app/main.dart';
@@ -34,18 +33,16 @@ class _CaptureModel {
   void setTitle(String newTitle) => _title = newTitle;
 }
 
-class AnnotateMediaPage extends StatelessWidget implements ScaffoldPage {
+class AnnotateMediaPage extends StatelessWidget {
   static const defaultTitle = 'New Snype';
   static const backgroundColor = Color.fromARGB(255, 240, 240, 240);
   final MediaUploadTask upload;
-  final GlobalKey<ScaffoldState> scaffoldKey;
 
-  AnnotateMediaPage(this.scaffoldKey, this.upload);
+  AnnotateMediaPage(this.upload);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        key: scaffoldKey,
         backgroundColor: backgroundColor,
         appBar: _buildAppBar(context),
         body: _buildBody()
@@ -185,7 +182,7 @@ class _MetadataFormState extends State<_MetadataForm> {
 
   Future<bool> _allowPop() async {
     final form = _formKey.currentState;
-    if (form != null) {
+    if (form != null && !widget.upload.isDeleted) {
       form.save();
       widget.upload.save(
         title: _model.title,
@@ -236,9 +233,13 @@ class _MetadataFormState extends State<_MetadataForm> {
     Navigator.of(context).pushNamed(AppRoute.LocalMediaInfo, arguments: widget.upload);
   }
 
-  void _onConfirmUploadDeletion() {
-    MediaUploadService.of(context).deleteTask(widget.upload);
-    Navigator.of(context).maybePop();
+  void _onConfirmUploadDeletion() async {
+    try {
+      await MediaUploadService.of(context).deleteTask(widget.upload);
+      Navigator.of(context).maybePop();
+    } catch (e) {
+      showSimpleDialog(context, 'Cannot delete Snype', e.toString());
+    }
   }
 }
 
@@ -326,7 +327,7 @@ class _TagsWidget extends StatelessWidget {
 
   Widget _buildTags(FormFieldState<Set<String>> state) {
     final tags = state.value;
-    final children = List<Widget>();
+    final children = <Widget>[];
     for (String tag in tags) {
       children.add(_buildTag(state, tag));
     }
