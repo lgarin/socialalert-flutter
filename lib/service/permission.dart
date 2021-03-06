@@ -7,16 +7,14 @@ class PermissionManager extends Service {
 
   static PermissionManager of(BuildContext context) => ServiceProvider.of(context);
 
-  final _permissionHandler = PermissionHandler();
-
   PermissionManager(BuildContext context) : super(context);
 
-  Future<bool> allows(List<PermissionGroup> requestedPermissions) async {
-    final permissionMap = await _permissionHandler.requestPermissions(requestedPermissions);
+  Future<bool> allows(List<Permission> requestedPermissions) async {
+    final permissionMap = await requestedPermissions.request();
     if (permissionMap.values.every((status) => status == PermissionStatus.granted)) {
       return true;
-    } else if (permissionMap.values.any((status) => status == PermissionStatus.neverAskAgain)) {
-      _permissionHandler.openAppSettings();
+    } else if (permissionMap.values.any((status) => status == PermissionStatus.permanentlyDenied)) {
+      openAppSettings();
       return false;
     } else {
       return false;

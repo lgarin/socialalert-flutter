@@ -206,7 +206,7 @@ abstract class BasePageState<T extends StatefulWidget> extends State<T> {
   }
 
   void _captureMedia(BuildContext context) async {
-    final requestedPermissions = [PermissionGroup.camera, PermissionGroup.microphone, PermissionGroup.locationWhenInUse];
+    final requestedPermissions = [Permission.camera, Permission.microphone, Permission.locationWhenInUse];
     if (await PermissionManager.of(context).allows(requestedPermissions)) {
       Navigator.of(context).pushNamed(AppRoute.CaptureMedia);
     }
