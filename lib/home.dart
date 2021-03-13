@@ -70,7 +70,7 @@ class _KeywordSearchWidget extends StatelessWidget {
       suggestionsBoxDecoration: SuggestionsBoxDecoration(borderRadius: BorderRadius.all(Radius.circular(5))),
       textFieldConfiguration: TextFieldConfiguration(
           controller: searchModel.controller,
-          onSubmitted: searchModel.beginSearch,
+          onSubmitted: (value) => searchModel.beginSearch(value.toString()), // TODO seems to be a bug with type inference
           autofocus: searchModel.keyword.isEmpty,
           textInputAction: TextInputAction.search,
           style: TextStyle(color: Colors.white),

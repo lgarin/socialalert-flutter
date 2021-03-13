@@ -14,6 +14,7 @@ import 'package:social_alert_app/service/mediaupload.dart';
 import 'package:social_alert_app/service/pagemanager.dart';
 import 'package:social_alert_app/service/permission.dart';
 import 'package:social_alert_app/service/profileupdate.dart';
+import 'package:social_alert_app/service/servernotification.dart';
 
 class _NotificationHook extends StatefulWidget {
   final String pageName;
@@ -25,31 +26,26 @@ class _NotificationHook extends StatefulWidget {
   _NotificationHookState createState() => _NotificationHookState();
 }
 
-class _NotificationEvent {
-  final String message;
-  final Color color;
-  final SnackBarAction action;
-  final DateTime timestamp;
-
-  _NotificationEvent(this.message, this.color, this.action, this.timestamp);
-}
-
 class _NotificationHookState extends State<_NotificationHook> {
 
-  static final repeatMessageDelay = Duration(seconds: 2);
   static final oldUploadAge = Duration(minutes: 2);
 
   StreamSubscription<PageEvent> _pageListener;
   StreamSubscription<MediaUploadTask> _uploadResultListener;
   StreamSubscription<UserProfile> _userProfileListener;
-  final _previousEvents = <_NotificationEvent>[];
+  StreamSubscription<UserNotification> _userNotificationListener;
 
   @override
   void initState() {
     super.initState();
-    _uploadResultListener = MediaUploadService.of(context).uploadResultStream.listen(_showUploadSnackBar);
-    _userProfileListener = ProfileUpdateService.of(context).profileStream.listen(_showUserProfileSnackBar);
+    _uploadResultListener = MediaUploadService.of(context).uploadResultStream.listen(_showUploadSnackBar, onError: _printError);
+    _userProfileListener = ProfileUpdateService.of(context).profileStream.listen(_showUserProfileSnackBar, onError: _printError);
+    _userNotificationListener = ServerNotification.of(context).userNotificationStream.listen(_showUserNotificationSnackBar, onError: _printError);
     _pageListener = EventBus.of(context).on<PageEvent>().listen(_onPageEvent);
+  }
+
+  void _printError(Object error) {
+    print(error);
   }
 
   void _onPageEvent(PageEvent event) {
@@ -57,19 +53,11 @@ class _NotificationHookState extends State<_NotificationHook> {
       return;
     }
 
-    final recentTimestamp = DateTime.now().subtract(repeatMessageDelay);
-    _showRecentSnackBars(recentTimestamp);
-
     UserProfile userProfile = Provider.of(context, listen: false);
     _showUserProfileSnackBar(userProfile);
 
     MediaUploadList uploadList = Provider.of(context, listen: false);
     _showAllUploadSnackBars(uploadList);
-  }
-
-  void _showRecentSnackBars(DateTime minTimestamp) {
-    _previousEvents.where((event) => event.timestamp.isAfter(minTimestamp)).forEach((element) => _showSnackBar(element.message, element.color, element.action));
-    _previousEvents.clear();
   }
 
   @override
@@ -79,18 +67,15 @@ class _NotificationHookState extends State<_NotificationHook> {
 
   @override
   void dispose() {
+    // TODO this method should be called on logout
     _pageListener.cancel();
     _uploadResultListener.cancel();
     _userProfileListener.cancel();
+    _userNotificationListener.cancel();
     super.dispose();
   }
 
   void _showSnackBar(String message, Color color, SnackBarAction action) {
-
-    if (PageManager.of(context).currentPageName != widget.pageName) {
-      _previousEvents.add(_NotificationEvent(message, color, action, DateTime.now()));
-      return;
-    }
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message, style: TextStyle(color: color)), action: action));
   }
 
@@ -162,6 +147,11 @@ class _NotificationHookState extends State<_NotificationHook> {
         _showUploadSnackBar(upload);
       }
     }
+  }
+
+  void _showUserNotificationSnackBar(UserNotification event) {
+    // TODO improve that
+    showSuccessSnackBar(event.type.toString());
   }
 }
 

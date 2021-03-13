@@ -217,8 +217,8 @@ class _DeleteAccountFormState extends State<_DeleteAccountForm> {
       while (navigator.canPop()) {
         await navigator.maybePop();
       }
-      navigator.pushReplacementNamed(AppRoute.Login);
-      // TODO pushReplacement never completes and consequently a snackbar cannot be shown in this case
+      showSuccessSnackBar(context, "Account ${profile.username} has been deleted");
+      navigator.pushReplacementNamed(AppRoute.Login); // TODO this call never completes
     } catch (e) {
       showSimpleDialog(context, 'Deletion failure', e.toString());
     }

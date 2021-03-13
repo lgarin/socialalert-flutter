@@ -738,7 +738,7 @@ class RemotePictureDisplay extends StatelessWidget {
       onTapUp: preview && (!media.isVideo || media.hasVideoPreview) ? _onTap : null,
       imageProvider: NetworkImage(url, headers: snapshot.data),
       loadingBuilder: _loadingBuilder,
-      loadFailedChild: _MediaDownloadFailedMessage(),
+      errorBuilder: _errorBuilder,
       heroAttributes: PhotoViewHeroAttributes(tag: media.mediaUri),
     ));
   }
@@ -754,6 +754,11 @@ class RemotePictureDisplay extends StatelessWidget {
     final progress = loadingProgress.expectedTotalBytes == null ? null :
     loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes;
     return _buildProgressIndicator(context, progress);
+  }
+
+  Widget _errorBuilder(BuildContext context, Object error, StackTrace stackTrace) {
+    showSimpleDialog(context, 'Cannot load image', error);
+    return _MediaDownloadFailedMessage();
   }
 
   Widget _buildProgressIndicator(BuildContext context, double progress) {

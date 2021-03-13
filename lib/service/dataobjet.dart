@@ -348,3 +348,40 @@ class FeedItem {
 class FeedItemPage extends ResultPage<FeedItem> {
   FeedItemPage.fromJson(Map<String, dynamic> json) : super.fromJson(json, FeedItem.fromJsonList);
 }
+
+enum NotificationType {
+  BEGIN_STREAM,
+  NEW_COMMENT,
+  LIKE_MEDIA,
+  DISLIKE_MEDIA,
+  LIKE_COMMENT,
+  DISLIKE_COMMENT,
+  WATCH_MEDIA,
+  JOINED_NETWORK,
+  LEFT_NETWORK
+}
+
+const Map<String, NotificationType> _notificationTypeMap = {
+  'BEGIN_STREAM': NotificationType.BEGIN_STREAM,
+  'NEW_COMMENT': NotificationType.NEW_COMMENT,
+  'LIKE_MEDIA': NotificationType.LIKE_MEDIA,
+  'DISLIKE_MEDIA': NotificationType.DISLIKE_MEDIA,
+  'LIKE_COMMENT': NotificationType.LIKE_COMMENT,
+  'DISLIKE_COMMENT': NotificationType.DISLIKE_COMMENT,
+  'WATCH_MEDIA': NotificationType.WATCH_MEDIA,
+  'JOINED_NETWORK': NotificationType.JOINED_NETWORK,
+  'LEFT_NETWORK': NotificationType.LEFT_NETWORK,
+};
+
+class UserNotification {
+  final String mediaUri;
+  final String sourceUserId;
+  final String targetUserId;
+  final NotificationType type;
+
+  UserNotification.fromJson(Map<String, dynamic> json) :
+        mediaUri = json['mediaUri'],
+        sourceUserId = json['sourceUserId'],
+        targetUserId = json['targetUserId'],
+        type = _notificationTypeMap[json['type']];
+}

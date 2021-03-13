@@ -30,6 +30,7 @@ import 'package:social_alert_app/service/profileupdate.dart';
 import 'package:social_alert_app/service/serviceprodiver.dart';
 import 'package:social_alert_app/service/useraccount.dart';
 import 'package:social_alert_app/service/videoencoder.dart';
+import 'package:social_alert_app/service/servernotification.dart';
 import 'package:social_alert_app/settings.dart';
 import 'package:social_alert_app/upload.dart';
 
@@ -59,6 +60,8 @@ class SocialAlertApp extends StatelessWidget {
           StreamProvider<GeoLocation>(create: (context) => GeoLocationService.of(context).locationStream, lazy: false, initialData: null),
           ServiceProvider<Authentication>(create: (context) => Authentication(context)),
           ServiceProvider<UserAccountService>(create: (context) => UserAccountService(context)),
+          ServiceProvider<ServerNotification>(create: (context) => ServerNotification(context)),
+          StreamProvider<UserNotification>(create: (context) => ServerNotification.of(context).userNotificationStream, lazy: false, initialData: null),
           ServiceProvider<ProfileQueryService>(create: (context) => ProfileQueryService(context)),
           ServiceProvider<ProfileUpdateService>(create: (context) => ProfileUpdateService(context)),
           StreamProvider<UserProfile>(create: (context) => ProfileUpdateService.of(context).profileStream, lazy: false, initialData: null),
