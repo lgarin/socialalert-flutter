@@ -122,7 +122,7 @@ class SocialAlertApp extends StatelessWidget {
       );
       case AppRoute.UserNetwork: return _TrackedMaterialPageRoute(
           settings: settings,
-          builder: (_) => UserNetworkPage()
+          builder: (_) => UserNetworkPage(settings.arguments)
       );
       case AppRoute.LocalMediaInfo: return _TrackedMaterialPageRoute(
           settings: settings,

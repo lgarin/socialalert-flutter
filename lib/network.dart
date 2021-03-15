@@ -16,6 +16,9 @@ class _NetworkTabSelectionModel with ChangeNotifier {
 
   int _currentDisplayIndex = favoritesIndex;
 
+  _NetworkTabSelectionModel(UserNetworkTab defaultTab) :
+        _currentDisplayIndex = defaultTab == UserNetworkTab.FOLLOWERS ? followersIndex : favoritesIndex;
+
   int get currentDisplayIndex => _currentDisplayIndex;
   bool get favoritesSelected => _currentDisplayIndex == favoritesIndex;
   bool get followersSelected => _currentDisplayIndex == followersIndex;
@@ -26,17 +29,28 @@ class _NetworkTabSelectionModel with ChangeNotifier {
   }
 }
 
+enum UserNetworkTab {
+  FAVORITES,
+  FOLLOWERS,
+}
+
 class UserNetworkPage extends StatefulWidget {
 
+  final UserNetworkTab defaultTab;
+
+  UserNetworkPage(this.defaultTab);
+
   @override
-  _UserNetworkPageState createState() => _UserNetworkPageState();
+  _UserNetworkPageState createState() => _UserNetworkPageState(defaultTab);
 }
 
 class _UserNetworkPageState extends BasePageState<UserNetworkPage> {
 
-  final _tabSelectionModel = _NetworkTabSelectionModel();
+  final _NetworkTabSelectionModel _tabSelectionModel;
 
-  _UserNetworkPageState() : super(AppRoute.UserNetwork);
+  _UserNetworkPageState(UserNetworkTab defaultTab) :
+        _tabSelectionModel = _NetworkTabSelectionModel(defaultTab),
+        super(AppRoute.UserNetwork);
 
   @override
   AppBar buildAppBar() {

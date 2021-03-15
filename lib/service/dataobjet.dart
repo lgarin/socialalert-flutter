@@ -350,7 +350,6 @@ class FeedItemPage extends ResultPage<FeedItem> {
 }
 
 enum NotificationType {
-  BEGIN_STREAM,
   NEW_COMMENT,
   LIKE_MEDIA,
   DISLIKE_MEDIA,
@@ -362,7 +361,6 @@ enum NotificationType {
 }
 
 const Map<String, NotificationType> _notificationTypeMap = {
-  'BEGIN_STREAM': NotificationType.BEGIN_STREAM,
   'NEW_COMMENT': NotificationType.NEW_COMMENT,
   'LIKE_MEDIA': NotificationType.LIKE_MEDIA,
   'DISLIKE_MEDIA': NotificationType.DISLIKE_MEDIA,
@@ -375,13 +373,21 @@ const Map<String, NotificationType> _notificationTypeMap = {
 
 class UserNotification {
   final String mediaUri;
+  final String mediaTitle;
+  final String commentId;
+  final String commentText;
   final String sourceUserId;
+  final String sourceUsername;
   final String targetUserId;
   final NotificationType type;
 
   UserNotification.fromJson(Map<String, dynamic> json) :
         mediaUri = json['mediaUri'],
+        mediaTitle = json['mediaTitle'],
+        commentId = json['commentId'],
+        commentText = json['commentText'],
         sourceUserId = json['sourceUserId'],
+        sourceUsername = json['sourceUsername'],
         targetUserId = json['targetUserId'],
         type = _notificationTypeMap[json['type']];
 }

@@ -7,9 +7,11 @@ import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/menu.dart';
+import 'package:social_alert_app/network.dart';
 import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/dataobjet.dart';
 import 'package:social_alert_app/service/eventbus.dart';
+import 'package:social_alert_app/service/mediaquery.dart';
 import 'package:social_alert_app/service/mediaupload.dart';
 import 'package:social_alert_app/service/pagemanager.dart';
 import 'package:social_alert_app/service/permission.dart';
@@ -149,9 +151,47 @@ class _NotificationHookState extends State<_NotificationHook> {
     }
   }
 
+  String _getNotificationMessage(UserNotification event) {
+    switch (event.type) {
+      case NotificationType.NEW_COMMENT: return "User ${event.sourceUsername} has posted a new comment for '${event.mediaTitle}'";
+      case NotificationType.LIKE_COMMENT: return "User ${event.sourceUsername} liked your comment '${event.commentText}'";
+      case NotificationType.DISLIKE_COMMENT: return "User ${event.sourceUsername} disliked your comment '${event.commentText}'";
+      case NotificationType.LIKE_MEDIA: return "User ${event.sourceUsername} liked '${event.mediaTitle}'";
+      case NotificationType.DISLIKE_MEDIA: return "User ${event.sourceUsername} disliked '${event.mediaTitle}'";
+      case NotificationType.WATCH_MEDIA: return "User ${event.sourceUsername} watched '${event.mediaTitle}'";
+      case NotificationType.JOINED_NETWORK: return "User ${event.sourceUsername} joined your network";
+      case NotificationType.LEFT_NETWORK: return "User ${event.sourceUsername} left your network";
+      default: throw "Invalid event type";
+    }
+  }
+
+  void _showMedia(String mediaUri) async {
+    final media = await MediaQueryService.of(context).viewDetail(mediaUri);
+    Navigator.of(context).pushNamed<MediaDetail>(AppRoute.RemoteMediaDetail, arguments: media);
+  }
+
+  void _showNetwork() {
+    Navigator.of(context).pushNamed(AppRoute.UserNetwork, arguments: UserNetworkTab.FOLLOWERS);
+  }
+
+  SnackBarAction _getNotificationAction(UserNotification event) {
+    switch (event.type) {
+      case NotificationType.NEW_COMMENT:
+      case NotificationType.LIKE_COMMENT:
+      case NotificationType.DISLIKE_COMMENT:
+      case NotificationType.LIKE_MEDIA:
+      case NotificationType.DISLIKE_MEDIA:
+      case NotificationType.WATCH_MEDIA:
+        return SnackBarAction(label: "Show media", onPressed: () => _showMedia(event.mediaUri));
+      case NotificationType.JOINED_NETWORK:
+      case NotificationType.LEFT_NETWORK:
+        return SnackBarAction(label: "Show network", onPressed: () => _showNetwork());
+      default: throw "Invalid event type";
+    }
+  }
+
   void _showUserNotificationSnackBar(UserNotification event) {
-    // TODO improve that
-    showSuccessSnackBar(event.type.toString());
+    showSuccessSnackBar(_getNotificationMessage(event), action: _getNotificationAction(event));
   }
 }
 
