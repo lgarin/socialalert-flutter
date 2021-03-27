@@ -48,7 +48,9 @@ abstract class _Cluster<T extends _Cluster<T>> extends Clusterable {
 
   void addChild(T child);
 
-  String get text => pointsSize >= maxDisplayCount ? '$maxDisplayCount+' : pointsSize.toString();
+  int get count;
+
+  String get text => count >= maxDisplayCount ? '$maxDisplayCount+' : count.toString();
 
   Feeling get _averageFeeling;
 
@@ -71,6 +73,8 @@ class _MediaCluster extends _Cluster<_MediaCluster> {
           markerId: media.mediaUri,
           itemCount: 1
         );
+
+  int get count => _items.length;
 
   void addChild(_MediaCluster child) {
     _items.addAll(child._items);
@@ -97,6 +101,13 @@ class _StatisticCluster extends _Cluster<_StatisticCluster> {
   int _feelingSum;
 
   _StatisticCluster(BaseCluster cluster, LatLng position) :
+        _minLat = position.latitude,
+        _maxLat = position.latitude,
+        _minLon = position.longitude,
+        _maxLon = position.longitude,
+        _count = 0,
+        _feelingCount = 0,
+        _feelingSum = 0,
         super(cluster, position);
 
   _StatisticCluster.single(GeoStatistic item) :
@@ -114,24 +125,16 @@ class _StatisticCluster extends _Cluster<_StatisticCluster> {
           markerId: '${item.minLat}/${item.maxLat}/${item.minLon}/${item.maxLon}'
         );
 
+  int get count => _count;
+
   void addChild(_StatisticCluster item) {
-    if (_minLat == null || _maxLat == null || _minLon == null || _maxLon == null) {
-      _minLat = item._minLat;
-      _maxLat = item._maxLat;
-      _minLon = item._minLon;
-      _maxLon = item._maxLon;
-      _count = item._count;
-      _feelingCount = item._feelingCount;
-      _feelingSum = item._feelingSum;
-    } else {
-      _minLat = min(_minLat, item._minLat);
-      _maxLat = max(_maxLat, item._maxLat);
-      _minLon = min(_minLon, item._minLon);
-      _maxLon = max(_maxLon, item._maxLon);
-      _count += item._count;
-      _feelingCount += item._feelingCount;
-      _feelingSum += item._feelingSum;
-    }
+    _minLat = min(_minLat, item._minLat);
+    _maxLat = max(_maxLat, item._maxLat);
+    _minLon = min(_minLon, item._minLon);
+    _maxLon = max(_maxLon, item._maxLon);
+    _count += item._count;
+    _feelingCount += item._feelingCount;
+    _feelingSum += item._feelingSum;
   }
 
   LatLngBounds get bounds => LatLngBounds(southwest: LatLng(_minLat, _minLon), northeast: LatLng(_maxLat, _maxLon));
@@ -373,7 +376,7 @@ class _MapDisplayState extends State<MapDisplay> {
     final zoomLevel = await _mapController.getZoomLevel();
     try {
       final result = await _queryMatchingMedia(bounds);
-      List<Clusterable> clusters;
+      List<_Cluster> clusters;
       if (result.nextPage != null) {
         final statistic = await MediaQueryService.of(context).mapMediaCount(widget.categoryToken, widget.keywords, bounds);
         clusters = _buildStatisticClusters(statistic, bounds, zoomLevel);
@@ -440,7 +443,6 @@ class _MapDisplayState extends State<MapDisplay> {
     if (items.isEmpty) {
       return [];
     }
-
     final builder = _createClusterBuilder(items,
       (e) => _StatisticCluster.single(e),
       (cluster, position) => _StatisticCluster(cluster, position)
