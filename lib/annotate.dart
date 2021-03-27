@@ -341,7 +341,7 @@ class _TagsWidget extends StatelessWidget {
 
   Widget _buildInput(FormFieldState<Set<String>> state) {
     return TypeAheadFormField(
-          autovalidate: true,
+          autovalidateMode: AutovalidateMode.always,
           direction: AxisDirection.up,
           suggestionsBoxDecoration: SuggestionsBoxDecoration(borderRadius: BorderRadius.all(Radius.circular(5))),
           textFieldConfiguration: TextFieldConfiguration(
