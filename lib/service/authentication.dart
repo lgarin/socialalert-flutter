@@ -213,7 +213,7 @@ class UserProfilePage extends ResultPage<UserProfile> {
 class Authentication extends Service {
 
   final _credentialStore = CredentialStore();
-  final _profileController = StreamController<UserProfile>();
+  final _profileController = StreamController<UserProfile>.broadcast();
   _AuthToken _token;
 
   Authentication(BuildContext context) : super(context);

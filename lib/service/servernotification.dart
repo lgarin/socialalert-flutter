@@ -22,7 +22,17 @@ class _UserNotificationApi {
 
 class ServerNotification extends Service {
 
-  ServerNotification(BuildContext context) : super(context);
+  final _notificationStreamController = StreamController<UserNotification>.broadcast();
+  StreamSubscription<UserNotification> _notificationSubscription;
+
+  ServerNotification(BuildContext context) : super(context) {
+    _notificationSubscription = _authService.profileStream
+        .distinct((previous, next) => previous?.username == next?.username)
+        .asyncExpand((_) => _authService.getOrRenewAccessToken().asStream())
+        .where((accessToken) => accessToken != null)
+        .asyncExpand((accessToken) => _userNotificationApi.openNotificationStream(accessToken))
+        .listen(_notificationStreamController.add, onError: _notificationStreamController.addError, onDone: _notificationStreamController.close);
+  }
 
   static ServerNotification of(BuildContext context) => ServiceProvider.of(context);
 
@@ -30,11 +40,13 @@ class ServerNotification extends Service {
   Authentication get _authService => lookup();
 
   Stream<UserNotification> get userNotificationStream {
-    return _authService.obtainAccessToken().asStream().asyncExpand((accessToken) => _userNotificationApi.openNotificationStream(accessToken));
+    return _notificationStreamController.stream;
   }
 
   @override
   void dispose() {
+    _notificationSubscription.cancel();
+    _notificationStreamController.close();
   }
 
 }

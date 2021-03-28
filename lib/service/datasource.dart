@@ -15,6 +15,7 @@ class DataSource extends Service {
   final _client = Client();
   final _uploader = FlutterUploader();
   final _sseController = StreamController<SseEvent>.broadcast();
+  StreamSubscription<SseEvent> _sseSubscription;
 
   DataSource(BuildContext context) : super(context);
 
@@ -77,14 +78,18 @@ class DataSource extends Service {
     if (accessToken != null) {
       request.headers['Authorization'] = accessToken;
     }
+    _sseSubscription?.cancel();
     _client.send(request).then(_handleEventStream, onError: _sseController.addError);
     return _sseController.stream;
   }
 
   void _handleEventStream(StreamedResponse response) {
     if (response.statusCode == 200) {
-      response.stream.transform(Utf8Decoder()).transform(LineSplitter()).transform(_SseEventParser().transformer).listen(_sseController.add, onError: _sseController.addError)
-    ;
+      _sseSubscription = response.stream
+          .transform(Utf8Decoder())
+          .transform(LineSplitter())
+          .transform(_SseEventParser().transformer)
+          .listen(_sseController.add, onError: _sseController.addError);
     } else {
       _sseController.addError(ClientException(response.reasonPhrase, response.request.url));
     }
@@ -92,9 +97,10 @@ class DataSource extends Service {
 
   @override
   void dispose() {
+    _sseSubscription?.cancel();
     _uploader.dispose();
     _client.close();
-    //_sseController.close();
+    _sseController.close();
   }
 }
 

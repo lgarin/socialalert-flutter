@@ -60,8 +60,6 @@ class SocialAlertApp extends StatelessWidget {
           StreamProvider<GeoLocation>(create: (context) => GeoLocationService.of(context).locationStream, lazy: false, initialData: null),
           ServiceProvider<Authentication>(create: (context) => Authentication(context)),
           ServiceProvider<UserAccountService>(create: (context) => UserAccountService(context)),
-          ServiceProvider<ServerNotification>(create: (context) => ServerNotification(context)),
-          StreamProvider<UserNotification>(create: (context) => ServerNotification.of(context).userNotificationStream, lazy: false, initialData: null),
           ServiceProvider<ProfileQueryService>(create: (context) => ProfileQueryService(context)),
           ServiceProvider<ProfileUpdateService>(create: (context) => ProfileUpdateService(context)),
           StreamProvider<UserProfile>(create: (context) => ProfileUpdateService.of(context).profileStream, lazy: false, initialData: null),
@@ -72,6 +70,8 @@ class SocialAlertApp extends StatelessWidget {
           ServiceProvider<MediaUpdateService>(create: (context) => MediaUpdateService(context)),
           ServiceProvider<CommentQueryService>(create: (context) => CommentQueryService(context)),
           ServiceProvider<FeedQueryService>(create: (context) => FeedQueryService(context)),
+          ServiceProvider<ServerNotification>(create: (context) => ServerNotification(context)),
+          StreamProvider<UserNotification>(create: (context) => ServerNotification.of(context).userNotificationStream, lazy: false, initialData: null),
         ],
         child: _buildApp()
     );
