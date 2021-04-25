@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:chewie/chewie.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:form_field_validator/form_field_validator.dart';
 import 'package:photo_view/photo_view.dart';

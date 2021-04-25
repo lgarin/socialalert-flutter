@@ -74,7 +74,6 @@ class LoadingCircle extends StatelessWidget {
 
   const LoadingCircle({Key key, this.progressValue}) : super(key: key);
 
-
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -86,6 +85,7 @@ class LoadingCircle extends StatelessWidget {
   }
 }
 
+// TODO check if this class can be replaced by RequiredValidator
 class NonEmptyValidator extends TextFieldValidator {
   NonEmptyValidator({@required String errorText}) : super(errorText);
 

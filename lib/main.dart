@@ -7,6 +7,7 @@ import 'package:social_alert_app/home.dart';
 import 'package:social_alert_app/local.dart';
 import 'package:social_alert_app/login.dart';
 import 'package:social_alert_app/network.dart';
+import 'package:social_alert_app/notification.dart';
 import 'package:social_alert_app/profile.dart';
 import 'package:social_alert_app/register.dart';
 import 'package:social_alert_app/remote.dart';
@@ -167,6 +168,10 @@ class SocialAlertApp extends StatelessWidget {
           settings: settings,
           builder: (_) => ChangePasswordPage()
       );
+      case AppRoute.MediaNotification: return _TrackedMaterialPageRoute(
+        settings: settings,
+        builder: (_) => MediaNotificationPage()
+      );
       default: return null;
     }
   }
@@ -189,6 +194,7 @@ class AppRoute {
   static const SettingsEditor = 'settingsEditor';
   static const DeleteAccount = 'deleteAccount';
   static const ChangePassword = 'changePassword';
+  static const MediaNotification = 'mediaNotification';
 }
 
 class _TrackedMaterialPageRoute<T> extends MaterialPageRoute<T> {
