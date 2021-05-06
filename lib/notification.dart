@@ -10,9 +10,11 @@ import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/base.dart';
 import 'package:social_alert_app/service/configuration.dart';
+import 'package:social_alert_app/service/dataobjet.dart';
 import 'package:social_alert_app/service/eventbus.dart';
 import 'package:social_alert_app/service/geolocation.dart';
 import 'package:social_alert_app/service/mediaquery.dart';
+import 'package:social_alert_app/service/servernotification.dart';
 
 class MediaNotificationPage extends StatefulWidget {
 
@@ -53,11 +55,19 @@ class _MediaNotificationFormModel extends ChangeNotifier {
   String _label;
   String _keyword;
 
-  double radius;
+  final _thresholdValues = [1, 5, 10, 50, 100, 500, 1000];
+
+  double _radius;
+  double get radius => _radius;
+
+  double _thresholdIndex = 3.0;
+  double get thresholdIndex => _thresholdIndex;
+
+  LatLng _center;
+  LatLng get center => _center;
+
 
   final keywordController = TextEditingController();
-
-  GoogleMapController mapController;
 
   String selectedCategory;
 
@@ -70,14 +80,13 @@ class _MediaNotificationFormModel extends ChangeNotifier {
     keywordController.text = newKeyword;
   }
 
-  void setMapController(GoogleMapController controller) => mapController = controller;
-
   void setMapPosition(CameraPosition position) {
-    final oldRadius = radius;
-    radius = _toDistance(position.zoom);
-    if (oldRadius != null || radius != oldRadius) {
-      notifyListeners();
-    }
+    _radius = _toDistance(position.zoom);
+    _center = position.target;
+  }
+
+  void updateCircle() {
+    notifyListeners();
   }
 
   double _toDistance(double zoom) {
@@ -85,8 +94,26 @@ class _MediaNotificationFormModel extends ChangeNotifier {
     return pow(2, 13.0 - zoom) * 1000.0;
   }
 
-  void setThreshold(double value) {
+  void setThresholdIndex(double value) {
+    if (value != _thresholdIndex) {
+      _thresholdIndex = value;
+      notifyListeners();
+    }
   }
+
+  int get threshold => _thresholdValues[_thresholdIndex.toInt()];
+
+  String get thresholdLabel => threshold.toString();
+
+  MediaQueryParameter toUpdateRequest() => MediaQueryParameter(
+      label: label,
+      category: selectedCategory,
+      keywords: keyword,
+      hitThreshold: threshold,
+      radius: radius,
+      latitude: center.latitude,
+      longitude: center.longitude,
+  );
 }
 
 class _MediaNotificationForm extends StatefulWidget {
@@ -171,7 +198,7 @@ class _MediaNotificationFormState extends State<_MediaNotificationForm> {
     if (form != null && form.validate()) {
       form.save();
       try {
-        //await MediaNotificationUpdateService.of(context).updateMediaNotification(_formModel.toUpdateRequest());
+        await ServerNotification.of(context).setCurrentLiveQuery(_formModel.toUpdateRequest());
         _dirty = false;
         await Navigator.of(context).maybePop();
         showSuccessSnackBar(context, 'Your live query has been saved');
@@ -334,15 +361,15 @@ class _MapWidget extends StatelessWidget {
       model.setMapPosition(position);
     }
     return GoogleMap(
-          onMapCreated: model.setMapController,
           mapType: MapType.normal,
           minMaxZoomPreference: MinMaxZoomPreference(minZoomLevel, maxZoomLevel),
-          myLocationEnabled: false,
-          myLocationButtonEnabled: false,
+          myLocationEnabled: true,
+          myLocationButtonEnabled: true,
           compassEnabled: false,
           initialCameraPosition: position,
-          circles: {Circle(circleId: CircleId("center"), center: position.target, radius: model.radius, strokeColor: Colors.red)},
+          circles: {Circle(circleId: CircleId("center"), center: model.center, radius: model.radius, strokeColor: Colors.red)},
           onCameraMove: model.setMapPosition,
+          onCameraIdle: model.updateCircle,
         );
   }
 }
@@ -350,8 +377,13 @@ class _MapWidget extends StatelessWidget {
 class _ThresholdWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    _MediaNotificationFormModel model = Provider.of(context, listen: false);
-    return WideRoundedField(child: Slider(value: 10, min: 1, max: 1000, onChanged: model.setThreshold,));
+    _MediaNotificationFormModel model = Provider.of(context);
+    return WideRoundedField(child: Slider(
+      value: model.thresholdIndex,
+      min: 0, max: 6, divisions: 6,
+      label: model.thresholdLabel,
+      onChanged: model.setThresholdIndex)
+    );
   }
 
 }

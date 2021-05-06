@@ -391,3 +391,53 @@ class UserNotification {
         targetUserId = json['targetUserId'],
         type = _notificationTypeMap[json['type']];
 }
+
+class MediaQueryParameter {
+  final String label;
+  final String category;
+  final String keywords;
+  final double latitude;
+  final double longitude;
+  final double radius;
+  final int hitThreshold;
+
+  MediaQueryParameter({this.label, this.category, this.keywords, this.latitude, this.longitude, this.radius, this.hitThreshold});
+
+  Map<String, dynamic> toJson() => {
+    'label': label,
+    'category': category,
+    'keywords': keywords,
+    'latitude': latitude,
+    'longitude': longitude,
+    'radius': radius,
+    'hitThreshold': hitThreshold,
+  };
+}
+
+class GeoArea {
+  final double latitude;
+  final double longitude;
+  final double radius;
+
+  GeoArea.fromJson(Map<String, dynamic> json) :
+        latitude = json['latitude'],
+        longitude = json['longitude'],
+        radius = json['radius'];
+}
+
+class MediaQueryInfo {
+  final String id;
+  final String label;
+  final String category;
+  final String keywords;
+  final GeoArea location;
+  final int hitThreshold;
+
+  MediaQueryInfo.fromJson(Map<String, dynamic> json) :
+        id = json['id'],
+        label = json['label'],
+        category = json['category'],
+        keywords = json['keywords'],
+        location = GeoArea.fromJson(json['location']),
+        hitThreshold = json['hitThreshold'];
+}
