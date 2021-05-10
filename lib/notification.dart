@@ -43,67 +43,95 @@ class _MediaNotificationPageState extends BasePageState<MediaNotificationPage> {
 
   @override
   Widget buildBody(BuildContext context) {
-    return ListView(
-      children: <Widget>[
-        _MediaNotificationForm(),
-      ],
+    return FutureBuilder(
+      future: ServerNotification.of(context).getCurrentLiveQuery(),
+      builder: _buildContent,
+    );
+  }
+
+  Widget _buildContent(BuildContext context, AsyncSnapshot<MediaQueryInfo> snapshot) {
+    if (snapshot.connectionState == ConnectionState.waiting) {
+      return LoadingCircle();
+    }
+    return SingleChildScrollView(
+      child: _MediaNotificationForm(snapshot.data),
     );
   }
 }
 
 class _MediaNotificationFormModel extends ChangeNotifier {
+  static final _thresholdValues = [1, 5, 10, 50, 100, 500, 1000];
+
   String _label;
   String _keyword;
-
-  final _thresholdValues = [1, 5, 10, 50, 100, 500, 1000];
-
+  String _selectedCategory;
   double _radius;
-  double get radius => _radius;
-
-  double _thresholdIndex = 3.0;
-  double get thresholdIndex => _thresholdIndex;
-
   LatLng _center;
-  LatLng get center => _center;
-
+  double _thresholdIndex = 3.0;
 
   final keywordController = TextEditingController();
 
-  String selectedCategory;
+  _MediaNotificationFormModel.fromInfo(MediaQueryInfo info) :
+        _label = info.label,
+        _keyword = info.keywords,
+        _selectedCategory = info.category,
+        _radius = info.location.radius,
+        _center = LatLng(info.location.latitude, info.location.longitude),
+        _thresholdIndex = _thresholdValues.indexOf(info.hitThreshold).toDouble() ?? 3.0 {
+    keywordController.text = _keyword;
+  }
+
+  _MediaNotificationFormModel();
 
   String get label => _label;
+  String get keyword => _keyword;
+  String get selectedCategory => _selectedCategory;
+  double get radius => _radius;
+  LatLng get center => _center;
+  double get thresholdIndex => _thresholdIndex;
+  int get threshold => _thresholdValues[_thresholdIndex.toInt()];
+  String get thresholdLabel => threshold.toString();
+
   void setLabel(String newLabel) => _label = newLabel;
 
-  String get keyword => _keyword;
   void setKeyword(String newKeyword) {
     _keyword = newKeyword;
     keywordController.text = newKeyword;
   }
 
+  void setSelectedCategory(String newCategory) {
+    _selectedCategory = newCategory;
+  }
+
   void setMapPosition(CameraPosition position) {
     _radius = _toDistance(position.zoom);
     _center = position.target;
+    // TODO mark dirty
+  }
+
+  double get zoom {
+    if (_radius == null) {
+      return 13.0;
+    }
+    return 13.0 - log(_radius / 1000.0) * log2e;
+  }
+
+  static double _toDistance(double zoom) {
+    // 13 -> 1000m,
+    return pow(2, 13.0 - zoom) * 1000.0;
   }
 
   void updateCircle() {
     notifyListeners();
   }
 
-  double _toDistance(double zoom) {
-    // 13 -> 1000m,
-    return pow(2, 13.0 - zoom) * 1000.0;
-  }
-
   void setThresholdIndex(double value) {
     if (value != _thresholdIndex) {
       _thresholdIndex = value;
       notifyListeners();
+      // TODO mark dirty
     }
   }
-
-  int get threshold => _thresholdValues[_thresholdIndex.toInt()];
-
-  String get thresholdLabel => threshold.toString();
 
   MediaQueryParameter toUpdateRequest() => MediaQueryParameter(
       label: label,
@@ -117,6 +145,10 @@ class _MediaNotificationFormModel extends ChangeNotifier {
 }
 
 class _MediaNotificationForm extends StatefulWidget {
+  final MediaQueryInfo info;
+
+  _MediaNotificationForm(this.info);
+
   @override
   _MediaNotificationFormState createState() => _MediaNotificationFormState();
 }
@@ -137,7 +169,7 @@ class _MediaNotificationFormState extends State<_MediaNotificationForm> {
   void initState() {
     super.initState();
     _dirty = false;
-    _formModel = _MediaNotificationFormModel();
+    _formModel = widget.info != null ? _MediaNotificationFormModel.fromInfo(widget.info) : _MediaNotificationFormModel();
     _actionSubscription = EventBus.of(context).on<_MediaNotificationAction>().listen((action) {
       if (action == _MediaNotificationAction.save) {
         _onSave();
@@ -216,6 +248,7 @@ class _LabelFormField extends StatelessWidget {
     _MediaNotificationFormModel model = Provider.of(context, listen: false);
     return WideRoundedField(
       child: TextFormField(
+        initialValue: model.label,
         onSaved: model.setLabel,
         decoration: InputDecoration(
             hintText: 'Label',
@@ -254,7 +287,7 @@ class _CategoryWidgetState extends State<_CategoryWidget> {
   void _onSelected(int index) {
     setState(() {
       _selectedIndex = index;
-      widget.model.selectedCategory = index == null ? '' : categoryTokens[index];
+      widget.model.setSelectedCategory(index == null ? '' : categoryTokens[index]);
     });
   }
 
@@ -359,6 +392,8 @@ class _MapWidget extends StatelessWidget {
     _MediaNotificationFormModel model = Provider.of(context);
     if (model.radius == null) {
       model.setMapPosition(position);
+    } else {
+      position = CameraPosition(target: model.center, zoom: model.zoom);
     }
     return GoogleMap(
           mapType: MapType.normal,
