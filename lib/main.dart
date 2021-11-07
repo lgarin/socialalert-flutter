@@ -85,9 +85,8 @@ class SocialAlertApp extends StatelessWidget {
           brightness: Brightness.light,
           primaryColor: Color.fromARGB(255, 54, 71, 163),
           primaryColorDark: Color.fromARGB(255, 43, 56, 130),
-          accentColor: Color.fromARGB(255, 82, 173, 243),
-          buttonColor: Color.fromARGB(255, 32, 47, 128),
           backgroundColor: Color.fromARGB(255, 63, 79, 167),
+          appBarTheme: AppBarTheme(backgroundColor: Color.fromARGB(255, 63, 79, 167)),
           textTheme: TextTheme(
             button: TextStyle(fontSize: 18, color: Colors.white),
             subtitle2: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)

@@ -162,7 +162,7 @@ class WideRoundedButton extends StatelessWidget {
         child: ElevatedButton(
           child: Text(text, style: Theme.of(context).textTheme.button),
           onPressed: onPressed,
-          style: ElevatedButton.styleFrom(shape: _shape, primary: color ?? Theme.of(context).buttonColor),
+          style: ElevatedButton.styleFrom(shape: _shape, primary: color),
           ),
     );
   }

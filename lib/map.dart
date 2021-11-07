@@ -161,12 +161,12 @@ class _MapDisplayState extends State<MapDisplay> {
   List<MediaInfo> _mediaList = [];
   GoogleMapController _mapController;
   List<_Cluster> _clusterList = [];
-  StreamSubscription<GeoPosition> postionSubscription;
+  StreamSubscription<GeoPosition> positionSubscription;
 
   @override
   void initState() {
     super.initState();
-    postionSubscription = _createPositionSubscription();
+    positionSubscription = _createPositionSubscription();
     GeoLocationService.of(context).readPosition(100.0);
   }
 
@@ -180,7 +180,7 @@ class _MapDisplayState extends State<MapDisplay> {
 
   @override
   void dispose() {
-    postionSubscription.cancel();
+    positionSubscription.cancel();
     super.dispose();
   }
 

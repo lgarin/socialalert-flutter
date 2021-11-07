@@ -59,7 +59,7 @@ class ProfileAvatar extends StatelessWidget {
       ),
       borderRadius: BorderRadius.all(Radius.circular(radius / 2)),
       //boxShadow: [BoxShadow(color: online ? Theme.of(context).accentColor : Colors.grey, spreadRadius: 1.0, blurRadius: 1.0)],
-      border: online != null ? Border.all(color: online ? Theme.of(context).accentColor : Colors.grey, width: 2) : null,
+      border: online != null ? Border.all(color: online ? Theme.of(context).colorScheme.secondary : Colors.grey, width: 2) : null,
     );
   }
 }
@@ -523,7 +523,7 @@ abstract class _BaseProfilePageState<T extends StatefulWidget> extends BasePageS
   }
 
   void _choosePicture() async {
-    final image = await imagePicker.getImage(source: ImageSource.gallery);
+    final image = await imagePicker.pickImage(source: ImageSource.gallery);
     if (image != null) {
       _beginUpload(File(image.path));
     }
@@ -1204,7 +1204,7 @@ class ProfileHeader extends StatelessWidget {
               Icon(Icons.edit, size: 14, color: Colors.white),
               SizedBox(width: 4),
               Text(profile.statistic.commentCount.toString(), style: TextStyle(fontSize: 12, color: Colors.white)),
-            ])
+            ]),
           ]),
     );
   }
@@ -1226,7 +1226,7 @@ class ProfileHeader extends StatelessWidget {
 
   Widget _buildAvatar(BuildContext context, UserProfile profile) {
     return Hero(tag: profile.userId,
-        child: ProfileAvatar(radius: 120.0, imageUri: profile.imageUri, uploadTaskId: uploadTaskId)
+        child: ProfileAvatar(radius: 120.0, imageUri: profile.imageUri, online: profile.online, uploadTaskId: uploadTaskId)
     );
   }
 }
