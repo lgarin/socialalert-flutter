@@ -441,3 +441,27 @@ class MediaQueryInfo {
         location = GeoArea.fromJson(json['location']),
         hitThreshold = json['hitThreshold'];
 }
+
+class CountByPeriod {
+  final int count;
+  final String key;
+  final DateTime period;
+
+  CountByPeriod.fromJson(Map<String, dynamic> json) :
+        count = json['count'],
+        key = json['key'],
+        period = DateTime.fromMillisecondsSinceEpoch(json['period']);
+
+  static List<CountByPeriod> fromJsonList(List<dynamic> json) {
+    return json.map((e) => CountByPeriod.fromJson(e)).toList();
+  }
+}
+
+enum Period {
+  HOUR,
+  DAY,
+  WEEK,
+  MONTH,
+  QUARTER,
+  YEAR
+}

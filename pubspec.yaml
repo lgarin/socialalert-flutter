@@ -37,6 +37,7 @@ dependencies:
   video_thumbnail:
   permission_handler:
   sse_client:
+  charts_flutter:
 
 dev_dependencies:
   flutter_test:

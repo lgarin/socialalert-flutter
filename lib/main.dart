@@ -30,9 +30,11 @@ import 'package:social_alert_app/service/profilequery.dart';
 import 'package:social_alert_app/service/profileupdate.dart';
 import 'package:social_alert_app/service/serviceprodiver.dart';
 import 'package:social_alert_app/service/useraccount.dart';
+import 'package:social_alert_app/service/userstatistic.dart';
 import 'package:social_alert_app/service/videoencoder.dart';
 import 'package:social_alert_app/service/servernotification.dart';
 import 'package:social_alert_app/settings.dart';
+import 'package:social_alert_app/statistic.dart';
 import 'package:social_alert_app/upload.dart';
 
 import 'helper.dart';
@@ -73,6 +75,7 @@ class SocialAlertApp extends StatelessWidget {
           ServiceProvider<FeedQueryService>(create: (context) => FeedQueryService(context)),
           ServiceProvider<ServerNotification>(create: (context) => ServerNotification(context)),
           StreamProvider<UserNotification>(create: (context) => ServerNotification.of(context).userNotificationStream, lazy: false, initialData: null),
+          ServiceProvider<UserStatisticService>(create: (context) => UserStatisticService(context)),
         ],
         child: _buildApp()
     );
@@ -171,6 +174,10 @@ class SocialAlertApp extends StatelessWidget {
         settings: settings,
         builder: (_) => MediaNotificationPage()
       );
+      case AppRoute.UserStatistic: return _TrackedMaterialPageRoute(
+          settings: settings,
+          builder: (_) => UserStatisticPage()
+      );
       default: return null;
     }
   }
@@ -194,6 +201,7 @@ class AppRoute {
   static const DeleteAccount = 'deleteAccount';
   static const ChangePassword = 'changePassword';
   static const MediaNotification = 'mediaNotification';
+  static const UserStatistic = "userStatistic";
 }
 
 class _TrackedMaterialPageRoute<T> extends MaterialPageRoute<T> {
