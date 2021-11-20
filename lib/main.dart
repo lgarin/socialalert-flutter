@@ -14,7 +14,7 @@ import 'package:social_alert_app/remote.dart';
 import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/cameradevice.dart';
 import 'package:social_alert_app/service/commentquery.dart';
-import 'package:social_alert_app/service/dataobjet.dart';
+import 'package:social_alert_app/service/dataobject.dart';
 import 'package:social_alert_app/service/eventbus.dart';
 import 'package:social_alert_app/service/feedquery.dart';
 import 'package:social_alert_app/service/filesystem.dart';

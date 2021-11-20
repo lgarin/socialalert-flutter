@@ -8,7 +8,7 @@ import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/profile.dart';
 import 'package:social_alert_app/service/authentication.dart';
-import 'package:social_alert_app/service/dataobjet.dart';
+import 'package:social_alert_app/service/dataobject.dart';
 import 'package:social_alert_app/service/profileupdate.dart';
 
 class _SettingsTabSelectionModel with ChangeNotifier {

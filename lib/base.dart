@@ -9,7 +9,7 @@ import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/menu.dart';
 import 'package:social_alert_app/network.dart';
 import 'package:social_alert_app/service/authentication.dart';
-import 'package:social_alert_app/service/dataobjet.dart';
+import 'package:social_alert_app/service/dataobject.dart';
 import 'package:social_alert_app/service/eventbus.dart';
 import 'package:social_alert_app/service/mediaquery.dart';
 import 'package:social_alert_app/service/mediaupload.dart';

@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter/widgets.dart';
 import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/service/credential.dart';
-import 'package:social_alert_app/service/dataobjet.dart';
+import 'package:social_alert_app/service/dataobject.dart';
 import 'package:social_alert_app/service/datasource.dart';
 import 'package:social_alert_app/service/navigation.dart';
 import 'package:social_alert_app/service/serviceprodiver.dart';

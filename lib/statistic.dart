@@ -1,13 +1,13 @@
 import 'dart:async';
 
-import 'package:charts_flutter/flutter.dart';
+import 'package:charts_flutter/flutter.dart' as chart;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:social_alert_app/base.dart';
 import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/service/authentication.dart';
-import 'package:social_alert_app/service/dataobjet.dart';
+import 'package:social_alert_app/service/dataobject.dart';
 import 'package:social_alert_app/service/eventbus.dart';
 import 'package:social_alert_app/service/userstatistic.dart';
 
@@ -46,9 +46,9 @@ class _UserStatisticPageState extends BasePageState<UserStatisticPage> {
   Widget buildBody(BuildContext context) {
     return ListView(children: [
       Center(child: _PeriodWidget(currentPeriod: _period)),
-      _BarChart(title: 'Likes', source: UserStatisticSource.LIKES, period: _period),
-      _BarChart(title: 'Views', source: UserStatisticSource.VIEWS, period: _period),
-      _BarChart(title: 'Followers', source: UserStatisticSource.FOLLOWERS, period: _period),
+      _UserStatisticChart(title: 'Likes', source: UserStatisticSource.LIKES, period: _period),
+      _UserStatisticChart(title: 'Views', source: UserStatisticSource.VIEWS, period: _period),
+      _UserStatisticChart(title: 'Followers', source: UserStatisticSource.FOLLOWERS, period: _period),
     ]);
   }
 }
@@ -87,17 +87,17 @@ class _PeriodWidget extends StatelessWidget {
   }
 }
 
-class _BarChart extends StatelessWidget {
+class _UserStatisticChart extends StatelessWidget {
   static final itemMargin = EdgeInsets.only(left: 10, right: 10, top: 10);
   static final itemPadding = EdgeInsets.all(5);
-  static final chartTextStyle = TextStyleSpec(fontSize: 14);
-  static final chartSmallTickStyle = LineStyleSpec(color: MaterialPalette.black);
+  static final chartTextStyle = chart.TextStyleSpec(fontSize: 14);
+  static final chartSmallTickStyle = chart.LineStyleSpec(color: chart.MaterialPalette.black);
 
   final UserStatisticSource source;
   final String title;
   final Period period;
 
-  _BarChart({@required this.source, @required this.title, @required this.period}) : super(key: ValueKey('$source/$period'));
+  _UserStatisticChart({@required this.source, @required this.title, @required this.period}) : super(key: ValueKey('$source/$period'));
 
   @override
   Widget build(BuildContext context) {
@@ -122,39 +122,39 @@ class _BarChart extends StatelessWidget {
   }
 
   Widget _buildDataLoader(BuildContext context) {
-    return FutureProvider<Series>(
+    return FutureProvider<chart.Series>(
         initialData: null,
         create: _buildSeries,
         ///catchError: showUnexpectedError,
-        child: Consumer<Series>(
+        child: Consumer<chart.Series>(
             builder: _buildBarChart
         )
     );
   }
 
-  Future<Series> _buildSeries(BuildContext context) async {
+  Future<chart.Series> _buildSeries(BuildContext context) async {
     final profile = Provider.of<UserProfile>(context, listen: false);
     final data = await UserStatisticService.of(context).histogram(source, profile.userId, period);
-    return Series<CountByPeriod, DateTime>(id: key.toString(), displayName: title, data: data,
+    return chart.Series<CountByPeriod, DateTime>(id: key.toString(), displayName: title, data: data,
         domainFn: (CountByPeriod item, _) => item.period,
         measureFn: (CountByPeriod item, _) => item.count);
   }
 
-  Widget _buildBarChart(BuildContext context, Series value, Widget child) {
+  Widget _buildBarChart(BuildContext context, chart.Series value, Widget child) {
     if (value == null) {
       return LoadingCircle();
     }
-    return TimeSeriesChart(
+    return chart.TimeSeriesChart(
       [value],
       animate: true,
-      defaultRenderer: LineRendererConfig(includeArea: true),
+      defaultRenderer: chart.LineRendererConfig(includeArea: true),
       defaultInteractions: false,
-      domainAxis: DateTimeAxisSpec(
-          renderSpec: SmallTickRendererSpec(
+      domainAxis: chart.DateTimeAxisSpec(
+          renderSpec: chart.SmallTickRendererSpec(
               labelStyle: chartTextStyle,
               lineStyle: chartSmallTickStyle)),
-      primaryMeasureAxis: NumericAxisSpec(
-          renderSpec: GridlineRendererSpec(
+      primaryMeasureAxis: chart.NumericAxisSpec(
+          renderSpec: chart.GridlineRendererSpec(
               labelStyle: chartTextStyle)),
     );
   }

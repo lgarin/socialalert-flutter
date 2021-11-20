@@ -8,7 +8,7 @@ import 'package:social_alert_app/feeling.dart';
 import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/service/geolocation.dart';
-import 'package:social_alert_app/service/dataobjet.dart';
+import 'package:social_alert_app/service/dataobject.dart';
 import 'package:social_alert_app/service/mediaquery.dart';
 import 'package:social_alert_app/thumbnail.dart';
 
