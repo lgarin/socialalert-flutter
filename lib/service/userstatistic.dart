@@ -46,7 +46,7 @@ enum UserStatisticSource {
   FOLLOWERS
 }
 
-class UserStatisticService extends Service {
+class UserStatisticService extends StatisticService<UserStatisticSource> {
 
   UserStatisticService(BuildContext context) : super(context);
 

@@ -1,9 +1,13 @@
 import 'dart:math';
 import 'dart:ui';
 
+import 'package:charts_flutter/flutter.dart' as chart;
 import 'package:flutter/material.dart' hide FormFieldValidator;
 import 'package:form_field_validator/form_field_validator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:provider/provider.dart';
+import 'package:social_alert_app/service/authentication.dart';
+import 'package:social_alert_app/service/dataobject.dart';
 
 T showUnexpectedError<T>(BuildContext context, Object error) {
   showSimpleDialog(context, 'Unexpected error', error.toString());
@@ -218,4 +222,129 @@ class CheckboxFormField extends FormField<bool> {
                 controlAffinity: controlAffinity,
               );
             });
+}
+
+class StatisticPeriodWidget extends StatelessWidget {
+  static final List<Period> periods = [Period.WEEK, Period.MONTH, Period.YEAR];
+  static final List<String> fullTexts = ['Week', 'Month', 'Year'];
+  final Period currentPeriod;
+  final void Function(Period) onChanged;
+
+  StatisticPeriodWidget({this.currentPeriod, this.onChanged}) : super(key: ValueKey(currentPeriod));
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(padding: EdgeInsets.only(left: 10, right: 10, top: 10),
+        child: ToggleButtons(
+          children: periods.map(_buildText).toList(growable: false),
+          isSelected: periods.map(_isSelected).toList(growable: false),
+          selectedColor: Colors.white,
+          fillColor: Theme.of(context).primaryColor,
+          onPressed: (index) => onChanged(periods[index]),
+          borderRadius: BorderRadius.circular(20),
+          borderWidth: 2,
+          selectedBorderColor: Theme.of(context).primaryColor,
+        )
+    );
+  }
+
+  bool _isSelected(Period value) => currentPeriod == value;
+
+  Widget _buildText(Period value) {
+    final index = periods.indexOf(value);
+    return Padding(
+        padding: EdgeInsets.symmetric(horizontal: 15),
+        child: Text(fullTexts[index])
+    );
+  }
+}
+
+class StatisticChart<S extends Enum> extends StatelessWidget {
+  static final itemMargin = EdgeInsets.only(left: 10, right: 10, top: 10);
+  static final itemPadding = EdgeInsets.all(5);
+  static final chartTextStyle = chart.TextStyleSpec(fontSize: 14);
+  static final chartSmallTickStyle = chart.LineStyleSpec(color: chart.MaterialPalette.black);
+
+  final StatisticService service;
+  final S source;
+  final String title;
+  final Period period;
+
+  StatisticChart({@required this.service, @required this.source, @required this.title, @required this.period}) : super(key: ValueKey('$source/$period'));
+
+  @override
+  Widget build(BuildContext context) {
+    return AspectRatio(
+      aspectRatio: 1.6,
+      child: Card(
+          margin: itemMargin,
+          child: Padding(
+            padding: itemPadding,
+            child: _buildCardContent(context),
+          )
+      ),
+    );
+  }
+
+  Widget _buildCardContent(BuildContext context) {
+    return Column(
+        children: [
+          Text(title),
+          Expanded(child: _buildDataLoader(context))
+        ]);
+  }
+
+  Widget _buildDataLoader(BuildContext context) {
+    return FutureProvider<chart.Series>(
+        initialData: null,
+        create: _buildSeries,
+        ///catchError: showUnexpectedError,
+        child: Consumer<chart.Series>(
+            builder: _buildBarChart
+        )
+    );
+  }
+
+  Future<chart.Series> _buildSeries(BuildContext context) async {
+    final profile = Provider.of<UserProfile>(context, listen: false);
+    final data = await service.histogram(source, profile.userId, period);
+    return chart.Series<CountByPeriod, DateTime>(id: key.toString(), displayName: title, data: data,
+        domainFn: (CountByPeriod item, _) => item.period,
+        measureFn: (CountByPeriod item, _) => item.count);
+  }
+
+  Column _buildNoData(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        Icon(Icons.show_chart, size: 100, color: Colors.grey),
+        Text('No data yet', style: Theme
+            .of(context)
+            .textTheme
+            .headline6),
+      ],
+    );
+  }
+
+  Widget _buildBarChart(BuildContext context, chart.Series value, Widget child) {
+    if (value == null) {
+      return LoadingCircle();
+    }
+    if (value.data.isEmpty) {
+      return _buildNoData(context);
+    }
+    return chart.TimeSeriesChart(
+      [value],
+      animate: true,
+      defaultRenderer: chart.LineRendererConfig(includeArea: true),
+      defaultInteractions: false,
+      domainAxis: chart.DateTimeAxisSpec(
+          renderSpec: chart.SmallTickRendererSpec(
+              labelStyle: chartTextStyle,
+              lineStyle: chartSmallTickStyle)),
+      primaryMeasureAxis: chart.NumericAxisSpec(
+          renderSpec: chart.GridlineRendererSpec(
+              labelStyle: chartTextStyle)),
+    );
+  }
 }

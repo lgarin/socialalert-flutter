@@ -16,6 +16,7 @@ import 'package:social_alert_app/service/configuration.dart';
 import 'package:social_alert_app/service/dataobject.dart';
 import 'package:social_alert_app/service/eventbus.dart';
 import 'package:social_alert_app/service/mediaquery.dart';
+import 'package:social_alert_app/service/mediastatistic.dart';
 import 'package:social_alert_app/service/mediaupdate.dart';
 import 'package:social_alert_app/service/profilequery.dart';
 import 'package:timeago_flutter/timeago_flutter.dart';
@@ -641,6 +642,32 @@ class _ApprovalButton extends StatelessWidget {
   }
 }
 
+class _MediaStatisticPanel extends StatefulWidget {
+
+  @override
+  _MediaStatisticPanelState createState() => _MediaStatisticPanelState();
+}
+
+class _MediaStatisticPanelState extends State<_MediaStatisticPanel> {
+
+  Period _period = Period.MONTH;
+
+  void _onPeriodChanged(Period newPeriod) {
+    setState(() {
+      _period = newPeriod;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(children: [
+      StatisticChart<MediaStatisticSource>(title: 'Likes', source: MediaStatisticSource.LIKES, period: _period, service: MediaStatisticService.of(context)),
+      StatisticChart<MediaStatisticSource>(title: 'Views', source: MediaStatisticSource.VIEWS, period: _period, service: MediaStatisticService.of(context)),
+      Center(child: StatisticPeriodWidget(currentPeriod: _period, onChanged: _onPeriodChanged)),
+    ]);
+  }
+}
+
 class _MediaBottomNavigationBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -657,6 +684,10 @@ class _MediaBottomNavigationBar extends StatelessWidget {
             icon: Icon(Icons.create),
             label: 'Scribes',
           ),
+          new BottomNavigationBarItem(
+            icon: Icon(Icons.show_chart),
+            label: 'Statistics',
+          ),
         ]
     );
   }
@@ -670,6 +701,8 @@ class _MediaTabWidget extends StatelessWidget {
       return _MediaDetailPanel();
     } else if (tabSelectionModel.feedSelected) {
       return _MediaFeedPanel();
+    } else if (tabSelectionModel.statisticSelected) {
+      return _MediaStatisticPanel();
     } else {
       return null;
     }
@@ -679,12 +712,14 @@ class _MediaTabWidget extends StatelessWidget {
 class _MediaTabSelectionModel with ChangeNotifier {
   static const infoIndex = 0;
   static const feedIndex = 1;
+  static const statisticIndex = 2;
 
   int _currentDisplayIndex = infoIndex;
 
   int get currentDisplayIndex => _currentDisplayIndex;
   bool get feedSelected => _currentDisplayIndex == feedIndex;
   bool get infoSelected => _currentDisplayIndex == infoIndex;
+  bool get statisticSelected => _currentDisplayIndex == statisticIndex;
 
   void tabSelected(int index) {
     _currentDisplayIndex = index;

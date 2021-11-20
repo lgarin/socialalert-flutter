@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 import 'package:social_alert_app/service/geolocation.dart';
+import 'package:social_alert_app/service/serviceprodiver.dart';
 
 class PagingParameter {
   final int pageNumber;
@@ -464,4 +466,11 @@ enum Period {
   MONTH,
   QUARTER,
   YEAR
+}
+
+// TODO this class does not belong here
+abstract class StatisticService<S extends Enum> extends Service {
+  StatisticService(BuildContext context) : super(context);
+
+  Future<List<CountByPeriod>> histogram(S source, String key, Period period);
 }

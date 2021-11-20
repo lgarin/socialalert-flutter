@@ -21,6 +21,7 @@ import 'package:social_alert_app/service/filesystem.dart';
 import 'package:social_alert_app/service/geolocation.dart';
 import 'package:social_alert_app/service/datasource.dart';
 import 'package:social_alert_app/service/mediaquery.dart';
+import 'package:social_alert_app/service/mediastatistic.dart';
 import 'package:social_alert_app/service/mediaupdate.dart';
 import 'package:social_alert_app/service/mediaupload.dart';
 import 'package:social_alert_app/service/navigation.dart';
@@ -76,6 +77,7 @@ class SocialAlertApp extends StatelessWidget {
           ServiceProvider<ServerNotification>(create: (context) => ServerNotification(context)),
           StreamProvider<UserNotification>(create: (context) => ServerNotification.of(context).userNotificationStream, lazy: false, initialData: null),
           ServiceProvider<UserStatisticService>(create: (context) => UserStatisticService(context)),
+          ServiceProvider<MediaStatisticService>(create: (context) => MediaStatisticService(context)),
         ],
         child: _buildApp()
     );
