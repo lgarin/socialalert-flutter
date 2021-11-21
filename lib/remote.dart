@@ -660,9 +660,12 @@ class _MediaStatisticPanelState extends State<_MediaStatisticPanel> {
 
   @override
   Widget build(BuildContext context) {
+    final model = Provider.of<_MediaInfoModel>(context);
+    final likeCount = model.detail.likeCount;
+    final hitCount = model.detail.hitCount;
     return Column(children: [
-      StatisticChart<MediaStatisticSource>(title: 'Likes', source: MediaStatisticSource.LIKES, period: _period, service: MediaStatisticService.of(context)),
-      StatisticChart<MediaStatisticSource>(title: 'Views', source: MediaStatisticSource.VIEWS, period: _period, service: MediaStatisticService.of(context)),
+      StatisticChart<MediaStatisticSource>(title: 'Likes (Total $likeCount)', objectId: model.mediaUri, source: MediaStatisticSource.LIKES, period: _period, service: MediaStatisticService.of(context)),
+      StatisticChart<MediaStatisticSource>(title: 'Views (Total $hitCount)', objectId: model.mediaUri, source: MediaStatisticSource.VIEWS, period: _period, service: MediaStatisticService.of(context)),
       Center(child: StatisticPeriodWidget(currentPeriod: _period, onChanged: _onPeriodChanged)),
     ]);
   }

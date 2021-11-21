@@ -6,7 +6,6 @@ import 'package:flutter/material.dart' hide FormFieldValidator;
 import 'package:form_field_validator/form_field_validator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
-import 'package:social_alert_app/service/authentication.dart';
 import 'package:social_alert_app/service/dataobject.dart';
 
 T showUnexpectedError<T>(BuildContext context, Object error) {
@@ -266,11 +265,12 @@ class StatisticChart<S extends Enum> extends StatelessWidget {
   static final chartSmallTickStyle = chart.LineStyleSpec(color: chart.MaterialPalette.black);
 
   final StatisticService service;
+  final String objectId;
   final S source;
   final String title;
   final Period period;
 
-  StatisticChart({@required this.service, @required this.source, @required this.title, @required this.period}) : super(key: ValueKey('$source/$period'));
+  StatisticChart({@required this.service, @required this.objectId, @required this.source, @required this.title, @required this.period}) : super(key: ValueKey('$objectId/$source/$period'));
 
   @override
   Widget build(BuildContext context) {
@@ -306,8 +306,7 @@ class StatisticChart<S extends Enum> extends StatelessWidget {
   }
 
   Future<chart.Series> _buildSeries(BuildContext context) async {
-    final profile = Provider.of<UserProfile>(context, listen: false);
-    final data = await service.histogram(source, profile.userId, period);
+    final data = await service.histogram(source, objectId, period);
     return chart.Series<CountByPeriod, DateTime>(id: key.toString(), displayName: title, data: data,
         domainFn: (CountByPeriod item, _) => item.period,
         measureFn: (CountByPeriod item, _) => item.count);
