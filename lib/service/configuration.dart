@@ -11,3 +11,5 @@ final previewHeight = 640;
 final previewWidth = 960;
 
 final maxCommentLength = 4000;
+
+final maxVideoDuration = Duration(seconds: 30);

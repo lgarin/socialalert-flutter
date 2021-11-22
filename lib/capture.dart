@@ -1,14 +1,14 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import 'package:native_device_orientation/native_device_orientation.dart';
 import 'package:provider/provider.dart';
 import 'package:social_alert_app/helper.dart';
 import 'package:social_alert_app/main.dart';
 import 'package:social_alert_app/service/cameradevice.dart';
-import 'package:social_alert_app/service/filesystem.dart';
+import 'package:social_alert_app/service/configuration.dart';
 import 'package:social_alert_app/service/geolocation.dart';
 import 'package:social_alert_app/service/mediaupload.dart';
 
@@ -26,7 +26,7 @@ class _CaptureMediaPageState extends State<CaptureMediaPage> {
   Future<GeoPosition> _asyncPosition;
   Future<DeviceInfo> _asyncDevice;
   bool _videoMode = false;
-  File _videoFile;
+  Stopwatch _videoLength;
   Timer _videoMonitor;
 
   @override
@@ -44,7 +44,8 @@ class _CaptureMediaPageState extends State<CaptureMediaPage> {
     final portrait = MediaQuery.of(context).orientation == Orientation.portrait;
     return Scaffold(
       appBar: portrait ? AppBar(title: Text('Synpix')) : null,
-      body: _CameraPreviewArea(),
+      body: Center(child: _CameraPreviewArea()),
+      backgroundColor: Colors.black,
       bottomNavigationBar: _CaptureNavigationBar(videoMode: _videoMode, cameraNotifier: cameraNotifier, onCameraSwitch: _onCameraSwitch, onVideoResume: _onVideoStart, onVideoPause: _onVideoPause, onModeSwitch: _onModeSwitch,),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: _CaptureButton(videoMode: _videoMode, cameraNotifier: cameraNotifier, onPictureCapture: _onPictureCapture, onVideoStart: _onVideoStart, onVideoStop: _onVideoStop),
@@ -95,11 +96,10 @@ class _CaptureMediaPageState extends State<CaptureMediaPage> {
   void _onPictureCapture() async {
     cameraNotifier.value = null;
     try {
-      File outputFile = await FileSystem.of(context).defineOutputFile('jpg');
-      await _cameraController.takePicture(outputFile.path);
+      XFile outputFile = await _cameraController.takePicture();
       final device = await _asyncDevice;
       final position = await _asyncPosition;
-      final task = MediaUploadTask(file: outputFile, type: MediaUploadType.PICTURE, position: position, device: device);
+      final task = MediaUploadTask(file: File(outputFile.path), type: MediaUploadType.PICTURE, position: position, device: device);
       await MediaUploadService.of(context).saveTask(task);
       Navigator.of(context).pushReplacementNamed(AppRoute.AnnotateMedia, arguments: task);
     } catch (e) {
@@ -108,50 +108,51 @@ class _CaptureMediaPageState extends State<CaptureMediaPage> {
     }
   }
 
-  void _onMaximumVideoSize() async {
-    _videoMonitor.cancel();
+  void _onMaximumVideoLength() async {
     _onVideoStop();
-    showWarningSnackBar(context, 'Maximum video size reached');
+    showWarningSnackBar(context, 'Maximum video length reached');
   }
 
   void _onVideoStart() async {
     cameraNotifier.value = null;
     try {
-      if (_videoFile != null) {
+      if (_videoLength != null) {
         await _cameraController.resumeVideoRecording();
-        cameraNotifier.value = _cameraController?.value;
       } else {
-        _videoFile = await FileSystem.of(context).defineOutputFile('mp4');
-        _videoMonitor = FileSystem.of(context).createFileSizeMonitor(_videoFile, MediaUploadTask.maximumFileSize, _onMaximumVideoSize);
-        await _cameraController.startVideoRecording(_videoFile.path);
-        cameraNotifier.value = _cameraController?.value;
+        await _cameraController.startVideoRecording();
+        _videoLength = Stopwatch();
       }
+      cameraNotifier.value = _cameraController?.value;
+      _videoLength.start();
+      final remainingMillis = maxVideoDuration.inMilliseconds - _videoLength.elapsedMilliseconds;
+      _videoMonitor = Timer(Duration(milliseconds: max(1, remainingMillis)), _onMaximumVideoLength);
     } catch (e) {
-      _videoFile = null;
       print(e);
       showSimpleDialog(context, 'Capture failed', e.toString());
     }
   }
 
   void _onVideoStop() async {
+    _videoLength = null;
     _videoMonitor.cancel();
     cameraNotifier.value = null;
     try {
-      await _cameraController.stopVideoRecording();
+      XFile file = await _cameraController.stopVideoRecording();
       cameraNotifier.value = _cameraController?.value;
       final device = await _asyncDevice;
       final position = await _asyncPosition;
-      final task = MediaUploadTask(file: _videoFile, type: MediaUploadType.VIDEO, position: position, device: device);
+      final task = MediaUploadTask(file: File(file.path), type: MediaUploadType.VIDEO, position: position, device: device);
       await MediaUploadService.of(context).saveTask(task);
       Navigator.of(context).pushReplacementNamed(AppRoute.AnnotateMedia, arguments: task);
     } catch (e) {
-      _videoFile = null;
       print(e);
       showSimpleDialog(context, 'Capture failed', e.toString());
     }
   }
 
   void _onVideoPause() async {
+    _videoLength.stop();
+    _videoMonitor.cancel();
     cameraNotifier.value = null;
     try {
       await _cameraController.pauseVideoRecording();
@@ -178,26 +179,7 @@ class _CameraPreviewArea extends StatelessWidget {
       return LoadingCircle();
     }
 
-    return NativeDeviceOrientationReader(useSensor: true, builder: _buildCameraPreview);
-  }
-
-  Widget _buildCameraPreview(BuildContext context) {
-    CameraController controller = Provider.of(context);
-    int turns = _determineRotationCount(context);
-    return RotatedBox(
-      quarterTurns: turns,
-      child: CameraPreview(controller),
-    );
-  }
-
-  int _determineRotationCount(BuildContext context) {
-    NativeDeviceOrientation orientation = NativeDeviceOrientationReader.orientation(context);
-    switch (orientation) {
-      case NativeDeviceOrientation.landscapeLeft: return -1;
-      case NativeDeviceOrientation.landscapeRight: return 1;
-      case NativeDeviceOrientation.portraitDown: return 2;
-      default: return 0;
-    }
+    return CameraPreview(controller);
   }
 }
 
