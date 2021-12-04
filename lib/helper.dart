@@ -223,13 +223,36 @@ class CheckboxFormField extends FormField<bool> {
             });
 }
 
-class StatisticPeriodWidget extends StatelessWidget {
+class _StatisticCumulationButton extends StatelessWidget {
+
+  final bool cumulation;
+  final void Function(bool) onChanged;
+
+  _StatisticCumulationButton({this.cumulation, this.onChanged}) : super(key: ValueKey(cumulation));
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+        child: Ink(
+            decoration: ShapeDecoration(
+              color: cumulation ? Theme.of(context).primaryColor : null,
+              shape: CircleBorder(side: BorderSide(color: Colors.grey.shade300, width: 2)),
+            ),
+            child: IconButton(
+              icon: Icon(Icons.assessment_outlined),
+              color: cumulation ? Colors.white : Colors.black,
+              onPressed: () => onChanged(!cumulation),
+            )));
+  }
+}
+
+class _StatisticPeriodWidget extends StatelessWidget {
   static final List<Period> periods = [Period.WEEK, Period.MONTH, Period.YEAR];
   static final List<String> fullTexts = ['Week', 'Month', 'Year'];
   final Period currentPeriod;
   final void Function(Period) onChanged;
 
-  StatisticPeriodWidget({this.currentPeriod, this.onChanged}) : super(key: ValueKey(currentPeriod));
+  _StatisticPeriodWidget({this.currentPeriod, this.onChanged}) : super(key: ValueKey(currentPeriod));
 
   @override
   Widget build(BuildContext context) {
@@ -258,6 +281,34 @@ class StatisticPeriodWidget extends StatelessWidget {
   }
 }
 
+class StatisticControlWidget extends StatelessWidget {
+  final StatisticParameter parameter;
+  final void Function(StatisticParameter) onChanged;
+
+  StatisticControlWidget({this.parameter, this.onChanged}) : super(key: ValueKey(parameter));
+
+  void _onPeriodChanged(Period newPeriod) {
+    onChanged(StatisticParameter(newPeriod, parameter.cumulation));
+  }
+
+  void _onCumulationChanged(bool newCumulation) {
+    onChanged(StatisticParameter(parameter.period, newCumulation));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          SizedBox(width: 10),
+          _StatisticCumulationButton(cumulation: parameter.cumulation, onChanged: _onCumulationChanged),
+          _StatisticPeriodWidget(currentPeriod: parameter.period, onChanged: _onPeriodChanged),
+        ],
+      );
+  }
+}
+
 class StatisticChart<S extends Enum> extends StatelessWidget {
   static final itemMargin = EdgeInsets.only(left: 10, right: 10, top: 10);
   static final itemPadding = EdgeInsets.all(5);
@@ -268,9 +319,9 @@ class StatisticChart<S extends Enum> extends StatelessWidget {
   final String objectId;
   final S source;
   final String title;
-  final Period period;
+  final StatisticParameter parameter;
 
-  StatisticChart({@required this.service, @required this.objectId, @required this.source, @required this.title, @required this.period}) : super(key: ValueKey('$objectId/$source/$period'));
+  StatisticChart({@required this.service, @required this.objectId, @required this.source, @required this.title, @required this.parameter}) : super(key: ValueKey('$objectId/$source/${parameter.period}/${parameter.cumulation}'));
 
   @override
   Widget build(BuildContext context) {
@@ -306,7 +357,7 @@ class StatisticChart<S extends Enum> extends StatelessWidget {
   }
 
   Future<chart.Series> _buildSeries(BuildContext context) async {
-    final data = await service.histogram(source, objectId, period);
+    final data = await service.histogram(source, objectId, parameter);
     return chart.Series<CountByPeriod, DateTime>(id: key.toString(), displayName: title, data: data,
         domainFn: (CountByPeriod item, _) => item.period,
         measureFn: (CountByPeriod item, _) => item.count);
@@ -317,7 +368,7 @@ class StatisticChart<S extends Enum> extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: <Widget>[
         Icon(Icons.show_chart, size: 100, color: Colors.grey),
-        Text('No data yet', style: Theme
+        Text('Not enough data', style: Theme
             .of(context)
             .textTheme
             .headline6),
@@ -329,7 +380,7 @@ class StatisticChart<S extends Enum> extends StatelessWidget {
     if (value == null) {
       return LoadingCircle();
     }
-    if (value.data.isEmpty) {
+    if (value.data.length < 2) {
       return _buildNoData(context);
     }
     return chart.TimeSeriesChart(

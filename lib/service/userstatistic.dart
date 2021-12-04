@@ -12,8 +12,8 @@ class _UserStatisticApi {
 
   _UserStatisticApi(this.dataSource);
 
-  Future<List<CountByPeriod>> likesHistogram(String userId, Period period, String accessToken) async {
-    final uri = '/feed/userHistogram/$userId?activity=LIKE_MEDIA&interval=${describeEnum(period)}';
+  Future<List<CountByPeriod>> likesHistogram(String userId, Period period, bool cumulation, String accessToken) async {
+    final uri = '/feed/userHistogram/$userId?activity=LIKE_MEDIA&interval=${describeEnum(period)}&cumulation=$cumulation';
     final response = await dataSource.getJson(uri: uri, accessToken: accessToken);
     if (response.statusCode == 200) {
       return CountByPeriod.fromJsonList(jsonDecode(response.body));
@@ -21,8 +21,8 @@ class _UserStatisticApi {
     throw response.reasonPhrase;
   }
 
-  Future<List<CountByPeriod>> viewsHistogram(String userId, Period period, String accessToken) async {
-    final uri = '/feed/userHistogram/$userId?activity=WATCH_MEDIA&interval=${describeEnum(period)}';
+  Future<List<CountByPeriod>> viewsHistogram(String userId, Period period, bool cumulation, String accessToken) async {
+    final uri = '/feed/userHistogram/$userId?activity=WATCH_MEDIA&interval=${describeEnum(period)}&cumulation=$cumulation';
     final response = await dataSource.getJson(uri: uri, accessToken: accessToken);
     if (response.statusCode == 200) {
       return CountByPeriod.fromJsonList(jsonDecode(response.body));
@@ -30,8 +30,8 @@ class _UserStatisticApi {
     throw response.reasonPhrase;
   }
 
-  Future<List<CountByPeriod>> followersHistogram(String userId, Period period, String accessToken) async {
-    final uri = '/user/followerHistogram/$userId?interval=${describeEnum(period)}';
+  Future<List<CountByPeriod>> followersHistogram(String userId, Period period, bool cumulation, String accessToken) async {
+    final uri = '/user/followerHistogram/$userId?interval=${describeEnum(period)}&cumulation=$cumulation';
     final response = await dataSource.getJson(uri: uri, accessToken: accessToken);
     if (response.statusCode == 200) {
       return CountByPeriod.fromJsonList(jsonDecode(response.body));
@@ -56,16 +56,16 @@ class UserStatisticService extends StatisticService<UserStatisticSource> {
 
   _UserStatisticApi get _statisticApi => _UserStatisticApi(lookup());
 
-  Future<List<CountByPeriod>> histogram(UserStatisticSource source, String userId, Period period) async {
+  Future<List<CountByPeriod>> histogram(UserStatisticSource source, String userId, StatisticParameter parameter) async {
     final accessToken = await _authService.obtainAccessToken();
     try {
       switch (source) {
         case UserStatisticSource.LIKES:
-          return await _statisticApi.likesHistogram(userId, period, accessToken);
+          return await _statisticApi.likesHistogram(userId, parameter.period, parameter.cumulation, accessToken);
         case UserStatisticSource.VIEWS:
-          return await _statisticApi.viewsHistogram(userId, period, accessToken);
+          return await _statisticApi.viewsHistogram(userId, parameter.period, parameter.cumulation, accessToken);
         case UserStatisticSource.FOLLOWERS:
-          return await _statisticApi.followersHistogram(userId, period, accessToken);
+          return await _statisticApi.followersHistogram(userId, parameter.period, parameter.cumulation, accessToken);
         default:
           throw 'source not supported';
       }

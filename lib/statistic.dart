@@ -16,7 +16,7 @@ class UserStatisticPage extends StatefulWidget {
 
 class _UserStatisticPageState extends BasePageState<UserStatisticPage> {
 
-  Period _period = Period.MONTH;
+  StatisticParameter _parameter = StatisticParameter(Period.MONTH, true);
 
   _UserStatisticPageState() : super(AppRoute.UserStatistic);
 
@@ -25,9 +25,9 @@ class _UserStatisticPageState extends BasePageState<UserStatisticPage> {
     return AppBar(title: Text('My statistics'));
   }
 
-  void _onPeriodChanged(Period newPeriod) {
+  void _onParameterChanged(StatisticParameter newParameter) {
     setState(() {
-      _period = newPeriod;
+      _parameter = newParameter;
     });
   }
 
@@ -51,10 +51,10 @@ class _UserStatisticPageState extends BasePageState<UserStatisticPage> {
     final hitCount = profile.statistic.hitCount;
     final followerCount = profile.statistic.followerCount;
     return Column(children: [
-      StatisticChart<UserStatisticSource>(title: 'Likes (Total $likeCount)', objectId: profile.userId, source: UserStatisticSource.LIKES, period: _period, service: UserStatisticService.of(context)),
-      StatisticChart<UserStatisticSource>(title: 'Views (Total $hitCount)', objectId: profile.userId, source: UserStatisticSource.VIEWS, period: _period, service: UserStatisticService.of(context)),
-      StatisticChart<UserStatisticSource>(title: 'Followers (Total $followerCount)', objectId: profile.userId, source: UserStatisticSource.FOLLOWERS, period: _period, service: UserStatisticService.of(context)),
-      Center(child: StatisticPeriodWidget(currentPeriod: _period, onChanged: _onPeriodChanged)),
+      StatisticChart<UserStatisticSource>(title: 'Likes (Total $likeCount)', objectId: profile.userId, source: UserStatisticSource.LIKES, parameter: _parameter, service: UserStatisticService.of(context)),
+      StatisticChart<UserStatisticSource>(title: 'Views (Total $hitCount)', objectId: profile.userId, source: UserStatisticSource.VIEWS, parameter: _parameter, service: UserStatisticService.of(context)),
+      StatisticChart<UserStatisticSource>(title: 'Followers (Total $followerCount)', objectId: profile.userId, source: UserStatisticSource.FOLLOWERS, parameter: _parameter, service: UserStatisticService.of(context)),
+      StatisticControlWidget(parameter: _parameter, onChanged: _onParameterChanged),
       SizedBox(height: 15)
     ]);
   }

@@ -650,11 +650,11 @@ class _MediaStatisticPanel extends StatefulWidget {
 
 class _MediaStatisticPanelState extends State<_MediaStatisticPanel> {
 
-  Period _period = Period.MONTH;
+  StatisticParameter _parameter = StatisticParameter(Period.MONTH, true);
 
-  void _onPeriodChanged(Period newPeriod) {
+  void _onParameterChanged(StatisticParameter newParameter) {
     setState(() {
-      _period = newPeriod;
+      _parameter = newParameter;
     });
   }
 
@@ -664,9 +664,9 @@ class _MediaStatisticPanelState extends State<_MediaStatisticPanel> {
     final likeCount = model.detail.likeCount;
     final hitCount = model.detail.hitCount;
     return Column(children: [
-      StatisticChart<MediaStatisticSource>(title: 'Likes (Total $likeCount)', objectId: model.mediaUri, source: MediaStatisticSource.LIKES, period: _period, service: MediaStatisticService.of(context)),
-      StatisticChart<MediaStatisticSource>(title: 'Views (Total $hitCount)', objectId: model.mediaUri, source: MediaStatisticSource.VIEWS, period: _period, service: MediaStatisticService.of(context)),
-      Center(child: StatisticPeriodWidget(currentPeriod: _period, onChanged: _onPeriodChanged)),
+      StatisticChart<MediaStatisticSource>(title: 'Likes (Total $likeCount)', objectId: model.mediaUri, source: MediaStatisticSource.LIKES, parameter: _parameter, service: MediaStatisticService.of(context)),
+      StatisticChart<MediaStatisticSource>(title: 'Views (Total $hitCount)', objectId: model.mediaUri, source: MediaStatisticSource.VIEWS, parameter: _parameter, service: MediaStatisticService.of(context)),
+      StatisticControlWidget(parameter: _parameter, onChanged: _onParameterChanged),
     ]);
   }
 }

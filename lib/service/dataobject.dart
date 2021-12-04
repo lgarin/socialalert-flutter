@@ -468,9 +468,16 @@ enum Period {
   YEAR
 }
 
+class StatisticParameter {
+  final Period period;
+  final bool cumulation;
+
+  StatisticParameter(this.period, this.cumulation);
+}
+
 // TODO this class does not belong here
 abstract class StatisticService<S extends Enum> extends Service {
   StatisticService(BuildContext context) : super(context);
 
-  Future<List<CountByPeriod>> histogram(S source, String key, Period period);
+  Future<List<CountByPeriod>> histogram(S source, String key, StatisticParameter parameter);
 }

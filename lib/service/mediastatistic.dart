@@ -12,8 +12,8 @@ class _MediaStatisticApi {
 
   _MediaStatisticApi(this.dataSource);
 
-  Future<List<CountByPeriod>> likesHistogram(String mediaUri, Period period, String accessToken) async {
-    final uri = '/feed/mediaHistogram/$mediaUri?activity=LIKE_MEDIA&interval=${describeEnum(period)}';
+  Future<List<CountByPeriod>> likesHistogram(String mediaUri, Period period, bool cumulation, String accessToken) async {
+    final uri = '/feed/mediaHistogram/$mediaUri?activity=LIKE_MEDIA&interval=${describeEnum(period)}&cumulation=$cumulation';
     final response = await dataSource.getJson(uri: uri, accessToken: accessToken);
     if (response.statusCode == 200) {
       return CountByPeriod.fromJsonList(jsonDecode(response.body));
@@ -21,8 +21,8 @@ class _MediaStatisticApi {
     throw response.reasonPhrase;
   }
 
-  Future<List<CountByPeriod>> viewsHistogram(String mediaUri, Period period, String accessToken) async {
-    final uri = '/feed/mediaHistogram/$mediaUri?activity=WATCH_MEDIA&interval=${describeEnum(period)}';
+  Future<List<CountByPeriod>> viewsHistogram(String mediaUri, Period period, bool cumulation, String accessToken) async {
+    final uri = '/feed/mediaHistogram/$mediaUri?activity=WATCH_MEDIA&interval=${describeEnum(period)}&cumulation=$cumulation';
     final response = await dataSource.getJson(uri: uri, accessToken: accessToken);
     if (response.statusCode == 200) {
       return CountByPeriod.fromJsonList(jsonDecode(response.body));
@@ -46,14 +46,14 @@ class MediaStatisticService extends StatisticService<MediaStatisticSource> {
 
   _MediaStatisticApi get _statisticApi => _MediaStatisticApi(lookup());
 
-  Future<List<CountByPeriod>> histogram(MediaStatisticSource source, String userId, Period period) async {
+  Future<List<CountByPeriod>> histogram(MediaStatisticSource source, String userId, StatisticParameter parameter) async {
     final accessToken = await _authService.obtainAccessToken();
     try {
       switch (source) {
         case MediaStatisticSource.LIKES:
-          return await _statisticApi.likesHistogram(userId, period, accessToken);
+          return await _statisticApi.likesHistogram(userId, parameter.period, parameter.cumulation, accessToken);
         case MediaStatisticSource.VIEWS:
-          return await _statisticApi.viewsHistogram(userId, period, accessToken);
+          return await _statisticApi.viewsHistogram(userId, parameter.period, parameter.cumulation, accessToken);
         default:
           throw 'source not supported';
       }
