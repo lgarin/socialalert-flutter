@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_uploader/flutter_uploader.dart';
@@ -67,7 +66,7 @@ class MediaUploadTask with ChangeNotifier {
 
   bool get isDeleted => _status == null;
 
-  bool get canBeDeleted => _status == MediaUploadStatus.CREATED || _status == MediaUploadStatus.ANNOTATED || _status == MediaUploadStatus.CLAIMED || hasError;
+  bool get canBeDeleted => _status == MediaUploadStatus.CREATED || _status == MediaUploadStatus.ANNOTATED || _status == MediaUploadStatus.CLAIMED;
 
   Future<bool> isFileValid() => file.exists();
 

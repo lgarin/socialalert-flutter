@@ -1,7 +1,5 @@
-
 import 'package:camera/camera.dart';
 import 'package:device_info/device_info.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:social_alert_app/service/serviceprodiver.dart';
 

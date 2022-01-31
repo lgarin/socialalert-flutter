@@ -82,7 +82,7 @@ class _UploadManagerPageState extends BasePageState<UploadManagerPage> {
   Widget _buildTask(BuildContext context, MediaUploadTask task) {
     return Dismissible(
         key: ValueKey(task.id),
-        direction: DismissDirection.endToStart,
+        direction: task.canBeDeleted ? DismissDirection.endToStart : DismissDirection.none,
         confirmDismiss: (_) => _confirmDelete(),
         onDismissed: (_) => _onConfirmUploadDeletion(task),
         background: _buildDismissibleBackground(),
